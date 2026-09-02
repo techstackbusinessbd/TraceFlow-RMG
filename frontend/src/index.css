@@ -90,48 +90,12 @@
   background-color: #b91c1c;
 }
 
-/* Ultra-Light Subtle Animated Dot Matrix & Whisper-Soft Ambient Light */
-@keyframes matrix-drift {
-  0% {
-    background-position: 0px 0px;
-  }
-  100% {
-    background-position: 48px 48px;
-  }
-}
-
-@keyframes light-shimmer {
-  0%, 100% {
-    opacity: 0.25;
-    transform: scale(0.96);
-  }
-  50% {
-    opacity: 0.45;
-    transform: scale(1.06);
-  }
-}
-
+/* Static Clean Enterprise Dot Matrix Pattern (Zero Animation) */
 .bg-dot-matrix {
-  background-size: 28px 28px;
-  background-image: radial-gradient(rgba(148, 163, 184, 0.09) 1px, transparent 1px);
-  animation: matrix-drift 40s linear infinite;
+  background-size: 24px 24px;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px);
 }
 
 .dark .bg-dot-matrix {
   background-image: radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px);
-}
-
-.ambient-aurora {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 700px;
-  height: 700px;
-  margin-top: -350px;
-  margin-left: -350px;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, rgba(99, 102, 241, 0.03) 45%, transparent 70%);
-  border-radius: 9999px;
-  filter: blur(80px);
-  pointer-events: none;
-  animation: light-shimmer 12s ease-in-out infinite alternate;
 }
