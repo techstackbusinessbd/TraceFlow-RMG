@@ -374,10 +374,10 @@ export const AppShell: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                   >
+                    <LogOut className="w-3.5 h-3.5 shrink-0" />
                     <span>Sign Out</span>
-                    <LogOut className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
