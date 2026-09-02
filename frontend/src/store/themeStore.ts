@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 
 export type ThemeMode = 'light' | 'dark';
+export type SidebarTheme = 'indigo' | 'navy' | 'gray';
 
 interface ThemeState {
   theme: ThemeMode;
+  sidebarTheme: SidebarTheme;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
+  setSidebarTheme: (sidebarTheme: SidebarTheme) => void;
 }
 
 const getInitialTheme = (): ThemeMode => {
@@ -13,15 +16,23 @@ const getInitialTheme = (): ThemeMode => {
   if (saved === 'light' || saved === 'dark') {
     return saved;
   }
-  // Default to light mode for crisp daytime corporate use or respect system
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     return 'dark';
   }
   return 'light';
 };
 
+const getInitialSidebarTheme = (): SidebarTheme => {
+  const saved = localStorage.getItem('traceflow_sidebar_theme') as SidebarTheme | null;
+  if (saved === 'indigo' || saved === 'navy' || saved === 'gray') {
+    return saved;
+  }
+  return 'indigo'; // Default to Royal RMG Indigo
+};
+
 export const useThemeStore = create<ThemeState>((set, get) => ({
   theme: getInitialTheme(),
+  sidebarTheme: getInitialSidebarTheme(),
 
   setTheme: (theme: ThemeMode) => {
     localStorage.setItem('traceflow_theme', theme);
@@ -40,6 +51,11 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   toggleTheme: () => {
     const nextTheme = get().theme === 'dark' ? 'light' : 'dark';
     get().setTheme(nextTheme);
+  },
+
+  setSidebarTheme: (sidebarTheme: SidebarTheme) => {
+    localStorage.setItem('traceflow_sidebar_theme', sidebarTheme);
+    set({ sidebarTheme });
   },
 }));
 
