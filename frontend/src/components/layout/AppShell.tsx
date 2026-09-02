@@ -383,16 +383,6 @@ export const AppShell: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* Quick Sign Out Icon Button */}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            title="Sign Out"
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-200 dark:hover:border-rose-900/50 transition-colors flex items-center justify-center ml-1"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
         </div>
       </header>
 
