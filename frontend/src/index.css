@@ -90,7 +90,7 @@
   background-color: #b91c1c;
 }
 
-/* Elegant Animated Dot Matrix & Soft Ambient Light */
+/* Ultra-Light Subtle Animated Dot Matrix & Whisper-Soft Ambient Light */
 @keyframes matrix-drift {
   0% {
     background-position: 0px 0px;
@@ -102,36 +102,36 @@
 
 @keyframes light-shimmer {
   0%, 100% {
-    opacity: 0.35;
-    transform: scale(0.95);
+    opacity: 0.25;
+    transform: scale(0.96);
   }
   50% {
-    opacity: 0.65;
-    transform: scale(1.1);
+    opacity: 0.45;
+    transform: scale(1.06);
   }
 }
 
 .bg-dot-matrix {
-  background-size: 24px 24px;
-  background-image: radial-gradient(rgba(100, 116, 139, 0.22) 1.2px, transparent 1.2px);
-  animation: matrix-drift 35s linear infinite;
+  background-size: 28px 28px;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.09) 1px, transparent 1px);
+  animation: matrix-drift 40s linear infinite;
 }
 
 .dark .bg-dot-matrix {
-  background-image: radial-gradient(rgba(148, 163, 184, 0.18) 1.2px, transparent 1.2px);
+  background-image: radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px);
 }
 
 .ambient-aurora {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 650px;
-  height: 650px;
-  margin-top: -325px;
-  margin-left: -325px;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, rgba(99, 102, 241, 0.08) 45%, transparent 70%);
+  width: 700px;
+  height: 700px;
+  margin-top: -350px;
+  margin-left: -350px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, rgba(99, 102, 241, 0.03) 45%, transparent 70%);
   border-radius: 9999px;
-  filter: blur(60px);
+  filter: blur(80px);
   pointer-events: none;
-  animation: light-shimmer 10s ease-in-out infinite alternate;
+  animation: light-shimmer 12s ease-in-out infinite alternate;
 }
