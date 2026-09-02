@@ -5,7 +5,7 @@ import { AppShell } from './components/layout/AppShell';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { PlatformOverviewPage } from './pages/admin/PlatformOverviewPage';
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
-import { ENTERPRISE_DOMAINS_CONFIG } from './config/navigationData';
+import { ENTERPRISE_NAV_SECTIONS } from './config/navigationData';
 import { useAuthStore } from './store/authStore';
 import { resolveLandingPath } from './routes/RoleLandingEngine';
 
@@ -44,8 +44,8 @@ export const App: React.FC = () => {
           <Route path="/admin/platform-overview" element={<PlatformOverviewPage />} />
 
           {/* Dynamic Module Routes from Master Configuration */}
-          {ENTERPRISE_DOMAINS_CONFIG.map((domain) =>
-            domain.modules.map((mod) =>
+          {ENTERPRISE_NAV_SECTIONS.map((section) =>
+            section.modules.map((mod) =>
               mod.submodules.map((group) =>
                 group.children.map((item) => {
                   if (item.path === '/admin/platform-overview') return null;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowRight, CornerDownLeft, X, Shield, Factory, ShoppingBag, Archive } from 'lucide-react';
-import { ENTERPRISE_DOMAINS_CONFIG } from '../../config/navigationData';
+import { Search, ArrowRight, CornerDownLeft, X, Shield, Factory, ShoppingBag, Layers } from 'lucide-react';
+import { ENTERPRISE_NAV_SECTIONS } from '../../config/navigationData';
 
 interface OmniSearchPaletteProps {
   isOpen: boolean;
@@ -14,27 +14,27 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Flatten all navigable items across all 4 domains
+  // Flatten all navigable items across all 4 departments
   const allItems = useMemo(() => {
     const list: {
       id: string;
       title: string;
       path: string;
-      domainTitle: string;
-      domainId: string;
+      sectionTitle: string;
+      sectionId: string;
       moduleTitle: string;
     }[] = [];
 
-    ENTERPRISE_DOMAINS_CONFIG.forEach((domain) => {
-      domain.modules.forEach((mod) => {
+    ENTERPRISE_NAV_SECTIONS.forEach((sec) => {
+      sec.modules.forEach((mod) => {
         mod.submodules.forEach((sub) => {
           sub.children.forEach((leaf) => {
             list.push({
               id: leaf.id,
               title: leaf.title,
               path: leaf.path,
-              domainTitle: domain.title,
-              domainId: domain.id,
+              sectionTitle: sec.title,
+              sectionId: sec.id,
               moduleTitle: mod.title,
             });
           });
@@ -55,7 +55,7 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
       .filter(
         (item) =>
           item.title.toLowerCase().includes(q) ||
-          item.domainTitle.toLowerCase().includes(q) ||
+          item.sectionTitle.toLowerCase().includes(q) ||
           item.moduleTitle.toLowerCase().includes(q) ||
           item.path.toLowerCase().includes(q)
       )
@@ -102,15 +102,15 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
 
   if (!isOpen) return null;
 
-  const getDomainIcon = (domainId: string) => {
-    switch (domainId) {
-      case 'commercial':
+  const getSectionIcon = (secId: string) => {
+    switch (secId) {
+      case 'merchandising-commercial':
         return <ShoppingBag className="w-3.5 h-3.5 text-blue-500" />;
-      case 'manufacturing':
+      case 'supply-chain-warehouse':
+        return <Layers className="w-3.5 h-3.5 text-emerald-500" />;
+      case 'production-execution':
         return <Factory className="w-3.5 h-3.5 text-amber-500" />;
-      case 'warehouse':
-        return <Archive className="w-3.5 h-3.5 text-emerald-500" />;
-      case 'governance':
+      case 'quality-governance':
       default:
         return <Shield className="w-3.5 h-3.5 text-indigo-500" />;
     }
@@ -130,7 +130,7 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="Type a screen, module, or keyword to jump instantly..."
+            placeholder="Search POs, styles, bundles, rolls, or screens..."
             className="w-full bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
           />
           <button
@@ -170,7 +170,7 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
                         isSelected ? 'bg-blue-700 text-white' : 'bg-slate-100 dark:bg-slate-800'
                       }`}
                     >
-                      {getDomainIcon(item.domainId)}
+                      {getSectionIcon(item.sectionId)}
                     </span>
                     <div className="truncate">
                       <div className="font-semibold truncate">{item.title}</div>
@@ -179,7 +179,7 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
                           isSelected ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'
                         }`}
                       >
-                        {item.domainTitle} &rsaquo; {item.moduleTitle}
+                        {item.sectionTitle} &rsaquo; {item.moduleTitle}
                       </div>
                     </div>
                   </div>

@@ -2,8 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Shield,
-  Factory,
-  ShoppingBag,
   Archive,
   ChevronDown,
   Search,
@@ -29,16 +27,14 @@ import {
   Sliders,
   CheckCheck,
   TrendingUp,
+  Lock,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { OmniSearchPalette } from '../common/OmniSearchPalette';
 import { SidebarThemeSelector } from '../common/SidebarThemeSelector';
-import {
-  ENTERPRISE_DOMAINS_CONFIG,
-  type EnterpriseDomain,
-} from '../../config/navigationData';
+import { ENTERPRISE_NAV_SECTIONS } from '../../config/navigationData';
 
 export const AppShell: React.FC = () => {
   const location = useLocation();
@@ -51,10 +47,9 @@ export const AppShell: React.FC = () => {
   });
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isDomainMenuOpen, setIsDomainMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  // 3rd Level Hierarchy Accordion State
+  // Accordion State: Track open module IDs and open submodule IDs
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [expandedSubmodules, setExpandedSubmodules] = useState<Record<string, boolean>>({});
 
@@ -70,36 +65,14 @@ export const AppShell: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Determine active domain based on current URL
-  const activeDomain: EnterpriseDomain = useMemo(() => {
-    const currentPath = location.pathname;
-
-    for (const domain of ENTERPRISE_DOMAINS_CONFIG) {
-      for (const mod of domain.modules) {
-        for (const sub of mod.submodules) {
-          for (const leaf of sub.children) {
-            if (currentPath === leaf.path || (leaf.path !== '/' && currentPath.startsWith(leaf.path))) {
-              return domain;
-            }
-          }
-        }
-      }
-    }
-
-    return (
-      ENTERPRISE_DOMAINS_CONFIG.find((d) => d.id === 'governance') ||
-      ENTERPRISE_DOMAINS_CONFIG[0]
-    );
-  }, [location.pathname]);
-
   // Auto-expand parent module and submodule for current route
   useEffect(() => {
     const currentPath = location.pathname;
     const newMods: Record<string, boolean> = { ...expandedModules };
     const newSubs: Record<string, boolean> = { ...expandedSubmodules };
 
-    for (const domain of ENTERPRISE_DOMAINS_CONFIG) {
-      for (const mod of domain.modules) {
+    for (const sec of ENTERPRISE_NAV_SECTIONS) {
+      for (const mod of sec.modules) {
         let modHasActiveRoute = false;
         for (const sub of mod.submodules) {
           let subHasActiveRoute = false;
@@ -136,11 +109,6 @@ export const AppShell: React.FC = () => {
     }));
   };
 
-  const handleDomainSelect = (domain: EnterpriseDomain) => {
-    setIsDomainMenuOpen(false);
-    navigate(domain.defaultPath);
-  };
-
   const toggleSidebarCollapse = () => {
     setIsCollapsed((prev) => {
       const next = !prev;
@@ -154,81 +122,69 @@ export const AppShell: React.FC = () => {
     navigate('/login', { replace: true });
   };
 
-  const getDomainIcon = (iconName: string, className: string = 'w-4 h-4') => {
+  const getModuleIcon = (iconName: string, className: string = 'w-4 h-4') => {
     switch (iconName) {
-      case 'ShoppingBag':
-        return <ShoppingBag className={className} />;
-      case 'Factory':
-        return <Factory className={className} />;
+      case 'FileSpreadsheet':
+        return <FileSpreadsheet className={className} />;
+      case 'TrendingUp':
+        return <TrendingUp className={className} />;
+      case 'Building2':
+        return <Building2 className={className} />;
+      case 'Layers':
+        return <Layers className={className} />;
       case 'Archive':
         return <Archive className={className} />;
-      case 'ShieldCheck':
-      default:
-        return <Shield className={className} />;
-    }
-  };
-
-  const getModuleIcon = (modId: string, className: string = 'w-3.5 h-3.5') => {
-    switch (modId) {
-      case 'orders':
-        return <FileSpreadsheet className={className} />;
-      case 'commercial-export':
-        return <TrendingUp className={className} />;
-      case 'master-partners':
-        return <Building2 className={className} />;
-      case 'planning':
+      case 'Calendar':
         return <Calendar className={className} />;
-      case 'cutting':
+      case 'Scissors':
         return <Scissors className={className} />;
-      case 'printing':
+      case 'Printer':
         return <Printer className={className} />;
-      case 'embroidery':
+      case 'Sparkles':
         return <Sparkles className={className} />;
-      case 'subcontract':
+      case 'Truck':
         return <Truck className={className} />;
-      case 'sewing':
+      case 'Activity':
         return <Activity className={className} />;
-      case 'washing':
+      case 'Droplet':
         return <Droplet className={className} />;
-      case 'finishing':
+      case 'CheckSquare':
         return <CheckSquare className={className} />;
-      case 'packing':
+      case 'Package':
         return <Package className={className} />;
-      case 'fabric-warehouse':
-        return <Layers className={className} />;
-      case 'system-admin':
-        return <Shield className={className} />;
-      case 'quality-control':
+      case 'CheckCheck':
         return <CheckCheck className={className} />;
-      case 'plant-master':
+      case 'Sliders':
         return <Sliders className={className} />;
+      case 'Lock':
+        return <Lock className={className} />;
+      case 'Shield':
       default:
-        return <Folder className={className} />;
+        return <Shield className={className} />;
     }
   };
 
   // Breadcrumb item resolution
   const breadcrumbItems = useMemo(() => {
-    const items: { label: string; path?: string }[] = [
-      { label: 'TraceFlow', path: activeDomain.defaultPath },
-      { label: activeDomain.title },
-    ];
+    const items: { label: string; path?: string }[] = [{ label: 'TraceFlow', path: '/admin/platform-overview' }];
 
-    for (const mod of activeDomain.modules) {
-      for (const sub of mod.submodules) {
-        for (const leaf of sub.children) {
-          if (location.pathname === leaf.path || (leaf.path !== '/' && location.pathname.startsWith(leaf.path))) {
-            items.push({ label: mod.title });
-            items.push({ label: sub.title });
-            items.push({ label: leaf.title, path: leaf.path });
-            return items;
+    for (const sec of ENTERPRISE_NAV_SECTIONS) {
+      for (const mod of sec.modules) {
+        for (const sub of mod.submodules) {
+          for (const leaf of sub.children) {
+            if (location.pathname === leaf.path || (leaf.path !== '/' && location.pathname.startsWith(leaf.path))) {
+              items.push({ label: sec.title });
+              items.push({ label: mod.title });
+              items.push({ label: leaf.title, path: leaf.path });
+              return items;
+            }
           }
         }
       }
     }
 
     return items;
-  }, [activeDomain, location.pathname]);
+  }, [location.pathname]);
 
   // Dynamic Sidebar Theme Classes
   const sidebarStyles = useMemo(() => {
@@ -236,10 +192,7 @@ export const AppShell: React.FC = () => {
       case 'navy':
         return {
           aside: 'bg-[#0f172a] border-r border-[#1e293b] text-slate-100',
-          domainBtn:
-            'bg-[#1e293b] hover:bg-[#273549] border-[#334155] text-slate-200',
-          domainIconBox: 'bg-[#0f172a] text-blue-400 border border-[#334155]',
-          domainFlyout: 'bg-[#0f172a] border-[#334155] text-slate-200',
+          sectionHeader: 'text-slate-400 border-b border-slate-800/80',
           level1Btn: 'text-slate-300 hover:text-white hover:bg-slate-800/80',
           level2Btn: 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50',
           level3Inactive: 'text-slate-400 hover:text-white hover:bg-slate-800/70',
@@ -252,12 +205,7 @@ export const AppShell: React.FC = () => {
         return {
           aside:
             'bg-slate-100/90 dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-slate-100',
-          domainBtn:
-            'bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-slate-200',
-          domainIconBox:
-            'bg-slate-50 dark:bg-zinc-900 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-zinc-700',
-          domainFlyout:
-            'bg-white dark:bg-zinc-850 border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-slate-200',
+          sectionHeader: 'text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-zinc-800',
           level1Btn:
             'text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-200/80 dark:hover:bg-zinc-800',
           level2Btn:
@@ -275,10 +223,7 @@ export const AppShell: React.FC = () => {
       default:
         return {
           aside: 'bg-[#0c1322] border-r border-[#1a2336] text-slate-100',
-          domainBtn:
-            'bg-[#131d31] hover:bg-[#1a2843] border-[#223352] text-indigo-200',
-          domainIconBox: 'bg-[#0c1322] text-indigo-400 border border-[#223352]',
-          domainFlyout: 'bg-[#0c1322] border-[#223352] text-slate-200',
+          sectionHeader: 'text-indigo-400/90 border-b border-indigo-950/60',
           level1Btn: 'text-slate-200 hover:text-white hover:bg-indigo-950/60',
           level2Btn: 'text-indigo-300/80 hover:text-indigo-200 hover:bg-indigo-950/40',
           level3Inactive: 'text-slate-400 hover:text-white hover:bg-indigo-950/50',
@@ -296,10 +241,10 @@ export const AppShell: React.FC = () => {
       <OmniSearchPalette isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* ─────────────────────────────────────────────────────────────────────────
-          1. TOP NAVIGATION BAR (Clean, Spacious, Microsoft Dynamics 365 Architecture)
+          1. TOP NAVIGATION BAR (Spacious & Clean Enterprise Header)
          ───────────────────────────────────────────────────────────────────────── */}
       <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between z-30 shrink-0 select-none transition-colors">
-        {/* Left: Brand Logo & Workspace Title */}
+        {/* Left: Brand Identity */}
         <div className="flex items-center gap-3">
           <Link
             to="/admin/platform-overview"
@@ -328,7 +273,7 @@ export const AppShell: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <Search className="w-3.5 h-3.5 text-slate-400" />
-              <span>Search modules, POs, bundles, or screens...</span>
+              <span>Search POs, styles, bundles, rolls, or screens...</span>
             </div>
             <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded font-mono text-[10px] text-slate-400">
               Ctrl + K
@@ -423,131 +368,73 @@ export const AppShell: React.FC = () => {
       </header>
 
       {/* ─────────────────────────────────────────────────────────────────────────
-          2. MAIN WORKSPACE CONTAINER (3-Level Sidebar + Workspace Viewport)
+          2. MAIN WORKSPACE CONTAINER (Authentic RMG Departmental Flow Sidebar)
          ───────────────────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar (3-Level Hierarchical Tree) */}
+        {/* Left Sidebar (Customizable Palette, Departmental Sections & Collapsible) */}
         <aside
           className={`${
             isCollapsed ? 'w-16' : 'w-64'
           } ${sidebarStyles.aside} flex flex-col shrink-0 transition-all duration-200 z-20 select-none`}
         >
-          {/* Top Domain Switcher Area */}
-          <div className="p-3 border-b border-black/10 dark:border-white/10 relative">
-            <button
-              type="button"
-              onClick={() => setIsDomainMenuOpen(!isDomainMenuOpen)}
-              className={`w-full p-2 rounded-lg border transition-all flex items-center ${
-                isCollapsed ? 'justify-center' : 'justify-between'
-              } ${sidebarStyles.domainBtn}`}
-            >
-              <div className="flex items-center gap-2.5 truncate">
-                <div className={`p-1 rounded shadow-xs shrink-0 ${sidebarStyles.domainIconBox}`}>
-                  {getDomainIcon(activeDomain.iconName, 'w-4 h-4')}
-                </div>
-                {!isCollapsed && (
-                  <div className="text-left truncate">
-                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-60 block leading-tight">
-                      Domain
-                    </span>
-                    <span className="text-xs font-bold block truncate leading-tight mt-0.5">
-                      {activeDomain.shortTitle}
-                    </span>
+          {/* Main Departmental Navigation Sections */}
+          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-5">
+            {ENTERPRISE_NAV_SECTIONS.map((section) => (
+              <div key={section.id} className="space-y-1.5">
+                {/* Department Section Header (Clean Enterprise Divider) */}
+                {!isCollapsed ? (
+                  <div
+                    className={`px-2 pb-1 text-[10px] font-bold uppercase tracking-wider ${sidebarStyles.sectionHeader}`}
+                  >
+                    {section.title}
                   </div>
+                ) : (
+                  <div className="w-6 mx-auto my-2 border-b border-white/10 dark:border-white/10" />
                 )}
-              </div>
-              {!isCollapsed && (
-                <ChevronDown
-                  className={`w-3.5 h-3.5 opacity-60 transition-transform ${
-                    isDomainMenuOpen ? 'rotate-180 text-blue-400' : ''
-                  }`}
-                />
-              )}
-            </button>
 
-            {/* Domain Selection Flyout Menu */}
-            {isDomainMenuOpen && (
-              <div
-                className={`absolute top-full left-2 right-2 mt-1 rounded-xl shadow-2xl z-50 p-1.5 space-y-1 border ${sidebarStyles.domainFlyout}`}
-              >
-                <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider opacity-60">
-                  Select Business Domain
-                </div>
-                {ENTERPRISE_DOMAINS_CONFIG.map((dom) => {
-                  const isActive = dom.id === activeDomain.id;
-                  return (
-                    <button
-                      key={dom.id}
-                      type="button"
-                      onClick={() => handleDomainSelect(dom)}
-                      className={`w-full text-left p-2 rounded-lg text-xs flex items-start gap-2.5 transition-colors ${
-                        isActive
-                          ? 'bg-blue-600 text-white font-semibold shadow-xs'
-                          : 'hover:bg-white/10 opacity-80 hover:opacity-100'
-                      }`}
-                    >
-                      <span
-                        className={`p-1 rounded mt-0.5 shrink-0 ${
-                          isActive ? 'bg-blue-700 text-white' : 'bg-black/20'
-                        }`}
-                      >
-                        {getDomainIcon(dom.iconName, 'w-3.5 h-3.5')}
-                      </span>
-                      <div className="truncate">
-                        <div className="font-semibold">{dom.title}</div>
-                        <div className="text-[10px] leading-tight line-clamp-1 opacity-70">
-                          {dom.shortTitle}
-                        </div>
-                      </div>
-                    </button>
+                {/* Modules in this Department */}
+                {section.modules.map((mod) => {
+                  const isModExpanded = !!expandedModules[mod.id];
+                  const isModActive = mod.submodules.some((sub) =>
+                    sub.children.some(
+                      (leaf) =>
+                        location.pathname === leaf.path ||
+                        (leaf.path !== '/' && location.pathname.startsWith(leaf.path))
+                    )
                   );
-                })}
-              </div>
-            )}
-          </div>
 
-          {/* ─────────────────────────────────────────────────────────────────
-              3-LEVEL HIERARCHICAL ACCORDION TREE MENU
-             ───────────────────────────────────────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-2">
-            {activeDomain.modules.map((mod) => {
-              // Level 1: Module State
-              const isModExpanded = !!expandedModules[mod.id];
-
-              return (
-                <div key={mod.id} className="space-y-1">
-                  {/* Level 1: Module Header Row */}
-                  {!isCollapsed ? (
-                    <button
-                      type="button"
-                      onClick={() => toggleModule(mod.id)}
-                      title={`${mod.title} (${mod.code})`}
-                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-bold transition-colors ${sidebarStyles.level1Btn}`}
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        <span className="p-1 rounded bg-black/10 dark:bg-white/5 shrink-0">
-                          {getModuleIcon(mod.id)}
-                        </span>
-                        <span className="truncate">{mod.title}</span>
-                      </div>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 opacity-60 shrink-0 ml-1 transition-transform ${
-                          isModExpanded ? '' : '-rotate-90'
-                        }`}
-                      />
-                    </button>
-                  ) : (
-                    /* Collapsed Icon Mode (No Naked Dots!) */
-                    (() => {
-                      const isModActive = mod.submodules.some((sub) =>
-                        sub.children.some(
-                          (leaf) =>
-                            location.pathname === leaf.path ||
-                            (leaf.path !== '/' && location.pathname.startsWith(leaf.path))
-                        )
-                      );
-
-                      return (
+                  return (
+                    <div key={mod.id} className="space-y-1">
+                      {/* Expanded Mode: Module Accordion Header */}
+                      {!isCollapsed ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleModule(mod.id)}
+                          title={`${mod.title} (${mod.code})`}
+                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-bold transition-colors ${
+                            isModActive
+                              ? 'bg-blue-600/10 text-blue-400 dark:text-blue-300 font-semibold'
+                              : sidebarStyles.level1Btn
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 truncate">
+                            <span
+                              className={`p-1 rounded shrink-0 ${
+                                isModActive ? 'bg-blue-600 text-white' : 'bg-black/10 dark:bg-white/5'
+                              }`}
+                            >
+                              {getModuleIcon(mod.iconName, 'w-3.5 h-3.5')}
+                            </span>
+                            <span className="truncate">{mod.title}</span>
+                          </div>
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 opacity-60 shrink-0 ml-1 transition-transform ${
+                              isModExpanded ? '' : '-rotate-90'
+                            }`}
+                          />
+                        </button>
+                      ) : (
+                        /* Collapsed Mode: Prominent Module Icon Button + Flyout */
                         <div className="relative group flex justify-center py-1">
                           <button
                             type="button"
@@ -562,11 +449,11 @@ export const AppShell: React.FC = () => {
                                 : 'text-slate-400 hover:text-white hover:bg-white/10'
                             }`}
                           >
-                            {getModuleIcon(mod.id, 'w-5 h-5')}
+                            {getModuleIcon(mod.iconName, 'w-5 h-5')}
                           </button>
 
-                          {/* Floating Flyout Menu on Hover in Collapsed Mode */}
-                          <div className="absolute left-full ml-3 top-0 hidden group-hover:block z-50 min-w-[220px] bg-slate-900 border border-slate-700 rounded-xl p-2.5 shadow-2xl text-left select-none animate-in fade-in zoom-in-95 duration-100">
+                          {/* Hover Flyout Menu */}
+                          <div className="absolute left-full ml-3 top-0 hidden group-hover:block z-50 min-w-[240px] bg-slate-900 border border-slate-700 rounded-xl p-2.5 shadow-2xl text-left select-none animate-in fade-in zoom-in-95 duration-100">
                             <div className="px-2 py-1 text-xs font-bold text-white border-b border-slate-800 flex items-center justify-between">
                               <span>{mod.title}</span>
                               <span className="font-mono text-[9px] text-slate-400">{mod.code}</span>
@@ -601,77 +488,76 @@ export const AppShell: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                      );
-                    })()
-                  )}
+                      )}
 
-                  {/* Level 2 & 3: Rendered if Level 1 is Expanded */}
-                  {!isCollapsed && isModExpanded && (
-                    <div className={`ml-2 pl-2 space-y-1.5 ${sidebarStyles.treeLine}`}>
-                      {mod.submodules.map((sub) => {
-                        // Level 2: Submodule State
-                        const isSubExpanded = !!expandedSubmodules[sub.id];
+                      {/* Submodules & Actionable Screens (when Expanded) */}
+                      {!isCollapsed && isModExpanded && (
+                        <div className={`ml-2 pl-2 space-y-1.5 ${sidebarStyles.treeLine}`}>
+                          {mod.submodules.map((sub) => {
+                            const isSubExpanded = !!expandedSubmodules[sub.id];
 
-                        return (
-                          <div key={sub.id} className="space-y-1">
-                            {/* Level 2: Sub-category / Process Group Header */}
-                            <button
-                              type="button"
-                              onClick={() => toggleSubmodule(sub.id)}
-                              className={`w-full flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${sidebarStyles.level2Btn}`}
-                            >
-                              <div className="flex items-center gap-1.5 truncate">
-                                {isSubExpanded ? (
-                                  <FolderOpen className="w-3 h-3 shrink-0 text-amber-400" />
-                                ) : (
-                                  <Folder className="w-3 h-3 shrink-0 opacity-60" />
+                            return (
+                              <div key={sub.id} className="space-y-1">
+                                {/* Submodule / Process Header */}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSubmodule(sub.id)}
+                                  className={`w-full flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${sidebarStyles.level2Btn}`}
+                                >
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    {isSubExpanded ? (
+                                      <FolderOpen className="w-3 h-3 shrink-0 text-amber-400" />
+                                    ) : (
+                                      <Folder className="w-3 h-3 shrink-0 opacity-60" />
+                                    )}
+                                    <span className="truncate">{sub.title}</span>
+                                  </div>
+                                  <ChevronRight
+                                    className={`w-3 h-3 opacity-60 transition-transform ${
+                                      isSubExpanded ? 'rotate-90' : ''
+                                    }`}
+                                  />
+                                </button>
+
+                                {/* Actionable Screens */}
+                                {isSubExpanded && (
+                                  <div className={`ml-3 pl-2.5 space-y-0.5 ${sidebarStyles.treeLine}`}>
+                                    {sub.children.map((leaf) => {
+                                      const isActive =
+                                        location.pathname === leaf.path ||
+                                        (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
+
+                                      return (
+                                        <Link
+                                          key={leaf.id}
+                                          to={leaf.path}
+                                          className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
+                                            isActive
+                                              ? sidebarStyles.activeLink
+                                              : sidebarStyles.level3Inactive
+                                          }`}
+                                        >
+                                          <span
+                                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                              isActive ? 'bg-white' : 'bg-slate-400 opacity-60'
+                                            }`}
+                                          ></span>
+                                          <span className="truncate">{leaf.title}</span>
+                                        </Link>
+                                      );
+                                    })}
+                                  </div>
                                 )}
-                                <span className="truncate">{sub.title}</span>
                               </div>
-                              <ChevronRight
-                                className={`w-3 h-3 opacity-60 transition-transform ${
-                                  isSubExpanded ? 'rotate-90' : ''
-                                }`}
-                              />
-                            </button>
-
-                            {/* Level 3: Actionable Pages / Direct Screens */}
-                            {isSubExpanded && (
-                              <div className={`ml-3 pl-2.5 space-y-0.5 ${sidebarStyles.treeLine}`}>
-                                {sub.children.map((leaf) => {
-                                  const isActive =
-                                    location.pathname === leaf.path ||
-                                    (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
-
-                                  return (
-                                    <Link
-                                      key={leaf.id}
-                                      to={leaf.path}
-                                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
-                                        isActive
-                                          ? sidebarStyles.activeLink
-                                          : sidebarStyles.level3Inactive
-                                      }`}
-                                    >
-                                      <span
-                                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                          isActive ? 'bg-white' : 'bg-slate-400 opacity-60'
-                                        }`}
-                                      ></span>
-                                      <span className="truncate">{leaf.title}</span>
-                                    </Link>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            ))}
           </div>
 
           {/* Sidebar Footer: Theme Swatches + Collapse Toggle */}
@@ -700,7 +586,7 @@ export const AppShell: React.FC = () => {
 
         {/* Main Dedicated Workspace Viewport */}
         <main className="flex-1 flex flex-col overflow-y-auto bg-slate-100/60 dark:bg-slate-950 relative">
-          {/* Top 3-Level Breadcrumb Bar */}
+          {/* Top Breadcrumb Bar */}
           <div className="h-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 shrink-0 select-none">
             {breadcrumbItems.map((bc, idx) => (
               <React.Fragment key={idx}>
