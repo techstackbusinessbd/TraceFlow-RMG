@@ -474,22 +474,20 @@ export const AppShell: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleModule(mod.id)}
-                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-bold transition-colors ${sidebarStyles.level1Btn}`}
+                      title={`${mod.title} (${mod.code})`}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-bold transition-colors ${sidebarStyles.level1Btn}`}
                     >
-                      <div className="flex items-center gap-2 truncate">
+                      <div className="flex items-center gap-2.5 truncate">
                         <span className="p-1 rounded bg-black/10 dark:bg-white/5 shrink-0">
                           {getModuleIcon(mod.id)}
                         </span>
                         <span className="truncate">{mod.title}</span>
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                        <span className="font-mono text-[9px] opacity-50">{mod.code}</span>
-                        <ChevronDown
-                          className={`w-3.5 h-3.5 opacity-60 transition-transform ${
-                            isModExpanded ? '' : '-rotate-90'
-                          }`}
-                        />
-                      </div>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 opacity-60 shrink-0 ml-1 transition-transform ${
+                          isModExpanded ? '' : '-rotate-90'
+                        }`}
+                      />
                     </button>
                   ) : (
                     /* Collapsed Icon Mode (No Naked Dots!) */

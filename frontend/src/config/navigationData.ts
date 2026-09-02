@@ -31,36 +31,36 @@ export interface EnterpriseDomain {
 }
 
 export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
-  // 1. Commercial & Merchandising Domain
+  // 1. Orders & Commercial Business
   {
     id: 'commercial',
     code: 'DOM-01',
-    title: 'Commercial & Merchandising',
-    shortTitle: 'Commercial',
-    description: 'Buyer Orders, Multi-Tier BOMs, T&A Calendar, Commercial Invoices & C-Suite BI',
+    title: 'Orders & Commercial',
+    shortTitle: 'Orders & Sales',
+    description: 'Buyer Orders, Production Bills, Order Schedules, Invoices & Management Reports',
     iconName: 'ShoppingBag',
     defaultPath: '/orders',
     modules: [
       {
         id: 'orders',
         code: 'MOD-03',
-        title: 'Orders & BOM',
+        title: 'Buyer Orders',
         iconName: 'FileSpreadsheet',
         submodules: [
           {
             id: 'orders-commercial',
-            title: 'Purchase Orders',
+            title: 'Customer Orders',
             children: [
-              { id: 'orders-all', title: 'PO Directory', path: '/orders' },
+              { id: 'orders-all', title: 'Orders Directory', path: '/orders' },
               { id: 'orders-create', title: 'Create Order', path: '/orders/create' },
             ],
           },
           {
             id: 'orders-specs',
-            title: 'BOM & T&A',
+            title: 'Bill of Materials & Schedules',
             children: [
-              { id: 'orders-bom', title: 'Garment BOM', path: '/orders/bom-registry' },
-              { id: 'orders-tna', title: 'T&A Calendar', path: '/orders/tna-calendar' },
+              { id: 'orders-bom', title: 'Garment Materials Bill', path: '/orders/bom-registry' },
+              { id: 'orders-tna', title: 'Delivery Deadlines', path: '/orders/tna-calendar' },
             ],
           },
         ],
@@ -68,26 +68,26 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'commercial-export',
         code: 'MOD-15',
-        title: 'Commercial & BI',
+        title: 'Shipping & Reports',
         iconName: 'TrendingUp',
         submodules: [
           {
             id: 'comm-bi',
-            title: 'Executive BI',
+            title: 'Management Reports',
             children: [
-              { id: 'comm-csuite', title: 'C-Suite Strategy', path: '/commercial/bi/dashboard' },
-              { id: 'comm-cost', title: 'Cost Variance', path: '/commercial/cost-variance' },
-              { id: 'comm-otd', title: 'OTD Analytics', path: '/commercial/otd-analytics' },
+              { id: 'comm-csuite', title: 'Executive Dashboard', path: '/commercial/bi/dashboard' },
+              { id: 'comm-cost', title: 'Production Costs', path: '/commercial/cost-variance' },
+              { id: 'comm-otd', title: 'On-Time Delivery Rate', path: '/commercial/otd-analytics' },
             ],
           },
           {
             id: 'comm-export-docs',
-            title: 'Export Docs',
+            title: 'Export Shipping Papers',
             children: [
-              { id: 'comm-dash', title: 'Export Ledger', path: '/commercial/dashboard' },
-              { id: 'comm-ci', title: 'Invoices (CI)', path: '/commercial/invoices' },
-              { id: 'comm-pl', title: 'Packing List (PL)', path: '/commercial/packing-lists' },
-              { id: 'comm-bl', title: 'Bill of Lading', path: '/commercial/bill-of-lading' },
+              { id: 'comm-dash', title: 'Export History', path: '/commercial/dashboard' },
+              { id: 'comm-ci', title: 'Commercial Invoices', path: '/commercial/invoices' },
+              { id: 'comm-pl', title: 'Packing Lists', path: '/commercial/packing-lists' },
+              { id: 'comm-bl', title: 'Shipping Bills (BL)', path: '/commercial/bill-of-lading' },
             ],
           },
         ],
@@ -95,15 +95,15 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'master-partners',
         code: 'MOD-02',
-        title: 'Buyer & Supplier',
+        title: 'Buyers & Suppliers',
         iconName: 'Building2',
         submodules: [
           {
             id: 'master-partners-group',
-            title: 'Partners',
+            title: 'Business Contacts',
             children: [
-              { id: 'master-buyers', title: 'Buyers Directory', path: '/master-data/buyers' },
-              { id: 'master-suppliers', title: 'Suppliers Directory', path: '/master-data/suppliers' },
+              { id: 'master-buyers', title: 'Buyer Brands List', path: '/master-data/buyers' },
+              { id: 'master-suppliers', title: 'Supplier Mills List', path: '/master-data/suppliers' },
             ],
           },
         ],
@@ -111,31 +111,31 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
     ],
   },
 
-  // 2. Manufacturing & Production Floor Domain
+  // 2. Factory Production Floor
   {
     id: 'manufacturing',
     code: 'DOM-02',
-    title: 'Manufacturing Floor',
-    shortTitle: 'Manufacturing',
-    description: 'Planning, Cutting, Printing, Embroidery, Subcontract, Sewing, Washing, Finishing & Packing',
+    title: 'Factory Production',
+    shortTitle: 'Production',
+    description: 'Planning, Cutting, Printing, Embroidery, Sewing Lines, Washing, Finishing & Packing',
     iconName: 'Factory',
     defaultPath: '/planning/dashboard',
     modules: [
       {
         id: 'planning',
         code: 'MOD-04',
-        title: 'PPC Planning',
+        title: 'Line Planning',
         iconName: 'Calendar',
         submodules: [
           {
             id: 'planning-core',
-            title: 'Capacity Planning',
+            title: 'Capacity & Scheduling',
             children: [
-              { id: 'plan-dash', title: 'PPC Dashboard', path: '/planning/dashboard' },
-              { id: 'plan-cut-sew', title: 'Cut-Sew Scheduler', path: '/planning/cut-sew' },
-              { id: 'plan-gantt', title: 'Loading Gantt', path: '/planning/gantt' },
-              { id: 'plan-starve', title: 'Starvation Radar', path: '/planning/starvation-radar' },
-              { id: 'plan-smv', title: 'SMV Matrix', path: '/planning/smv-matrix' },
+              { id: 'plan-dash', title: 'Planning Overview', path: '/planning/dashboard' },
+              { id: 'plan-cut-sew', title: 'Cut to Sew Schedule', path: '/planning/cut-sew' },
+              { id: 'plan-gantt', title: 'Line Timeline Schedule', path: '/planning/gantt' },
+              { id: 'plan-starve', title: 'Line Delay Alerts', path: '/planning/starvation-radar' },
+              { id: 'plan-smv', title: 'Operation Times', path: '/planning/smv-matrix' },
             ],
           },
         ],
@@ -143,23 +143,23 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'cutting',
         code: 'MOD-05',
-        title: 'Cutting & CAD',
+        title: 'Fabric Cutting',
         iconName: 'Scissors',
         submodules: [
           {
             id: 'cut-cad-group',
-            title: 'CAD & Lay',
+            title: 'Pattern & Lay',
             children: [
-              { id: 'cut-cad', title: 'Marker Optimization', path: '/cutting/markers' },
-              { id: 'cut-lay', title: 'Lay Spreading', path: '/cutting/lay-sheets' },
+              { id: 'cut-cad', title: 'Pattern Marker Layout', path: '/cutting/markers' },
+              { id: 'cut-lay', title: 'Fabric Lay Spread', path: '/cutting/lay-sheets' },
             ],
           },
           {
             id: 'cut-station-group',
-            title: 'Bundles & QR',
+            title: 'Cut Bundles',
             children: [
-              { id: 'cut-qr-print', title: 'Bundle Station', path: '/cutting/station/bundles' },
-              { id: 'cut-remnant', title: 'End-Bit Remnants', path: '/cutting/end-bits' },
+              { id: 'cut-qr-print', title: 'Print Bundle QR Tickets', path: '/cutting/station/bundles' },
+              { id: 'cut-remnant', title: 'Leftover Fabric Roll Log', path: '/cutting/end-bits' },
             ],
           },
         ],
@@ -167,17 +167,17 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'printing',
         code: 'MOD-06',
-        title: 'Printing',
+        title: 'Fabric Printing',
         iconName: 'Printer',
         submodules: [
           {
             id: 'print-floor',
-            title: 'Print Execution',
+            title: 'Printing Operations',
             children: [
-              { id: 'print-orders', title: 'Batch Work Orders', path: '/printing/batches' },
-              { id: 'print-strike', title: 'Strike-Off Approvals', path: '/printing/strike-offs' },
-              { id: 'print-recipe', title: 'Color Kitchen', path: '/printing/color-kitchen' },
-              { id: 'print-qc', title: 'Panel Print QC', path: '/printing/panel-qc' },
+              { id: 'print-orders', title: 'Printing Work Orders', path: '/printing/batches' },
+              { id: 'print-strike', title: 'Sample Print Approvals', path: '/printing/strike-offs' },
+              { id: 'print-recipe', title: 'Color Ink Formulas', path: '/printing/color-kitchen' },
+              { id: 'print-qc', title: 'Check Printed Panels', path: '/printing/panel-qc' },
             ],
           },
         ],
@@ -185,17 +185,17 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'embroidery',
         code: 'MOD-07',
-        title: 'Embroidery',
+        title: 'Embroidery Work',
         iconName: 'Sparkles',
         submodules: [
           {
             id: 'emb-floor',
-            title: 'Embroidery Plant',
+            title: 'Embroidery Operations',
             children: [
-              { id: 'emb-workorders', title: 'Work Orders', path: '/embroidery/orders' },
+              { id: 'emb-workorders', title: 'Embroidery Orders', path: '/embroidery/orders' },
               { id: 'emb-multihead', title: 'Machine Fleet', path: '/embroidery/machines' },
-              { id: 'emb-files', title: 'Design Library', path: '/embroidery/designs' },
-              { id: 'emb-inspect', title: 'Panel Inspection', path: '/embroidery/panel-qc' },
+              { id: 'emb-files', title: 'Embroidery Designs', path: '/embroidery/designs' },
+              { id: 'emb-inspect', title: 'Check Embroidery Panels', path: '/embroidery/panel-qc' },
             ],
           },
         ],
@@ -203,17 +203,17 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'subcontract',
         code: 'MOD-08',
-        title: 'Subcontract',
+        title: 'Outside Factories',
         iconName: 'Truck',
         submodules: [
           {
             id: 'sub-gov',
-            title: 'Gate & Challans',
+            title: 'Factory Gate & Passes',
             children: [
-              { id: 'sub-challan', title: 'Mushak 6.3 Challans', path: '/subcontract/challans' },
-              { id: 'sub-gatepass', title: 'Returnable Passes', path: '/subcontract/gate-passes' },
-              { id: 'sub-list', title: 'Vendor Directory', path: '/subcontract/vendors' },
-              { id: 'sub-reconcile', title: 'Debit Notes', path: '/subcontract/debit-notes' },
+              { id: 'sub-challan', title: 'Government VAT Challans', path: '/subcontract/challans' },
+              { id: 'sub-gatepass', title: 'Gate Pass Records', path: '/subcontract/gate-passes' },
+              { id: 'sub-list', title: 'Approved Outside Vendors', path: '/subcontract/vendors' },
+              { id: 'sub-reconcile', title: 'Cost Adjustments', path: '/subcontract/debit-notes' },
             ],
           },
         ],
@@ -221,17 +221,17 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'sewing',
         code: 'MOD-09',
-        title: 'Sewing Floor',
+        title: 'Sewing Lines',
         iconName: 'Activity',
         submodules: [
           {
             id: 'sew-floor-stations',
-            title: 'Line Tracking',
+            title: 'Sewing Tracking',
             children: [
-              { id: 'sew-in', title: 'Line-In Feeding', path: '/sewing/station/line-in' },
-              { id: 'sew-out', title: 'Line-Out Station', path: '/sewing/station/line-out' },
-              { id: 'sew-tv', title: 'Floor Andon TV', path: '/sewing/andon-display' },
-              { id: 'sew-wip', title: 'WIP Radar', path: '/sewing/wip-radar' },
+              { id: 'sew-in', title: 'Feed Bundles to Line', path: '/sewing/station/line-in' },
+              { id: 'sew-out', title: 'Receive Finished Pieces', path: '/sewing/station/line-out' },
+              { id: 'sew-tv', title: 'Live Factory Screen (TV)', path: '/sewing/andon-display' },
+              { id: 'sew-wip', title: 'Work In Progress (WIP)', path: '/sewing/wip-radar' },
             ],
           },
         ],
@@ -239,17 +239,17 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'washing',
         code: 'MOD-11',
-        title: 'Washing',
+        title: 'Garment Washing',
         iconName: 'Droplet',
         submodules: [
           {
             id: 'wash-plant-ops',
-            title: 'Plant Operations',
+            title: 'Washing Operations',
             children: [
-              { id: 'wash-runs', title: 'Batch Operations', path: '/washing/batches' },
-              { id: 'wash-recipes', title: 'Chemical Recipes', path: '/washing/recipes' },
-              { id: 'wash-dryer', title: 'Dryer Logs', path: '/washing/dryers' },
-              { id: 'wash-qc', title: 'Post-Wash QC', path: '/washing/post-wash-qc' },
+              { id: 'wash-runs', title: 'Wash Batch Batches', path: '/washing/batches' },
+              { id: 'wash-recipes', title: 'Washing Chemical Mix', path: '/washing/recipes' },
+              { id: 'wash-dryer', title: 'Dryer Temperature Logs', path: '/washing/dryers' },
+              { id: 'wash-qc', title: 'Post-Wash Quality Check', path: '/washing/post-wash-qc' },
             ],
           },
         ],
@@ -257,17 +257,17 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'finishing',
         code: 'MOD-12',
-        title: 'Finishing',
+        title: 'Iron & Finishing',
         iconName: 'CheckSquare',
         submodules: [
           {
             id: 'fin-safety-group',
             title: 'Safety & Quality',
             children: [
-              { id: 'fin-metal', title: 'Metal Detection', path: '/finishing/station/metal' },
-              { id: 'fin-needle', title: 'Needle Incident Vault', path: '/finishing/broken-needles' },
-              { id: 'fin-pull', title: 'Pull Test Log', path: '/finishing/pull-tests' },
-              { id: 'fin-pom', title: 'POM Measurements', path: '/finishing/pom-audit' },
+              { id: 'fin-metal', title: 'Metal & Needle Detector', path: '/finishing/station/metal' },
+              { id: 'fin-needle', title: 'Broken Needle Record', path: '/finishing/broken-needles' },
+              { id: 'fin-pull', title: 'Button Pull Strength Test', path: '/finishing/pull-tests' },
+              { id: 'fin-pom', title: 'Garment Measurements', path: '/finishing/pom-audit' },
             ],
           },
         ],
@@ -275,18 +275,18 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'packing',
         code: 'MOD-13',
-        title: 'Packing & PSI',
+        title: 'Packing & Shipping',
         iconName: 'Package',
         submodules: [
           {
             id: 'pack-floor-group',
-            title: 'Cartons & Dispatch',
+            title: 'Carton Boxing',
             children: [
-              { id: 'pack-station', title: 'Carton Packing', path: '/packing/station/carton-pack' },
-              { id: 'pack-sscc', title: 'SSCC Cartons', path: '/packing/cartons' },
-              { id: 'pack-scale', title: 'Weight Verify', path: '/packing/scale-verify' },
-              { id: 'pack-psi', title: 'Final PSI Inspection', path: '/packing/psi-inspections' },
-              { id: 'pack-stuffing', title: 'Container Stuffing', path: '/packing/container-stuffing' },
+              { id: 'pack-station', title: 'Carton Packing Station', path: '/packing/station/carton-pack' },
+              { id: 'pack-sscc', title: 'Box Barcode Numbers', path: '/packing/cartons' },
+              { id: 'pack-scale', title: 'Check Box Weight', path: '/packing/scale-verify' },
+              { id: 'pack-psi', title: 'Final Inspection', path: '/packing/psi-inspections' },
+              { id: 'pack-stuffing', title: 'Container Loading', path: '/packing/container-stuffing' },
             ],
           },
         ],
@@ -294,39 +294,39 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
     ],
   },
 
-  // 3. Supply Chain & Warehouse Domain
+  // 3. Storage & Inventory Domain
   {
     id: 'warehouse',
     code: 'DOM-03',
-    title: 'Supply Chain & Warehouse',
-    shortTitle: 'Warehouse',
-    description: 'Fabric Inward, Roll Barcode Registry, ASTM 4-Point QC, Relaxation Chamber & Trims Inventory',
+    title: 'Storage & Inventory',
+    shortTitle: 'Inventory',
+    description: 'Fabric Receiving, Fabric Rolls, Defect Checks, Resting Hours & Buttons Stock',
     iconName: 'Archive',
     defaultPath: '/warehouse/dashboard',
     modules: [
       {
         id: 'fabric-warehouse',
         code: 'MOD-14',
-        title: 'Fabric & Trims',
+        title: 'Fabric & Materials',
         iconName: 'Layers',
         submodules: [
           {
             id: 'wh-fabric-ops',
-            title: 'Fabric Rolls',
+            title: 'Fabric Rolls Store',
             children: [
-              { id: 'wh-dash', title: 'Warehouse Intelligence', path: '/warehouse/dashboard' },
-              { id: 'wh-mrr', title: 'Receiving Reports (MRR)', path: '/warehouse/mrr' },
-              { id: 'wh-rolls', title: 'Roll Barcodes', path: '/warehouse/fabric-rolls' },
-              { id: 'wh-4pt', title: 'ASTM 4-Point QC', path: '/warehouse/inspection-4pt' },
-              { id: 'wh-relax', title: 'Relaxation Chamber', path: '/warehouse/relaxation-chamber' },
+              { id: 'wh-dash', title: 'Warehouse Overview', path: '/warehouse/dashboard' },
+              { id: 'wh-mrr', title: 'Fabric Delivery Receipts', path: '/warehouse/mrr' },
+              { id: 'wh-rolls', title: 'Fabric Rolls In Stock', path: '/warehouse/fabric-rolls' },
+              { id: 'wh-4pt', title: 'Fabric Quality Inspection', path: '/warehouse/inspection-4pt' },
+              { id: 'wh-relax', title: 'Fabric Resting Hours', path: '/warehouse/relaxation-chamber' },
             ],
           },
           {
             id: 'wh-trims-ops',
-            title: 'Trims Inventory',
+            title: 'Buttons & Trims',
             children: [
-              { id: 'wh-inventory', title: 'Stock Ledger', path: '/warehouse/trims-inventory' },
-              { id: 'wh-putaway', title: 'Bin Putaway', path: '/warehouse/putaway' },
+              { id: 'wh-inventory', title: 'Thread & Button Stock', path: '/warehouse/trims-inventory' },
+              { id: 'wh-putaway', title: 'Shelf & Bin Storage', path: '/warehouse/putaway' },
             ],
           },
         ],
@@ -334,37 +334,37 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
     ],
   },
 
-  // 4. Governance, QA & Administration Domain
+  // 4. Admin & Quality Control Domain
   {
     id: 'governance',
     code: 'DOM-04',
-    title: 'Governance & Admin',
-    shortTitle: 'Governance',
-    description: 'System Administration, Users, Roles & Permissions, Fleet Devices, WORM Audit Vault & Quality Control',
+    title: 'Admin & Quality',
+    shortTitle: 'Admin',
+    description: 'User Accounts, Roles, Floor Devices, Security Audit Log & Garment Quality Control',
     iconName: 'ShieldCheck',
     defaultPath: '/admin/platform-overview',
     modules: [
       {
         id: 'system-admin',
         code: 'MOD-01',
-        title: 'System Admin',
+        title: 'User & System Admin',
         iconName: 'Shield',
         submodules: [
           {
             id: 'admin-platform',
-            title: 'Platform Management',
+            title: 'User Management',
             children: [
-              { id: 'admin-dash', title: 'Command Center', path: '/admin/platform-overview' },
-              { id: 'admin-users', title: 'Users & Roles', path: '/admin/users' },
-              { id: 'admin-devices', title: 'Tablet Fleet', path: '/admin/devices' },
+              { id: 'admin-dash', title: 'System Status', path: '/admin/platform-overview' },
+              { id: 'admin-users', title: 'Users & Permissions', path: '/admin/users' },
+              { id: 'admin-devices', title: 'Floor Tablets & Scanners', path: '/admin/devices' },
             ],
           },
           {
             id: 'admin-audit',
-            title: 'Security & Audit',
+            title: 'Security & Safety',
             children: [
-              { id: 'admin-worm', title: 'WORM Audit Vault', path: '/admin/audit-vault' },
-              { id: 'admin-purge', title: 'Purge Console', path: '/admin/purge-console' },
+              { id: 'admin-worm', title: 'Security Audit Log', path: '/admin/audit-vault' },
+              { id: 'admin-purge', title: 'Data Cleanup Console', path: '/admin/purge-console' },
             ],
           },
         ],
@@ -372,18 +372,18 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'quality-control',
         code: 'MOD-10',
-        title: 'Quality & AQL',
+        title: 'Quality Inspection',
         iconName: 'CheckCheck',
         submodules: [
           {
             id: 'qc-ops',
             title: 'Floor Quality',
             children: [
-              { id: 'qc-dhu', title: 'DHU Traffic Light', path: '/qc/dhu-board' },
-              { id: 'qc-endline', title: 'End-Line QC Station', path: '/qc/station/end-line' },
-              { id: 'qc-rework', title: 'Alter Routing', path: '/qc/alter-routing' },
-              { id: 'qc-aql', title: 'AQL Audits', path: '/qc/aql-audits' },
-              { id: 'qc-pareto', title: 'Defect Pareto', path: '/qc/pareto' },
+              { id: 'qc-dhu', title: 'Live Defect Rates Board', path: '/qc/dhu-board' },
+              { id: 'qc-endline', title: 'End-Line Inspection', path: '/qc/station/end-line' },
+              { id: 'qc-rework', title: 'Defect Repair Routing', path: '/qc/alter-routing' },
+              { id: 'qc-aql', title: 'Buyer Quality Check', path: '/qc/aql-audits' },
+              { id: 'qc-pareto', title: 'Top Defect Reports', path: '/qc/pareto' },
             ],
           },
         ],
@@ -391,16 +391,16 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
       {
         id: 'plant-master',
         code: 'MOD-02',
-        title: 'Factory Master',
+        title: 'Factory Settings',
         iconName: 'Sliders',
         submodules: [
           {
             id: 'master-plant-group',
-            title: 'Plant Master',
+            title: 'Factory Master Data',
             children: [
-              { id: 'master-lines', title: 'Sewing Lines', path: '/master-data/lines' },
-              { id: 'master-sizes', title: 'Size Ranges', path: '/master-data/sizes' },
-              { id: 'master-defects', title: 'Defect Codes', path: '/master-data/defects' },
+              { id: 'master-lines', title: 'Sewing Lines & Tables', path: '/master-data/lines' },
+              { id: 'master-sizes', title: 'Garment Sizes List', path: '/master-data/sizes' },
+              { id: 'master-defects', title: 'Defect Types List', path: '/master-data/defects' },
             ],
           },
         ],
