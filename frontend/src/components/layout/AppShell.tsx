@@ -52,6 +52,7 @@ export const AppShell: React.FC = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDomainMenuOpen, setIsDomainMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // 3rd Level Hierarchy Accordion State
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
@@ -336,41 +337,87 @@ export const AppShell: React.FC = () => {
         </div>
 
         {/* Right Utility & Profile Controls */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* Live WebSocket Reverb Indicator */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400">
+          <div
+            title="Real-Time WebSocket Engine Connected"
+            className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400 select-none"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <Wifi className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-            <span className="font-mono text-[10px]">Reverb Live</span>
+            <span className="font-mono text-[10px]">Live</span>
           </div>
 
           {/* Theme Switcher */}
           <ThemeToggle />
 
-          {/* User Profile Capsule */}
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-            <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <div className="hidden xl:block text-left">
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block leading-tight truncate max-w-[130px]">
-                {user?.name || 'Administrator'}
-              </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-tight">
-                {user?.primary_role || 'Staff'}
-              </span>
-            </div>
+          {/* User Profile Capsule with Interactive Dropdown */}
+          <div className="relative pl-2 border-l border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none"
+            >
+              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+              </div>
+              <div className="hidden sm:block text-left">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block leading-tight">
+                  {user?.name || 'Administrator'}
+                </span>
+                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold block leading-tight">
+                  {user?.primary_role || 'Super Admin'}
+                </span>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                  isUserMenuOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {isUserMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">
+                    {user?.name || 'System Administrator'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {user?.email || 'admin@traceflow.com'}
+                  </p>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold border border-blue-200 dark:border-blue-900/50">
+                      {user?.emp_id || 'EMP-0001'}
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                      {user?.primary_role || 'Super Admin'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="w-full flex items-center justify-between p-2 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                  >
+                    <span>Sign Out of TraceFlow</span>
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Sign Out Button - STRICT SOLID COLOR */}
+          {/* Quick Sign Out Icon Button */}
           <button
             type="button"
             onClick={handleSignOut}
             title="Sign Out"
-            className="btn-solid-red text-xs py-1.5 px-2.5 ml-1"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-200 dark:hover:border-rose-900/50 transition-colors flex items-center justify-center ml-1"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Sign Out</span>
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </header>
