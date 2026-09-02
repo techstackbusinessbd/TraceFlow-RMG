@@ -96,8 +96,8 @@ export const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Login Card with Solid Blue Top Accent Bar */}
-      <div className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200/90 dark:border-slate-800 border-t-4 border-t-blue-600 rounded-xl p-8 shadow-xl dark:shadow-2xl relative z-10 transition-all">
+      {/* Main Login Card with Solid Blue Top Accent Bar (Zero Hazy Shadows) */}
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 border-t-blue-600 rounded-xl p-8 shadow-sm relative z-10">
         {/* Card Header */}
         <div className="mb-6 flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
