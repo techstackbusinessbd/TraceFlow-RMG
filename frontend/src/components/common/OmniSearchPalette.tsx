@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowRight, CornerDownLeft, X, Shield, Factory, ShoppingBag, Layers } from 'lucide-react';
-import { ENTERPRISE_NAV_SECTIONS } from '../../config/navigationData';
+import { Search, ArrowRight, CornerDownLeft, X, Shield } from 'lucide-react';
+import { ALL_SYSTEM_MODULES } from '../../config/navigationData';
 
 interface OmniSearchPaletteProps {
   isOpen: boolean;
@@ -14,29 +14,27 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Flatten all navigable items across all 4 departments
+  // Flatten all navigable items across all 15 modules
   const allItems = useMemo(() => {
     const list: {
       id: string;
       title: string;
       path: string;
-      sectionTitle: string;
-      sectionId: string;
       moduleTitle: string;
+      moduleCode: string;
+      submoduleTitle: string;
     }[] = [];
 
-    ENTERPRISE_NAV_SECTIONS.forEach((sec) => {
-      sec.modules.forEach((mod) => {
-        mod.submodules.forEach((sub) => {
-          sub.children.forEach((leaf) => {
-            list.push({
-              id: leaf.id,
-              title: leaf.title,
-              path: leaf.path,
-              sectionTitle: sec.title,
-              sectionId: sec.id,
-              moduleTitle: mod.title,
-            });
+    ALL_SYSTEM_MODULES.forEach((mod) => {
+      mod.submodules.forEach((sub) => {
+        sub.children.forEach((leaf) => {
+          list.push({
+            id: leaf.id,
+            title: leaf.title,
+            path: leaf.path,
+            moduleTitle: mod.title,
+            moduleCode: mod.code,
+            submoduleTitle: sub.title,
           });
         });
       });
@@ -55,8 +53,9 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
       .filter(
         (item) =>
           item.title.toLowerCase().includes(q) ||
-          item.sectionTitle.toLowerCase().includes(q) ||
           item.moduleTitle.toLowerCase().includes(q) ||
+          item.moduleCode.toLowerCase().includes(q) ||
+          item.submoduleTitle.toLowerCase().includes(q) ||
           item.path.toLowerCase().includes(q)
       )
       .slice(0, 10);
@@ -101,20 +100,6 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
   }, [isOpen, filteredItems, selectedIndex, navigate, onClose]);
 
   if (!isOpen) return null;
-
-  const getSectionIcon = (secId: string) => {
-    switch (secId) {
-      case 'merchandising-commercial':
-        return <ShoppingBag className="w-3.5 h-3.5 text-blue-500" />;
-      case 'supply-chain-warehouse':
-        return <Layers className="w-3.5 h-3.5 text-emerald-500" />;
-      case 'production-execution':
-        return <Factory className="w-3.5 h-3.5 text-amber-500" />;
-      case 'quality-governance':
-      default:
-        return <Shield className="w-3.5 h-3.5 text-indigo-500" />;
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-900/60 backdrop-blur-sm transition-all">
@@ -167,10 +152,10 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
                   <div className="flex items-center gap-2.5 truncate">
                     <span
                       className={`p-1.5 rounded-md ${
-                        isSelected ? 'bg-blue-700 text-white' : 'bg-slate-100 dark:bg-slate-800'
+                        isSelected ? 'bg-blue-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                       }`}
                     >
-                      {getSectionIcon(item.sectionId)}
+                      <Shield className="w-3.5 h-3.5" />
                     </span>
                     <div className="truncate">
                       <div className="font-semibold truncate">{item.title}</div>
@@ -179,7 +164,7 @@ export const OmniSearchPalette: React.FC<OmniSearchPaletteProps> = ({ isOpen, on
                           isSelected ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'
                         }`}
                       >
-                        {item.sectionTitle} &rsaquo; {item.moduleTitle}
+                        {item.moduleCode} &rsaquo; {item.moduleTitle} &rsaquo; {item.submoduleTitle}
                       </div>
                     </div>
                   </div>
