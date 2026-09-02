@@ -370,13 +370,13 @@ export const AppShell: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="w-full flex items-center justify-between p-2 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                   >
-                    <span>Sign Out of TraceFlow</span>
+                    <span>Sign Out</span>
                     <LogOut className="w-3.5 h-3.5" />
                   </button>
                 </div>
