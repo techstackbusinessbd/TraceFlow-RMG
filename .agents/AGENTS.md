@@ -14,6 +14,7 @@ Your job is to assume the required engineering roles to build this system.
 - **No Modals Rule (STRICT)**: Modals/popups are STRICTLY PROHIBITED. All forms, details, creation flows, edit flows, reports, and print views MUST be built as full dedicated pages/views (or full-screen views with proper back navigation). NEVER use modal dialogues/popups.
 - **UI Language**: All UI labels, buttons, tables, and messages MUST be in 100% English.
 - **Button Styling**: Buttons MUST use flat, crisp, solid colors. Gradient buttons are strictly prohibited.
+- **Zero-Confusion Microcopy (STRICT)**: Never include ambiguous, cryptic, or unnecessary text that confuses users. Avoid wordy filler paragraphs, engineering jargon, or screen clutter. All labels, messages, buttons, and helper texts MUST be direct, concise, purposeful, and action-oriented (e.g., "Create Order", "Reject Roll", "Enter 6-digit PIN").
 - **Git Branching**: All development commits MUST go to `develop` branch. `main` is reserved for production releases.
 
 ## Communication Rules

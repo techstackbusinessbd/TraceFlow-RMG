@@ -82,26 +82,23 @@ export const LoginPage: React.FC = () => {
 
       {/* Brand Header */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-600 dark:text-blue-500 mb-4 shadow-sm">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-600 dark:text-blue-500 mb-3 shadow-sm">
           <Shield className="w-8 h-8 text-blue-600 dark:text-blue-500" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
           TraceFlow RMG
         </h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Precision Fabric-to-Freight Garment Traceability & ERP
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Garment Traceability & ERP
         </p>
       </div>
 
       {/* Main Login Card - STRICT NO MODALS */}
       <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 shadow-xl dark:shadow-2xl transition-colors">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-200">
-            Sign In to Enterprise Workspace
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Sign In
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Universal access point for Executives, Planners, QA & Floor Operators
-          </p>
         </div>
 
         {/* General Error Banner */}
@@ -209,10 +206,10 @@ export const LoginPage: React.FC = () => {
             className="w-full btn-solid-blue py-3 mt-2 text-sm justify-center shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <span>Authenticating...</span>
+              <span>Signing in...</span>
             ) : (
               <>
-                <span>Sign In to Workspace</span>
+                <span>Sign In</span>
                 <ArrowRight className="w-4 h-4 ml-1" />
               </>
             )}

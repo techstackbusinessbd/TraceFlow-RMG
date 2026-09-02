@@ -18,6 +18,21 @@ TraceFlow RMG is an industrial-grade, mission-critical Garment Traceability and 
 4. **Flat, Crisp Solid Styling (ZERO Gradients):** Buttons and action controls MUST use solid, flat colors (`#2563EB` blue, `#16A34A` emerald, `#DC2626` rose). Gradient buttons are strictly prohibited.
 5. **100% English UI:** All labels, button texts, table headers, validation error strings, and telemetry tags MUST be in 100% English.
 6. **Sub-100ms Interaction Latency:** Instant response to user keystrokes, tab navigation, and hardware barcode scans.
+7. **Zero-Confusion Microcopy (STRICT):** Never display ambiguous, cryptic, verbose, or unnecessary text that causes cognitive overload or confusion. All labels, messages, buttons, and helper texts MUST be lean, direct, purposeful, and action-oriented.
+
+### 1.2. Zero-Confusion & Lean Information Architecture Rules
+Enterprise users (especially fast-moving floor supervisors and merchandisers) make critical operational decisions in seconds. Cluttered paragraphs, developer jargon, and redundant filler words cause costly delays and mistakes.
+
+| UI Element | ❌ Prohibited (Confusing / Verbose / Jargon) | ✅ Mandatory Standard (Lean & Clear) | Rationale |
+| :--- | :--- | :--- | :--- |
+| **Login Input** | *"Please provide your unique identifier credential assigned by IT"* | *"Employee ID, Username, or Email"* | Direct, immediately understood |
+| **Login Button** | *"Proceed to access the secure enterprise system"* | *"Sign In"* | Universal, instant action |
+| **Error Feedback** | *"The payload token failed integrity constraint verification"* | *"Invalid password. Please try again."* | Explains what happened without code jargon |
+| **Card Subtitles** | *"Here you can inspect, view, edit, configure, and alter the complete list..."* | *"Active Buyers Directory"* | Eliminates meaningless filler words |
+| **Action Buttons** | *"Submit Data"*, *"Click Here"*, *"Process"* | *"Create Purchase Order"*, *"Approve Lay"*, *"Reject Roll"* | Self-descriptive, prevents accidental clicks |
+| **Table Headers** | *"The timestamp when the record was initially created in the database"* | *"Created Date"* | Compact, high table density |
+| **Empty State** | *"There are currently zero entries detected within this SQL entity query"* | *"No orders found. Click 'Create Order' to start."* | Clear status + immediate next action |
+| **Confirmation** | *"Warning! Executing this command will delete the row permanently..."* | *"Delete Supplier 'ABC Textiles'? This cannot be undone."* | Clear subject, concise consequence |
 
 ---
 
