@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Shield,
@@ -51,6 +51,37 @@ export const AppShell: React.FC = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user profile dropdown on outside click or escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isUserMenuOpen]);
+
+  // Close user dropdown on route change
+  useEffect(() => {
+    setIsUserMenuOpen(false);
+  }, [location.pathname]);
 
   // Accordion State: Track open submodule IDs
   const [expandedSubmodules, setExpandedSubmodules] = useState<Record<string, boolean>>({});
@@ -295,7 +326,7 @@ export const AppShell: React.FC = () => {
           <ThemeToggle />
 
           {/* User Profile Capsule with Interactive Dropdown */}
-          <div className="relative pl-2 border-l border-slate-200 dark:border-slate-800">
+          <div ref={userMenuRef} className="relative pl-2 border-l border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
