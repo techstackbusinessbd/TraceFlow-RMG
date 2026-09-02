@@ -4,6 +4,7 @@ import { Shield, Lock, User as UserIcon, Eye, EyeOff, AlertCircle, ArrowRight } 
 import apiClient from '../../services/apiClient';
 import { useAuthStore } from '../../store/authStore';
 import { resolveLandingPath } from '../../routes/RoleLandingEngine';
+import { ThemeToggle } from '../../components/common/ThemeToggle';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -72,27 +73,33 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 py-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center items-center px-4 py-12 relative transition-colors">
+      {/* Top Right Theme Switcher */}
+      <div className="absolute top-6 right-6 flex items-center gap-3">
+        <span className="text-xs text-slate-500 hidden sm:inline">Toggle Theme</span>
+        <ThemeToggle />
+      </div>
+
       {/* Brand Header */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-500 mb-4">
-          <Shield className="w-8 h-8 text-blue-500" />
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-600 dark:text-blue-500 mb-4 shadow-sm">
+          <Shield className="w-8 h-8 text-blue-600 dark:text-blue-500" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100 sm:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
           TraceFlow RMG
         </h1>
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           Precision Fabric-to-Freight Garment Traceability & ERP
         </p>
       </div>
 
       {/* Main Login Card - STRICT NO MODALS */}
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 shadow-xl dark:shadow-2xl transition-colors">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-200">
             Sign In to Enterprise Workspace
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Universal access point for Executives, Planners, QA & Floor Operators
           </p>
         </div>
@@ -101,7 +108,7 @@ export const LoginPage: React.FC = () => {
         {generalError && (
           <div className="mb-5 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-            <p className="text-xs text-rose-400 font-medium leading-relaxed">
+            <p className="text-xs text-rose-600 dark:text-rose-400 font-medium leading-relaxed">
               {generalError}
             </p>
           </div>
@@ -111,11 +118,11 @@ export const LoginPage: React.FC = () => {
         <form noValidate onSubmit={handleSubmit} className="space-y-5">
           {/* Field 1: Tri-Identifier */}
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
               Employee ID, Username, or Email
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                 <UserIcon className="w-4 h-4" />
               </div>
               <input
@@ -123,14 +130,14 @@ export const LoginPage: React.FC = () => {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="e.g. EMP-0001, super.admin, or admin@traceflow.com"
-                className={`w-full bg-slate-950 border ${
-                  fieldErrors.identifier ? 'border-rose-500' : 'border-slate-800 focus:border-blue-500'
-                } rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none transition-colors`}
+                className={`w-full bg-slate-50 dark:bg-slate-950 border ${
+                  fieldErrors.identifier ? 'border-rose-500' : 'border-slate-300 dark:border-slate-800 focus:border-blue-500'
+                } rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none transition-colors`}
               />
             </div>
             {/* Pure Server Validation Error */}
             {fieldErrors.identifier && (
-              <p className="mt-1.5 text-xs text-rose-400 font-medium">
+              <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium">
                 {fieldErrors.identifier[0]}
               </p>
             )}
@@ -139,12 +146,12 @@ export const LoginPage: React.FC = () => {
           {/* Field 2: Password */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-slate-300">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                 Password
               </label>
             </div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                 <Lock className="w-4 h-4" />
               </div>
               <input
@@ -152,14 +159,14 @@ export const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className={`w-full bg-slate-950 border ${
-                  fieldErrors.password ? 'border-rose-500' : 'border-slate-800 focus:border-blue-500'
-                } rounded-lg pl-10 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none transition-colors`}
+                className={`w-full bg-slate-50 dark:bg-slate-950 border ${
+                  fieldErrors.password ? 'border-rose-500' : 'border-slate-300 dark:border-slate-800 focus:border-blue-500'
+                } rounded-lg pl-10 pr-10 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none transition-colors`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -167,7 +174,7 @@ export const LoginPage: React.FC = () => {
             </div>
             {/* Pure Server Validation Error */}
             {fieldErrors.password && (
-              <p className="mt-1.5 text-xs text-rose-400 font-medium">
+              <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium">
                 {fieldErrors.password[0]}
               </p>
             )}
@@ -175,8 +182,8 @@ export const LoginPage: React.FC = () => {
 
           {/* Progressive Inline 2FA Step (No Modals) */}
           {showTwoFactor && (
-            <div className="p-4 bg-slate-950/80 border border-blue-500/30 rounded-lg space-y-2">
-              <label className="block text-xs font-medium text-blue-400">
+            <div className="p-4 bg-slate-100 dark:bg-slate-950/80 border border-blue-500/30 rounded-lg space-y-2">
+              <label className="block text-xs font-medium text-blue-600 dark:text-blue-400">
                 Google Authenticator 6-Digit PIN
               </label>
               <input
@@ -185,10 +192,10 @@ export const LoginPage: React.FC = () => {
                 value={twoFactorCode}
                 onChange={(e) => setTwoFactorCode(e.target.value)}
                 placeholder="123456"
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-center text-lg tracking-widest font-mono text-slate-100 placeholder-slate-600 focus:border-blue-500 focus:outline-none"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-center text-lg tracking-widest font-mono text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 focus:border-blue-500 focus:outline-none"
               />
               {fieldErrors.two_factor_code && (
-                <p className="text-xs text-rose-400 font-medium">
+                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
                   {fieldErrors.two_factor_code[0]}
                 </p>
               )}
@@ -213,7 +220,7 @@ export const LoginPage: React.FC = () => {
         </form>
 
         {/* Footer Security Badges */}
-        <div className="mt-6 pt-5 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
           <span>WORM Security Vault Active</span>
           <span>PostgreSQL 17 • Redis 7</span>
         </div>

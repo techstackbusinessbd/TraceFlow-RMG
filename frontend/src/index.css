@@ -2,15 +2,23 @@
 
 @layer base {
   :root {
+    --bg-main: #f8fafc; /* slate-50 */
+    --bg-surface: #ffffff; /* white */
+    --border-color: #e2e8f0; /* slate-200 */
+    --text-primary: #0f172a; /* slate-900 */
+    --text-muted: #64748b; /* slate-500 */
+    --accent-blue: #2563eb; /* blue-600 */
+    --accent-emerald: #16a34a; /* emerald-600 */
+    --accent-rose: #dc2626; /* rose-600 */
+    --accent-amber: #d97706; /* amber-600 */
+  }
+
+  .dark {
     --bg-main: #020617; /* slate-950 */
     --bg-surface: #0f172a; /* slate-900 */
     --border-color: #1e293b; /* slate-800 */
     --text-primary: #f8fafc; /* slate-50 */
     --text-muted: #94a3b8; /* slate-400 */
-    --accent-blue: #2563eb; /* blue-600 */
-    --accent-emerald: #16a34a; /* emerald-600 */
-    --accent-rose: #dc2626; /* rose-600 */
-    --accent-amber: #d97706; /* amber-600 */
   }
 
   body {
@@ -21,6 +29,7 @@
     padding: 0;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 150ms ease, color 150ms ease;
   }
 }
 
