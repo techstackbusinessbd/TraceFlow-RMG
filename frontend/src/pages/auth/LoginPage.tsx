@@ -72,10 +72,9 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden bg-animated-grid transition-colors">
-      {/* Subtle Ambient Glow Orbs */}
-      <div className="ambient-glow-1"></div>
-      <div className="ambient-glow-2"></div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden bg-dot-matrix transition-colors">
+      {/* Soft Ambient Aurora Shimmer */}
+      <div className="ambient-aurora"></div>
 
       {/* Top Right Utility Bar */}
       <div className="absolute top-6 right-6 z-20 flex items-center gap-2.5">
