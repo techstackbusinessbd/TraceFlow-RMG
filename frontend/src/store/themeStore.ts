@@ -25,6 +25,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 
   setTheme: (theme: ThemeMode) => {
     localStorage.setItem('traceflow_theme', theme);
+    document.documentElement.style.colorScheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
@@ -43,8 +45,12 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 
 // Initialize theme on app load
 const initialTheme = getInitialTheme();
+document.documentElement.style.colorScheme = initialTheme;
+document.documentElement.setAttribute('data-theme', initialTheme);
 if (initialTheme === 'dark') {
   document.documentElement.classList.add('dark');
+  document.documentElement.classList.remove('light');
 } else {
   document.documentElement.classList.add('light');
+  document.documentElement.classList.remove('dark');
 }
