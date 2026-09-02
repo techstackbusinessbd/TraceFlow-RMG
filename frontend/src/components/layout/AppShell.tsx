@@ -492,11 +492,72 @@ export const AppShell: React.FC = () => {
                       </div>
                     </button>
                   ) : (
-                    <div className="flex justify-center p-1.5" title={mod.title}>
-                      <span className="p-1.5 rounded bg-black/20 text-slate-300">
-                        {getModuleIcon(mod.id)}
-                      </span>
-                    </div>
+                    /* Collapsed Icon Mode (No Naked Dots!) */
+                    (() => {
+                      const isModActive = mod.submodules.some((sub) =>
+                        sub.children.some(
+                          (leaf) =>
+                            location.pathname === leaf.path ||
+                            (leaf.path !== '/' && location.pathname.startsWith(leaf.path))
+                        )
+                      );
+
+                      return (
+                        <div className="relative group flex justify-center py-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const firstLeaf = mod.submodules[0]?.children[0];
+                              if (firstLeaf) navigate(firstLeaf.path);
+                            }}
+                            title={`${mod.title} (${mod.code})`}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                              isModActive
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'text-slate-400 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                            {getModuleIcon(mod.id, 'w-5 h-5')}
+                          </button>
+
+                          {/* Floating Flyout Menu on Hover in Collapsed Mode */}
+                          <div className="absolute left-full ml-3 top-0 hidden group-hover:block z-50 min-w-[220px] bg-slate-900 border border-slate-700 rounded-xl p-2.5 shadow-2xl text-left select-none animate-in fade-in zoom-in-95 duration-100">
+                            <div className="px-2 py-1 text-xs font-bold text-white border-b border-slate-800 flex items-center justify-between">
+                              <span>{mod.title}</span>
+                              <span className="font-mono text-[9px] text-slate-400">{mod.code}</span>
+                            </div>
+                            <div className="mt-1.5 space-y-2 max-h-80 overflow-y-auto">
+                              {mod.submodules.map((sub) => (
+                                <div key={sub.id} className="space-y-0.5">
+                                  <div className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                    <Folder className="w-2.5 h-2.5 text-amber-400" />
+                                    <span>{sub.title}</span>
+                                  </div>
+                                  {sub.children.map((leaf) => {
+                                    const isLeafActive =
+                                      location.pathname === leaf.path ||
+                                      (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
+                                    return (
+                                      <Link
+                                        key={leaf.id}
+                                        to={leaf.path}
+                                        className={`block px-2 py-1 rounded text-xs transition-colors ${
+                                          isLeafActive
+                                            ? 'bg-blue-600 text-white font-semibold'
+                                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                        }`}
+                                      >
+                                        {leaf.title}
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()
                   )}
 
                   {/* Level 2 & 3: Rendered if Level 1 is Expanded */}
