@@ -236,7 +236,7 @@ export const AppShell: React.FC = () => {
   }, [sidebarTheme]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+    <div className="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors select-none">
       {/* Omni-Search Modal Command Palette */}
       <OmniSearchPalette isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
@@ -585,8 +585,8 @@ export const AppShell: React.FC = () => {
         </aside>
 
         {/* Main Dedicated Workspace Viewport */}
-        <main className="flex-1 flex flex-col overflow-y-auto bg-slate-100/60 dark:bg-slate-950 relative">
-          {/* Top Breadcrumb Bar */}
+        <main className="flex-1 flex flex-col overflow-hidden bg-slate-100/60 dark:bg-slate-950 relative">
+          {/* Top Breadcrumb Bar (Pinned) */}
           <div className="h-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 shrink-0 select-none">
             {breadcrumbItems.map((bc, idx) => (
               <React.Fragment key={idx}>
@@ -607,8 +607,8 @@ export const AppShell: React.FC = () => {
             ))}
           </div>
 
-          {/* Child Full-Screen Viewport - STRICT NO MODALS */}
-          <div className="flex-1 p-6">
+          {/* Child Full-Screen Viewport - PURE INTERNAL SCROLLING - STRICT NO MODALS */}
+          <div className="flex-1 overflow-y-auto p-6">
             <Outlet />
           </div>
         </main>
