@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Shield,
+  Factory,
+  ShoppingBag,
+  ShieldCheck,
   Archive,
   ChevronDown,
   Search,
@@ -34,7 +37,10 @@ import { useThemeStore } from '../../store/themeStore';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { OmniSearchPalette } from '../common/OmniSearchPalette';
 import { SidebarThemeSelector } from '../common/SidebarThemeSelector';
-import { ENTERPRISE_NAV_SECTIONS } from '../../config/navigationData';
+import {
+  ENTERPRISE_NAV_SECTIONS,
+  type NavSection,
+} from '../../config/navigationData';
 
 export const AppShell: React.FC = () => {
   const location = useLocation();
@@ -65,35 +71,51 @@ export const AppShell: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Determine Active Top-Level Module Section based on current route
+  const activeSection = useMemo<NavSection>(() => {
+    const currentPath = location.pathname;
+    for (const sec of ENTERPRISE_NAV_SECTIONS) {
+      for (const mod of sec.modules) {
+        for (const sub of mod.submodules) {
+          for (const leaf of sub.children) {
+            if (currentPath === leaf.path || (leaf.path !== '/' && currentPath.startsWith(leaf.path))) {
+              return sec;
+            }
+          }
+        }
+      }
+    }
+    // Fallback: Quality & Governance or first section
+    return ENTERPRISE_NAV_SECTIONS.find((s) => s.id === 'quality-governance') || ENTERPRISE_NAV_SECTIONS[0];
+  }, [location.pathname]);
+
   // Auto-expand parent module and submodule for current route
   useEffect(() => {
     const currentPath = location.pathname;
     const newMods: Record<string, boolean> = { ...expandedModules };
     const newSubs: Record<string, boolean> = { ...expandedSubmodules };
 
-    for (const sec of ENTERPRISE_NAV_SECTIONS) {
-      for (const mod of sec.modules) {
-        let modHasActiveRoute = false;
-        for (const sub of mod.submodules) {
-          let subHasActiveRoute = false;
-          for (const leaf of sub.children) {
-            if (currentPath === leaf.path || (leaf.path !== '/' && currentPath.startsWith(leaf.path))) {
-              modHasActiveRoute = true;
-              subHasActiveRoute = true;
-            }
-          }
-          if (subHasActiveRoute) {
-            newSubs[sub.id] = true;
+    for (const mod of activeSection.modules) {
+      let modHasActiveRoute = false;
+      for (const sub of mod.submodules) {
+        let subHasActiveRoute = false;
+        for (const leaf of sub.children) {
+          if (currentPath === leaf.path || (leaf.path !== '/' && currentPath.startsWith(leaf.path))) {
+            modHasActiveRoute = true;
+            subHasActiveRoute = true;
           }
         }
-        if (modHasActiveRoute) {
-          newMods[mod.id] = true;
+        if (subHasActiveRoute) {
+          newSubs[sub.id] = true;
         }
+      }
+      if (modHasActiveRoute) {
+        newMods[mod.id] = true;
       }
     }
     setExpandedModules(newMods);
     setExpandedSubmodules(newSubs);
-  }, [location.pathname]);
+  }, [location.pathname, activeSection]);
 
   const toggleModule = (modId: string) => {
     setExpandedModules((prev) => ({
@@ -117,9 +139,30 @@ export const AppShell: React.FC = () => {
     });
   };
 
+  const handleSectionClick = (sec: NavSection) => {
+    const firstLeaf = sec.modules[0]?.submodules[0]?.children[0];
+    if (firstLeaf) {
+      navigate(firstLeaf.path);
+    }
+  };
+
   const handleSignOut = () => {
     logout();
     navigate('/login', { replace: true });
+  };
+
+  const getSectionIcon = (secId: string, className: string = 'w-4 h-4') => {
+    switch (secId) {
+      case 'merchandising-commercial':
+        return <ShoppingBag className={className} />;
+      case 'supply-chain-warehouse':
+        return <Layers className={className} />;
+      case 'production-execution':
+        return <Factory className={className} />;
+      case 'quality-governance':
+      default:
+        return <ShieldCheck className={className} />;
+    }
   };
 
   const getModuleIcon = (iconName: string, className: string = 'w-4 h-4') => {
@@ -241,7 +284,7 @@ export const AppShell: React.FC = () => {
       <OmniSearchPalette isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* ─────────────────────────────────────────────────────────────────────────
-          1. TOP NAVIGATION BAR (Spacious & Clean Enterprise Header)
+          1. TOP NAVIGATION BAR (Brand Logo + Omni Search + Profile)
          ───────────────────────────────────────────────────────────────────────── */}
       <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between z-30 shrink-0 select-none transition-colors">
         {/* Left: Brand Identity */}
@@ -368,196 +411,223 @@ export const AppShell: React.FC = () => {
       </header>
 
       {/* ─────────────────────────────────────────────────────────────────────────
-          2. MAIN WORKSPACE CONTAINER (Authentic RMG Departmental Flow Sidebar)
+          2. HORIZONTAL MODULE MENU BAR (Directly Below Logo & Header)
+         ───────────────────────────────────────────────────────────────────────── */}
+      <nav className="h-11 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center gap-2 overflow-x-auto shrink-0 z-20 transition-colors">
+        {ENTERPRISE_NAV_SECTIONS.map((sec) => {
+          const isSecActive = sec.id === activeSection.id;
+
+          return (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => handleSectionClick(sec)}
+              className={`h-8 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shrink-0 select-none ${
+                isSecActive
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <span>{getSectionIcon(sec.id, 'w-3.5 h-3.5')}</span>
+              <span>{sec.title}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* ─────────────────────────────────────────────────────────────────────────
+          3. MAIN WORKSPACE CONTAINER (Sidebar with Child Items + Content Viewport)
          ───────────────────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar (Customizable Palette, Departmental Sections & Collapsible) */}
+        {/* Left Sidebar (Renders ONLY the active module's child items) */}
         <aside
           className={`${
             isCollapsed ? 'w-16' : 'w-64'
           } ${sidebarStyles.aside} flex flex-col shrink-0 transition-all duration-200 z-20 select-none`}
         >
-          {/* Main Departmental Navigation Sections */}
-          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-5">
-            {ENTERPRISE_NAV_SECTIONS.map((section) => (
-              <div key={section.id} className="space-y-1.5">
-                {/* Department Section Header (Clean Enterprise Divider) */}
-                {!isCollapsed ? (
-                  <div
-                    className={`px-2 pb-1 text-[10px] font-bold uppercase tracking-wider ${sidebarStyles.sectionHeader}`}
-                  >
-                    {section.title}
-                  </div>
-                ) : (
-                  <div className="w-6 mx-auto my-2 border-b border-white/10 dark:border-white/10" />
-                )}
+          {/* Active Module Header */}
+          <div className="px-3 py-2.5 border-b border-black/10 dark:border-white/10 flex items-center justify-between">
+            {!isCollapsed ? (
+              <div className="flex items-center gap-2 truncate">
+                <span className="p-1 rounded bg-blue-600/20 text-blue-400">
+                  {getSectionIcon(activeSection.id, 'w-3.5 h-3.5')}
+                </span>
+                <span className="text-xs font-bold uppercase tracking-wider truncate text-slate-200 dark:text-slate-100">
+                  {activeSection.title}
+                </span>
+              </div>
+            ) : (
+              <div className="w-full flex justify-center text-blue-400 py-1" title={activeSection.title}>
+                {getSectionIcon(activeSection.id, 'w-4 h-4')}
+              </div>
+            )}
+          </div>
 
-                {/* Modules in this Department */}
-                {section.modules.map((mod) => {
-                  const isModExpanded = !!expandedModules[mod.id];
-                  const isModActive = mod.submodules.some((sub) =>
-                    sub.children.some(
-                      (leaf) =>
-                        location.pathname === leaf.path ||
-                        (leaf.path !== '/' && location.pathname.startsWith(leaf.path))
-                    )
-                  );
+          {/* Child Items of Active Module */}
+          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5">
+            {activeSection.modules.map((mod) => {
+              const isModExpanded = !!expandedModules[mod.id];
+              const isModActive = mod.submodules.some((sub) =>
+                sub.children.some(
+                  (leaf) =>
+                    location.pathname === leaf.path ||
+                    (leaf.path !== '/' && location.pathname.startsWith(leaf.path))
+                )
+              );
 
-                  return (
-                    <div key={mod.id} className="space-y-1">
-                      {/* Expanded Mode: Module Accordion Header */}
-                      {!isCollapsed ? (
-                        <button
-                          type="button"
-                          onClick={() => toggleModule(mod.id)}
-                          title={`${mod.title} (${mod.code})`}
-                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-bold transition-colors ${
-                            isModActive
-                              ? 'bg-blue-600/10 text-blue-400 dark:text-blue-300 font-semibold'
-                              : sidebarStyles.level1Btn
+              return (
+                <div key={mod.id} className="space-y-1">
+                  {/* Expanded Mode: Module Accordion Header */}
+                  {!isCollapsed ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleModule(mod.id)}
+                      title={`${mod.title} (${mod.code})`}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-bold transition-colors ${
+                        isModActive
+                          ? 'bg-blue-600/15 text-blue-400 dark:text-blue-300 font-semibold'
+                          : sidebarStyles.level1Btn
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 truncate">
+                        <span
+                          className={`p-1 rounded shrink-0 ${
+                            isModActive ? 'bg-blue-600 text-white' : 'bg-black/10 dark:bg-white/5'
                           }`}
                         >
-                          <div className="flex items-center gap-2.5 truncate">
-                            <span
-                              className={`p-1 rounded shrink-0 ${
-                                isModActive ? 'bg-blue-600 text-white' : 'bg-black/10 dark:bg-white/5'
-                              }`}
-                            >
-                              {getModuleIcon(mod.iconName, 'w-3.5 h-3.5')}
-                            </span>
-                            <span className="truncate">{mod.title}</span>
-                          </div>
-                          <ChevronDown
-                            className={`w-3.5 h-3.5 opacity-60 shrink-0 ml-1 transition-transform ${
-                              isModExpanded ? '' : '-rotate-90'
-                            }`}
-                          />
-                        </button>
-                      ) : (
-                        /* Collapsed Mode: Prominent Module Icon Button + Flyout */
-                        <div className="relative group flex justify-center py-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const firstLeaf = mod.submodules[0]?.children[0];
-                              if (firstLeaf) navigate(firstLeaf.path);
-                            }}
-                            title={`${mod.title} (${mod.code})`}
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                              isModActive
-                                ? 'bg-blue-600 text-white shadow-md'
-                                : 'text-slate-400 hover:text-white hover:bg-white/10'
-                            }`}
-                          >
-                            {getModuleIcon(mod.iconName, 'w-5 h-5')}
-                          </button>
+                          {getModuleIcon(mod.iconName, 'w-3.5 h-3.5')}
+                        </span>
+                        <span className="truncate">{mod.title}</span>
+                      </div>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 opacity-60 shrink-0 ml-1 transition-transform ${
+                          isModExpanded ? '' : '-rotate-90'
+                        }`}
+                      />
+                    </button>
+                  ) : (
+                    /* Collapsed Mode: Prominent Module Icon Button + Flyout */
+                    <div className="relative group flex justify-center py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const firstLeaf = mod.submodules[0]?.children[0];
+                          if (firstLeaf) navigate(firstLeaf.path);
+                        }}
+                        title={`${mod.title} (${mod.code})`}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                          isModActive
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'text-slate-400 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        {getModuleIcon(mod.iconName, 'w-5 h-5')}
+                      </button>
 
-                          {/* Hover Flyout Menu */}
-                          <div className="absolute left-full ml-3 top-0 hidden group-hover:block z-50 min-w-[240px] bg-slate-900 border border-slate-700 rounded-xl p-2.5 shadow-2xl text-left select-none animate-in fade-in zoom-in-95 duration-100">
-                            <div className="px-2 py-1 text-xs font-bold text-white border-b border-slate-800 flex items-center justify-between">
-                              <span>{mod.title}</span>
-                              <span className="font-mono text-[9px] text-slate-400">{mod.code}</span>
-                            </div>
-                            <div className="mt-1.5 space-y-2 max-h-80 overflow-y-auto">
-                              {mod.submodules.map((sub) => (
-                                <div key={sub.id} className="space-y-0.5">
-                                  <div className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                    <Folder className="w-2.5 h-2.5 text-amber-400" />
-                                    <span>{sub.title}</span>
-                                  </div>
-                                  {sub.children.map((leaf) => {
-                                    const isLeafActive =
-                                      location.pathname === leaf.path ||
-                                      (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
-                                    return (
-                                      <Link
-                                        key={leaf.id}
-                                        to={leaf.path}
-                                        className={`block px-2 py-1 rounded text-xs transition-colors ${
-                                          isLeafActive
-                                            ? 'bg-blue-600 text-white font-semibold'
-                                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                        }`}
-                                      >
-                                        {leaf.title}
-                                      </Link>
-                                    );
-                                  })}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                      {/* Hover Flyout Menu */}
+                      <div className="absolute left-full ml-3 top-0 hidden group-hover:block z-50 min-w-[240px] bg-slate-900 border border-slate-700 rounded-xl p-2.5 shadow-2xl text-left select-none animate-in fade-in zoom-in-95 duration-100">
+                        <div className="px-2 py-1 text-xs font-bold text-white border-b border-slate-800 flex items-center justify-between">
+                          <span>{mod.title}</span>
+                          <span className="font-mono text-[9px] text-slate-400">{mod.code}</span>
                         </div>
-                      )}
-
-                      {/* Submodules & Actionable Screens (when Expanded) */}
-                      {!isCollapsed && isModExpanded && (
-                        <div className={`ml-2 pl-2 space-y-1.5 ${sidebarStyles.treeLine}`}>
-                          {mod.submodules.map((sub) => {
-                            const isSubExpanded = !!expandedSubmodules[sub.id];
-
-                            return (
-                              <div key={sub.id} className="space-y-1">
-                                {/* Submodule / Process Header */}
-                                <button
-                                  type="button"
-                                  onClick={() => toggleSubmodule(sub.id)}
-                                  className={`w-full flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${sidebarStyles.level2Btn}`}
-                                >
-                                  <div className="flex items-center gap-1.5 truncate">
-                                    {isSubExpanded ? (
-                                      <FolderOpen className="w-3 h-3 shrink-0 text-amber-400" />
-                                    ) : (
-                                      <Folder className="w-3 h-3 shrink-0 opacity-60" />
-                                    )}
-                                    <span className="truncate">{sub.title}</span>
-                                  </div>
-                                  <ChevronRight
-                                    className={`w-3 h-3 opacity-60 transition-transform ${
-                                      isSubExpanded ? 'rotate-90' : ''
-                                    }`}
-                                  />
-                                </button>
-
-                                {/* Actionable Screens */}
-                                {isSubExpanded && (
-                                  <div className={`ml-3 pl-2.5 space-y-0.5 ${sidebarStyles.treeLine}`}>
-                                    {sub.children.map((leaf) => {
-                                      const isActive =
-                                        location.pathname === leaf.path ||
-                                        (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
-
-                                      return (
-                                        <Link
-                                          key={leaf.id}
-                                          to={leaf.path}
-                                          className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
-                                            isActive
-                                              ? sidebarStyles.activeLink
-                                              : sidebarStyles.level3Inactive
-                                          }`}
-                                        >
-                                          <span
-                                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                              isActive ? 'bg-white' : 'bg-slate-400 opacity-60'
-                                            }`}
-                                          ></span>
-                                          <span className="truncate">{leaf.title}</span>
-                                        </Link>
-                                      );
-                                    })}
-                                  </div>
-                                )}
+                        <div className="mt-1.5 space-y-2 max-h-80 overflow-y-auto">
+                          {mod.submodules.map((sub) => (
+                            <div key={sub.id} className="space-y-0.5">
+                              <div className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                <Folder className="w-2.5 h-2.5 text-amber-400" />
+                                <span>{sub.title}</span>
                               </div>
-                            );
-                          })}
+                              {sub.children.map((leaf) => {
+                                const isLeafActive =
+                                  location.pathname === leaf.path ||
+                                  (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
+                                return (
+                                  <Link
+                                    key={leaf.id}
+                                    to={leaf.path}
+                                    className={`block px-2 py-1 rounded text-xs transition-colors ${
+                                      isLeafActive
+                                        ? 'bg-blue-600 text-white font-semibold'
+                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                    }`}
+                                  >
+                                    {leaf.title}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          ))}
                         </div>
-                      )}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            ))}
+                  )}
+
+                  {/* Submodules & Actionable Screens (when Expanded) */}
+                  {!isCollapsed && isModExpanded && (
+                    <div className={`ml-2 pl-2 space-y-1.5 ${sidebarStyles.treeLine}`}>
+                      {mod.submodules.map((sub) => {
+                        const isSubExpanded = !!expandedSubmodules[sub.id];
+
+                        return (
+                          <div key={sub.id} className="space-y-1">
+                            {/* Submodule / Process Header */}
+                            <button
+                              type="button"
+                              onClick={() => toggleSubmodule(sub.id)}
+                              className={`w-full flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${sidebarStyles.level2Btn}`}
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                {isSubExpanded ? (
+                                  <FolderOpen className="w-3 h-3 shrink-0 text-amber-400" />
+                                ) : (
+                                  <Folder className="w-3 h-3 shrink-0 opacity-60" />
+                                )}
+                                <span className="truncate">{sub.title}</span>
+                              </div>
+                              <ChevronRight
+                                className={`w-3 h-3 opacity-60 transition-transform ${
+                                  isSubExpanded ? 'rotate-90' : ''
+                                }`}
+                              />
+                            </button>
+
+                            {/* Actionable Screens */}
+                            {isSubExpanded && (
+                              <div className={`ml-3 pl-2.5 space-y-0.5 ${sidebarStyles.treeLine}`}>
+                                {sub.children.map((leaf) => {
+                                  const isActive =
+                                    location.pathname === leaf.path ||
+                                    (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
+
+                                  return (
+                                    <Link
+                                      key={leaf.id}
+                                      to={leaf.path}
+                                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
+                                        isActive
+                                          ? sidebarStyles.activeLink
+                                          : sidebarStyles.level3Inactive
+                                      }`}
+                                    >
+                                      <span
+                                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                          isActive ? 'bg-white' : 'bg-slate-400 opacity-60'
+                                        }`}
+                                      ></span>
+                                      <span className="truncate">{leaf.title}</span>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Sidebar Footer: Theme Swatches + Collapse Toggle */}
@@ -607,7 +677,7 @@ export const AppShell: React.FC = () => {
             ))}
           </div>
 
-          {/* Child Full-Screen Viewport - PURE INTERNAL SCROLLING - STRICT NO MODALS */}
+          {/* Child Full-Screen Viewport - STRICT NO MODALS */}
           <div className="flex-1 overflow-y-auto p-6">
             <Outlet />
           </div>
