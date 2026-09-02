@@ -1,5 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, Database, Cpu, Activity, Server, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {
+  Shield,
+  Database,
+  Cpu,
+  Activity,
+  Server,
+  RefreshCw,
+  CheckCircle2,
+  Users,
+  Lock,
+  ArrowRight,
+  Tablet,
+  FileCheck,
+} from 'lucide-react';
 import apiClient from '../../services/apiClient';
 
 interface HealthStatus {
@@ -44,11 +58,11 @@ export const PlatformOverviewPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
             <Shield className="w-7 h-7 text-blue-600 dark:text-blue-500" />
             <span>Platform Command Center</span>
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Global RMG Platform Health, PostgreSQL 17 Database, and Security Vault
           </p>
         </div>
@@ -61,142 +75,231 @@ export const PlatformOverviewPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Primary KPI Status Cards */}
+      {/* KPI Cards Grid with Crisp Top Accent Bars */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Core API */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        {/* Card 1: Core Backend */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 border-t-blue-600 rounded-xl p-5 shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
               Core Backend
             </span>
-            <Server className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+              <Server className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white">
-            {health?.application || 'TraceFlow RMG'}
-          </div>
-          <div className="mt-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>{health?.framework || 'Laravel 13'} (PHP 8.5)</span>
+          <div className="mt-3">
+            <span className="text-lg font-bold text-slate-900 dark:text-white">
+              TraceFlow RMG Core API
+            </span>
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Laravel 13 (PHP 8.5)</span>
+            </div>
           </div>
         </div>
 
-        {/* Card 2: PostgreSQL 17 */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        {/* Card 2: Database Engine */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 border-t-indigo-600 rounded-xl p-5 shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
               Database Engine
             </span>
-            <Database className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+              <Database className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white">
-            {health?.database.engine || 'PostgreSQL 17'}
-          </div>
-          <div className="mt-2 flex items-center gap-2 text-xs">
-            <span
-              className={`inline-block w-2 h-2 rounded-full ${
-                health?.database.status === 'connected' ? 'bg-emerald-500' : 'bg-rose-500'
-              }`}
-            ></span>
-            <span className="text-slate-600 dark:text-slate-400 font-mono">
-              Status: {health?.database.status || 'Checking...'}
+          <div className="mt-3">
+            <span className="text-lg font-bold text-slate-900 dark:text-white">
+              PostgreSQL 17
             </span>
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  health?.database?.status === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'
+                }`}
+              ></span>
+              <span className="font-mono text-xs">
+                Status: {health?.database?.status || 'connecting...'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Card 3: Redis 7 */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        {/* Card 3: Cache & Queues */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 border-t-rose-600 rounded-xl p-5 shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
               Cache & Queues
             </span>
-            <Cpu className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400">
+              <Cpu className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white">
-            {health?.cache_and_queue.engine || 'Redis 7'}
-          </div>
-          <div className="mt-2 flex items-center gap-2 text-xs">
-            <span
-              className={`inline-block w-2 h-2 rounded-full ${
-                health?.cache_and_queue.status === 'connected' ? 'bg-emerald-500' : 'bg-rose-500'
-              }`}
-            ></span>
-            <span className="text-slate-600 dark:text-slate-400 font-mono">
-              Status: {health?.cache_and_queue.status || 'Checking...'}
+          <div className="mt-3">
+            <span className="text-lg font-bold text-slate-900 dark:text-white">
+              Redis 7
             </span>
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  health?.cache_and_queue?.status === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'
+                }`}
+              ></span>
+              <span className="font-mono text-xs">
+                Status: {health?.cache_and_queue?.status || 'connecting...'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Card 4: WORM Audit Vault */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        {/* Card 4: Security Vault */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 border-t-emerald-600 rounded-xl p-5 shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
               Security Vault
             </span>
-            <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+              <Activity className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white">WORM Active</div>
-          <div className="mt-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Immutable Triggers Enforced</span>
+          <div className="mt-3">
+            <span className="text-lg font-bold text-slate-900 dark:text-white">
+              WORM Active
+            </span>
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Immutable Triggers Enforced</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Architecture & Verification Panel */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm transition-colors">
-        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">
-          Enterprise Platform Specification Status
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800/80">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+      {/* Quick Launchpad Navigation Shortcuts */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link
+          to="/admin/users"
+          className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-blue-500 dark:hover:border-blue-500 transition-colors group shadow-xs"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                <Users className="w-5 h-5" />
+              </div>
               <div>
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 block">
-                  Pure Server-Side Validation Standard
-                </span>
-                <span className="text-xs text-slate-600 dark:text-slate-400">
-                  All forms use &lt;form noValidate&gt; with RFC 7807 422 JSON validation. Zero browser popups.
-                </span>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Users & Roles</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">21 Enterprise Roles</p>
               </div>
             </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </Link>
 
-            <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800/80">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-              <div>
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 block">
-                  STRICT No Modals Policy
-                </span>
-                <span className="text-xs text-slate-600 dark:text-slate-400">
-                  100% of forms, details, creation flows, and reports load as full-screen dedicated pages with breadcrumbs.
-                </span>
+        <Link
+          to="/admin/audit-vault"
+          className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors group shadow-xs"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                <Lock className="w-5 h-5" />
               </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">WORM Audit Vault</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Tamper-Proof Ledger</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </Link>
+
+        <Link
+          to="/admin/devices"
+          className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors group shadow-xs"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+                <Tablet className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Tablet Fleet</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Floor Kiosk & Scanners</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </Link>
+
+        <Link
+          to="/master-data/buyers"
+          className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 transition-colors group shadow-xs"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                <FileCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Master Data</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Buyers, Lines, Defects</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </Link>
+      </div>
+
+      {/* Core Architectural Pillars Card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs">
+        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">
+          Enterprise Operational Architecture Status
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                4 Core Operational Domains (Dynamics 365 Architecture)
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Commercial, Manufacturing, Supply Chain, and Governance separated into distinct high-focus workspaces.
+              </p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800/80">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-              <div>
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 block">
-                  Dual Theme Mode (Light & Dark)
-                </span>
-                <span className="text-xs text-slate-600 dark:text-slate-400">
-                  Instant toggle between clean daytime light mode and midnight enterprise dark mode.
-                </span>
-              </div>
+          <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                Global Omni-Search Command Palette (Ctrl + K)
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Instant keyboard shortcut navigation across all 15 modules and sub-pages.
+              </p>
             </div>
+          </div>
 
-            <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800/80">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-              <div>
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 block">
-                  100% English UI Labels & Git develop Branch
-                </span>
-                <span className="text-xs text-slate-600 dark:text-slate-400">
-                  All user interface text is 100% English. Code changes track directly to origin/develop.
-                </span>
-              </div>
+          <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                STRICT No Modals Policy
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                All forms, details, creation flows, and reports load as full screen dedicated pages with breadcrumbs.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                Pure Server-Side Validation Standard
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Forms use &lt;form noValidate&gt; with RFC 7807 422 JSON validation. Zero browser popups.
+              </p>
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { AppShell } from './components/layout/AppShell';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { PlatformOverviewPage } from './pages/admin/PlatformOverviewPage';
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
-import { MAIN_MODULES_CONFIG } from './config/navigationData';
+import { ENTERPRISE_DOMAINS_CONFIG } from './config/navigationData';
 import { useAuthStore } from './store/authStore';
 import { resolveLandingPath } from './routes/RoleLandingEngine';
 
@@ -44,24 +44,26 @@ export const App: React.FC = () => {
           <Route path="/admin/platform-overview" element={<PlatformOverviewPage />} />
 
           {/* Dynamic Module Routes from Master Configuration */}
-          {MAIN_MODULES_CONFIG.map((mod) =>
-            mod.submodules.map((group) =>
-              group.children.map((item) => {
-                if (item.path === '/admin/platform-overview') return null;
-                return (
-                  <Route
-                    key={item.id}
-                    path={item.path}
-                    element={
-                      <ModulePlaceholderPage
-                        title={item.title}
-                        moduleCode={mod.code}
-                        description={`${group.title} workspace for ${mod.title}`}
-                      />
-                    }
-                  />
-                );
-              })
+          {ENTERPRISE_DOMAINS_CONFIG.map((domain) =>
+            domain.modules.map((mod) =>
+              mod.submodules.map((group) =>
+                group.children.map((item) => {
+                  if (item.path === '/admin/platform-overview') return null;
+                  return (
+                    <Route
+                      key={item.id}
+                      path={item.path}
+                      element={
+                        <ModulePlaceholderPage
+                          title={item.title}
+                          moduleCode={mod.code}
+                          description={`${group.title} workspace for ${mod.title}`}
+                        />
+                      }
+                    />
+                  );
+                })
+              )
             )
           )}
 
