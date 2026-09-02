@@ -422,14 +422,15 @@ export const AppShell: React.FC = () => {
               key={sec.id}
               type="button"
               onClick={() => handleSectionClick(sec)}
-              className={`h-8 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shrink-0 select-none ${
+              title={sec.title}
+              className={`h-8 px-3.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shrink-0 select-none ${
                 isSecActive
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               <span>{getSectionIcon(sec.id, 'w-3.5 h-3.5')}</span>
-              <span>{sec.title}</span>
+              <span>{sec.shortTitle}</span>
             </button>
           );
         })}

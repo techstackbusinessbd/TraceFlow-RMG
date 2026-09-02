@@ -22,6 +22,7 @@ export interface NavModuleItem {
 export interface NavSection {
   id: string;
   title: string;
+  shortTitle: string;
   modules: NavModuleItem[];
 }
 
@@ -32,6 +33,7 @@ export const ENTERPRISE_NAV_SECTIONS: NavSection[] = [
   {
     id: 'merchandising-commercial',
     title: 'Merchandising & Commercial',
+    shortTitle: 'Merchandising',
     modules: [
       {
         id: 'order-management',
@@ -109,6 +111,7 @@ export const ENTERPRISE_NAV_SECTIONS: NavSection[] = [
   {
     id: 'supply-chain-warehouse',
     title: 'Supply Chain & Warehouse',
+    shortTitle: 'Warehouse',
     modules: [
       {
         id: 'fabric-warehouse',
@@ -160,6 +163,7 @@ export const ENTERPRISE_NAV_SECTIONS: NavSection[] = [
   {
     id: 'production-execution',
     title: 'Production Floor Execution',
+    shortTitle: 'Production',
     modules: [
       {
         id: 'production-planning',
@@ -340,6 +344,7 @@ export const ENTERPRISE_NAV_SECTIONS: NavSection[] = [
   {
     id: 'quality-governance',
     title: 'Quality Assurance & Governance',
+    shortTitle: 'Governance',
     modules: [
       {
         id: 'quality-control',
