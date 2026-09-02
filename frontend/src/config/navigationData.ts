@@ -24,6 +24,7 @@ export interface EnterpriseDomain {
     id: string;
     code: string;
     title: string;
+    iconName?: string;
     submodules: NavGroupItem[];
   }[];
 }
@@ -43,6 +44,7 @@ export const ENTERPRISE_DOMAINS_CONFIG: EnterpriseDomain[] = [
         id: 'orders',
         code: 'MOD-03',
         title: 'Order Management & Merchandising',
+        iconName: 'FileSpreadsheet',
         submodules: [
           {
             id: 'orders-commercial',

@@ -12,6 +12,23 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Wifi,
+  Folder,
+  FolderOpen,
+  FileSpreadsheet,
+  Scissors,
+  Layers,
+  Calendar,
+  Truck,
+  Printer,
+  Sparkles,
+  Activity,
+  Droplet,
+  CheckSquare,
+  Package,
+  Building2,
+  Sliders,
+  CheckCheck,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
@@ -35,6 +52,10 @@ export const AppShell: React.FC = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDomainMenuOpen, setIsDomainMenuOpen] = useState(false);
+
+  // 3rd Level Hierarchy Accordion State
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
+  const [expandedSubmodules, setExpandedSubmodules] = useState<Record<string, boolean>>({});
 
   // Global Ctrl + K listener
   useEffect(() => {
@@ -70,6 +91,50 @@ export const AppShell: React.FC = () => {
     );
   }, [location.pathname]);
 
+  // Auto-expand parent module and submodule for current route
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const newMods: Record<string, boolean> = { ...expandedModules };
+    const newSubs: Record<string, boolean> = { ...expandedSubmodules };
+
+    for (const domain of ENTERPRISE_DOMAINS_CONFIG) {
+      for (const mod of domain.modules) {
+        let modHasActiveRoute = false;
+        for (const sub of mod.submodules) {
+          let subHasActiveRoute = false;
+          for (const leaf of sub.children) {
+            if (currentPath === leaf.path || (leaf.path !== '/' && currentPath.startsWith(leaf.path))) {
+              modHasActiveRoute = true;
+              subHasActiveRoute = true;
+            }
+          }
+          if (subHasActiveRoute) {
+            newSubs[sub.id] = true;
+          }
+        }
+        if (modHasActiveRoute) {
+          newMods[mod.id] = true;
+        }
+      }
+    }
+    setExpandedModules(newMods);
+    setExpandedSubmodules(newSubs);
+  }, [location.pathname]);
+
+  const toggleModule = (modId: string) => {
+    setExpandedModules((prev) => ({
+      ...prev,
+      [modId]: !prev[modId],
+    }));
+  };
+
+  const toggleSubmodule = (subId: string) => {
+    setExpandedSubmodules((prev) => ({
+      ...prev,
+      [subId]: !prev[subId],
+    }));
+  };
+
   const handleDomainSelect = (domain: EnterpriseDomain) => {
     setIsDomainMenuOpen(false);
     navigate(domain.defaultPath);
@@ -102,6 +167,45 @@ export const AppShell: React.FC = () => {
     }
   };
 
+  const getModuleIcon = (modId: string, className: string = 'w-3.5 h-3.5') => {
+    switch (modId) {
+      case 'orders':
+        return <FileSpreadsheet className={className} />;
+      case 'commercial-export':
+        return <TrendingUp className={className} />;
+      case 'master-partners':
+        return <Building2 className={className} />;
+      case 'planning':
+        return <Calendar className={className} />;
+      case 'cutting':
+        return <Scissors className={className} />;
+      case 'printing':
+        return <Printer className={className} />;
+      case 'embroidery':
+        return <Sparkles className={className} />;
+      case 'subcontract':
+        return <Truck className={className} />;
+      case 'sewing':
+        return <Activity className={className} />;
+      case 'washing':
+        return <Droplet className={className} />;
+      case 'finishing':
+        return <CheckSquare className={className} />;
+      case 'packing':
+        return <Package className={className} />;
+      case 'fabric-warehouse':
+        return <Layers className={className} />;
+      case 'system-admin':
+        return <Shield className={className} />;
+      case 'quality-control':
+        return <CheckCheck className={className} />;
+      case 'plant-master':
+        return <Sliders className={className} />;
+      default:
+        return <Folder className={className} />;
+    }
+  };
+
   // Breadcrumb item resolution
   const breadcrumbItems = useMemo(() => {
     const items: { label: string; path?: string }[] = [
@@ -114,6 +218,7 @@ export const AppShell: React.FC = () => {
         for (const leaf of sub.children) {
           if (location.pathname === leaf.path || (leaf.path !== '/' && location.pathname.startsWith(leaf.path))) {
             items.push({ label: mod.title });
+            items.push({ label: sub.title });
             items.push({ label: leaf.title, path: leaf.path });
             return items;
           }
@@ -134,13 +239,13 @@ export const AppShell: React.FC = () => {
             'bg-[#1e293b] hover:bg-[#273549] border-[#334155] text-slate-200',
           domainIconBox: 'bg-[#0f172a] text-blue-400 border border-[#334155]',
           domainFlyout: 'bg-[#0f172a] border-[#334155] text-slate-200',
-          groupHeader: 'text-slate-400',
-          inactiveLink:
-            'text-slate-300 hover:text-white hover:bg-slate-800/80',
+          level1Btn: 'text-slate-300 hover:text-white hover:bg-slate-800/80',
+          level2Btn: 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50',
+          level3Inactive: 'text-slate-400 hover:text-white hover:bg-slate-800/70',
           activeLink: 'bg-blue-600 text-white font-semibold shadow-xs',
           footer: 'border-t border-[#1e293b] bg-[#0b1323] text-slate-400',
-          collapseBtn:
-            'hover:bg-[#1e293b] text-slate-400 hover:text-white',
+          collapseBtn: 'hover:bg-[#1e293b] text-slate-400 hover:text-white',
+          treeLine: 'border-l border-slate-700/60',
         };
       case 'gray':
         return {
@@ -152,14 +257,18 @@ export const AppShell: React.FC = () => {
             'bg-slate-50 dark:bg-zinc-900 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-zinc-700',
           domainFlyout:
             'bg-white dark:bg-zinc-850 border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-slate-200',
-          groupHeader: 'text-slate-500 dark:text-slate-400',
-          inactiveLink:
+          level1Btn:
             'text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-200/80 dark:hover:bg-zinc-800',
+          level2Btn:
+            'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-zinc-800/60',
+          level3Inactive:
+            'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-zinc-800',
           activeLink: 'bg-blue-600 text-white font-semibold shadow-xs',
           footer:
             'border-t border-slate-200 dark:border-zinc-800 bg-slate-200/50 dark:bg-zinc-950/40 text-slate-600 dark:text-slate-400',
           collapseBtn:
             'hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-slate-300',
+          treeLine: 'border-l border-slate-300 dark:border-zinc-700',
         };
       case 'indigo':
       default:
@@ -169,13 +278,13 @@ export const AppShell: React.FC = () => {
             'bg-[#131d31] hover:bg-[#1a2843] border-[#223352] text-indigo-200',
           domainIconBox: 'bg-[#0c1322] text-indigo-400 border border-[#223352]',
           domainFlyout: 'bg-[#0c1322] border-[#223352] text-slate-200',
-          groupHeader: 'text-indigo-400/90',
-          inactiveLink:
-            'text-slate-300 hover:text-white hover:bg-indigo-950/40',
+          level1Btn: 'text-slate-200 hover:text-white hover:bg-indigo-950/60',
+          level2Btn: 'text-indigo-300/80 hover:text-indigo-200 hover:bg-indigo-950/40',
+          level3Inactive: 'text-slate-400 hover:text-white hover:bg-indigo-950/50',
           activeLink: 'bg-blue-600 text-white font-semibold shadow-xs',
           footer: 'border-t border-[#1a2336] bg-[#080d19] text-slate-400',
-          collapseBtn:
-            'hover:bg-[#131d31] text-slate-400 hover:text-white',
+          collapseBtn: 'hover:bg-[#131d31] text-slate-400 hover:text-white',
+          treeLine: 'border-l border-indigo-900/60',
         };
     }
   }, [sidebarTheme]);
@@ -267,10 +376,10 @@ export const AppShell: React.FC = () => {
       </header>
 
       {/* ─────────────────────────────────────────────────────────────────────────
-          2. MAIN WORKSPACE CONTAINER (Sidebar + Workspace Viewport)
+          2. MAIN WORKSPACE CONTAINER (3-Level Sidebar + Workspace Viewport)
          ───────────────────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar (Customizable Palette & Collapsible) */}
+        {/* Left Sidebar (3-Level Hierarchical Tree) */}
         <aside
           className={`${
             isCollapsed ? 'w-16' : 'w-64'
@@ -311,7 +420,9 @@ export const AppShell: React.FC = () => {
 
             {/* Domain Selection Flyout Menu */}
             {isDomainMenuOpen && (
-              <div className={`absolute top-full left-2 right-2 mt-1 rounded-xl shadow-2xl z-50 p-1.5 space-y-1 border ${sidebarStyles.domainFlyout}`}>
+              <div
+                className={`absolute top-full left-2 right-2 mt-1 rounded-xl shadow-2xl z-50 p-1.5 space-y-1 border ${sidebarStyles.domainFlyout}`}
+              >
                 <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider opacity-60">
                   Select Business Domain
                 </div>
@@ -348,48 +459,113 @@ export const AppShell: React.FC = () => {
             )}
           </div>
 
-          {/* Sidebar Menu Items for Selected Domain */}
-          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
-            {activeDomain.modules.map((mod) => (
-              <div key={mod.id} className="space-y-1">
-                {!isCollapsed && (
-                  <div className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between ${sidebarStyles.groupHeader}`}>
-                    <span className="truncate">{mod.title}</span>
-                    <span className="font-mono text-[9px] opacity-60">{mod.code}</span>
-                  </div>
-                )}
+          {/* ─────────────────────────────────────────────────────────────────
+              3-LEVEL HIERARCHICAL ACCORDION TREE MENU
+             ───────────────────────────────────────────────────────────────── */}
+          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-2">
+            {activeDomain.modules.map((mod) => {
+              // Level 1: Module State
+              const isModExpanded = !!expandedModules[mod.id];
 
-                {mod.submodules.map((sub) => (
-                  <div key={sub.id} className="space-y-0.5">
-                    {sub.children.map((leaf) => {
-                      const isActive =
-                        location.pathname === leaf.path ||
-                        (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
+              return (
+                <div key={mod.id} className="space-y-1">
+                  {/* Level 1: Module Header Row */}
+                  {!isCollapsed ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleModule(mod.id)}
+                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-bold transition-colors ${sidebarStyles.level1Btn}`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="p-1 rounded bg-black/10 dark:bg-white/5 shrink-0">
+                          {getModuleIcon(mod.id)}
+                        </span>
+                        <span className="truncate">{mod.title}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                        <span className="font-mono text-[9px] opacity-50">{mod.code}</span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 opacity-60 transition-transform ${
+                            isModExpanded ? '' : '-rotate-90'
+                          }`}
+                        />
+                      </div>
+                    </button>
+                  ) : (
+                    <div className="flex justify-center p-1.5" title={mod.title}>
+                      <span className="p-1.5 rounded bg-black/20 text-slate-300">
+                        {getModuleIcon(mod.id)}
+                      </span>
+                    </div>
+                  )}
 
-                      return (
-                        <Link
-                          key={leaf.id}
-                          to={leaf.path}
-                          title={isCollapsed ? leaf.title : undefined}
-                          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
-                            isActive
-                              ? sidebarStyles.activeLink
-                              : sidebarStyles.inactiveLink
-                          } ${isCollapsed ? 'justify-center' : ''}`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              isActive ? 'bg-white' : 'bg-slate-400 opacity-60'
-                            }`}
-                          ></span>
-                          {!isCollapsed && <span className="truncate">{leaf.title}</span>}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            ))}
+                  {/* Level 2 & 3: Rendered if Level 1 is Expanded */}
+                  {!isCollapsed && isModExpanded && (
+                    <div className={`ml-2 pl-2 space-y-1.5 ${sidebarStyles.treeLine}`}>
+                      {mod.submodules.map((sub) => {
+                        // Level 2: Submodule State
+                        const isSubExpanded = !!expandedSubmodules[sub.id];
+
+                        return (
+                          <div key={sub.id} className="space-y-1">
+                            {/* Level 2: Sub-category / Process Group Header */}
+                            <button
+                              type="button"
+                              onClick={() => toggleSubmodule(sub.id)}
+                              className={`w-full flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${sidebarStyles.level2Btn}`}
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                {isSubExpanded ? (
+                                  <FolderOpen className="w-3 h-3 shrink-0 text-amber-400" />
+                                ) : (
+                                  <Folder className="w-3 h-3 shrink-0 opacity-60" />
+                                )}
+                                <span className="truncate">{sub.title}</span>
+                              </div>
+                              <ChevronRight
+                                className={`w-3 h-3 opacity-60 transition-transform ${
+                                  isSubExpanded ? 'rotate-90' : ''
+                                }`}
+                              />
+                            </button>
+
+                            {/* Level 3: Actionable Pages / Direct Screens */}
+                            {isSubExpanded && (
+                              <div className={`ml-3 pl-2.5 space-y-0.5 ${sidebarStyles.treeLine}`}>
+                                {sub.children.map((leaf) => {
+                                  const isActive =
+                                    location.pathname === leaf.path ||
+                                    (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
+
+                                  return (
+                                    <Link
+                                      key={leaf.id}
+                                      to={leaf.path}
+                                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
+                                        isActive
+                                          ? sidebarStyles.activeLink
+                                          : sidebarStyles.level3Inactive
+                                      }`}
+                                    >
+                                      <span
+                                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                          isActive ? 'bg-white' : 'bg-slate-400 opacity-60'
+                                        }`}
+                                      ></span>
+                                      <span className="truncate">{leaf.title}</span>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Sidebar Footer: Theme Swatches + Collapse Toggle */}
@@ -418,7 +594,7 @@ export const AppShell: React.FC = () => {
 
         {/* Main Dedicated Workspace Viewport */}
         <main className="flex-1 flex flex-col overflow-y-auto bg-slate-100/60 dark:bg-slate-950 relative">
-          {/* Top Breadcrumb Bar */}
+          {/* Top 3-Level Breadcrumb Bar */}
           <div className="h-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 shrink-0 select-none">
             {breadcrumbItems.map((bc, idx) => (
               <React.Fragment key={idx}>
