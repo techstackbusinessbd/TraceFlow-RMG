@@ -72,14 +72,18 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/70 dark:bg-slate-950 flex flex-col justify-center items-center px-4 py-12 relative transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden bg-animated-grid transition-colors">
+      {/* Subtle Ambient Glow Orbs */}
+      <div className="ambient-glow-1"></div>
+      <div className="ambient-glow-2"></div>
+
       {/* Top Right Utility Bar */}
-      <div className="absolute top-6 right-6 flex items-center gap-2.5">
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-2.5">
         <ThemeToggle />
       </div>
 
       {/* Brand Header */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6 relative z-10">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 text-white mb-3 shadow-md">
           <Shield className="w-6 h-6" />
         </div>
@@ -97,7 +101,7 @@ export const LoginPage: React.FC = () => {
       </div>
 
       {/* Main Login Card with Solid Blue Top Accent Bar */}
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 border-t-blue-600 rounded-xl p-8 shadow-xl dark:shadow-2xl transition-all">
+      <div className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200/90 dark:border-slate-800 border-t-4 border-t-blue-600 rounded-xl p-8 shadow-xl dark:shadow-2xl relative z-10 transition-all">
         {/* Card Header */}
         <div className="mb-6 flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
