@@ -394,24 +394,24 @@ export const RolePermissionsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <Link
             to="/admin/roles"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors mb-1"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors mb-1"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Roles Registry
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Permissions Matrix: {role.name}
             </h1>
             <Badge variant={isSuperAdmin ? 'root' : 'info'}>
               {selectedPermissions.size} Granted
             </Badge>
           </div>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Configure module-level access and functional authorization boundaries for this role profile.
           </p>
         </div>
@@ -443,17 +443,17 @@ export const RolePermissionsPage: React.FC = () => {
         {/* ------------------------------------------------------------------ */}
         {/* LEFT COLUMN: SYSTEM MODULES NAVIGATION LIST                        */}
         {/* ------------------------------------------------------------------ */}
-        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden">
-          <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-2xs overflow-hidden">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               System Modules ({Object.keys(manifest).length})
             </span>
-            <span className="text-[11px] font-mono font-semibold text-slate-500">
+            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-slate-400">
               {selectedPermissions.size} Total Gates
             </span>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {Object.keys(manifest).map((modName) => {
               const isActive = activeModule === modName;
               const stats = moduleStats[modName] || { total: 0, granted: 0 };
@@ -467,12 +467,12 @@ export const RolePermissionsPage: React.FC = () => {
                   onClick={() => setActiveModule(modName)}
                   className={`w-full text-left px-4 py-3.5 transition-colors flex items-center justify-between gap-3 ${
                     isActive
-                      ? 'bg-slate-900 text-white font-bold'
-                      : 'hover:bg-slate-50 text-slate-800'
+                      ? 'bg-slate-900 dark:bg-blue-600 text-white font-bold'
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={isActive ? 'text-blue-400' : 'text-slate-400'}>
+                    <div className={isActive ? 'text-blue-400 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
                       {getModuleIcon(modName)}
                     </div>
                     <span className="text-sm truncate">{modName}</span>
@@ -501,16 +501,16 @@ export const RolePermissionsPage: React.FC = () => {
         {/* ------------------------------------------------------------------ */}
         {/* RIGHT COLUMN: ENTERPRISE PERMISSION MATRIX TABLE                   */}
         {/* ------------------------------------------------------------------ */}
-        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden space-y-0">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-2xs overflow-hidden space-y-0">
           
           {/* Module Toolbar & Quick Presets */}
-          <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
-                <span className="text-blue-600">{getModuleIcon(activeModule)}</span>
+              <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 text-base">
+                <span className="text-blue-600 dark:text-blue-400">{getModuleIcon(activeModule)}</span>
                 <span>{activeModule}</span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Authorized {currentStats.granted} of {currentStats.total} security gates in this module
               </p>
             </div>
@@ -548,7 +548,7 @@ export const RolePermissionsPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse table-fixed">
               <thead>
-                <tr className="bg-slate-100/70 border-b border-slate-200 text-xs text-slate-700 font-semibold uppercase tracking-wider">
+                <tr className="bg-slate-100/70 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 font-semibold uppercase tracking-wider">
                   <th className="py-3 px-4 w-[240px]">Business Resource</th>
                   <th className="py-3 px-2 w-20 text-center">View</th>
                   <th className="py-3 px-2 w-20 text-center">Create</th>
@@ -558,15 +558,15 @@ export const RolePermissionsPage: React.FC = () => {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-200 text-sm text-slate-700">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm text-slate-700 dark:text-slate-300">
                 {currentRows.map((row) => {
                   return (
-                    <tr key={row.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <tr key={row.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
                       
                       {/* 1. Resource & Description */}
                       <td className="py-3.5 px-4 align-top">
-                        <div className="font-bold text-slate-900 text-sm">{row.resourceName}</div>
-                        <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">{row.description}</div>
+                        <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">{row.resourceName}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{row.description}</div>
                       </td>
 
                       {/* 2. VIEW Action */}
@@ -579,7 +579,7 @@ export const RolePermissionsPage: React.FC = () => {
                             className={`w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center transition-colors shadow-2xs ${
                               selectedPermissions.has(row.viewKey)
                                 ? 'bg-blue-600 text-white font-bold'
-                                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-500'
+                                : 'bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'
                             }`}
                           >
                             {selectedPermissions.has(row.viewKey) ? (
@@ -589,7 +589,7 @@ export const RolePermissionsPage: React.FC = () => {
                             )}
                           </button>
                         ) : (
-                          <span className="text-slate-300 font-mono text-xs select-none">—</span>
+                          <span className="text-slate-300 dark:text-slate-600 font-mono text-xs select-none">—</span>
                         )}
                       </td>
 
@@ -603,7 +603,7 @@ export const RolePermissionsPage: React.FC = () => {
                             className={`w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center transition-colors shadow-2xs ${
                               selectedPermissions.has(row.createKey)
                                 ? 'bg-emerald-600 text-white font-bold'
-                                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-500'
+                                : 'bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'
                             }`}
                           >
                             {selectedPermissions.has(row.createKey) ? (
@@ -613,7 +613,7 @@ export const RolePermissionsPage: React.FC = () => {
                             )}
                           </button>
                         ) : (
-                          <span className="text-slate-300 font-mono text-xs select-none">—</span>
+                          <span className="text-slate-300 dark:text-slate-600 font-mono text-xs select-none">—</span>
                         )}
                       </td>
 
@@ -627,7 +627,7 @@ export const RolePermissionsPage: React.FC = () => {
                             className={`w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center transition-colors shadow-2xs ${
                               selectedPermissions.has(row.editKey)
                                 ? 'bg-amber-500 text-white font-bold'
-                                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-500'
+                                : 'bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'
                             }`}
                           >
                             {selectedPermissions.has(row.editKey) ? (
@@ -637,7 +637,7 @@ export const RolePermissionsPage: React.FC = () => {
                             )}
                           </button>
                         ) : (
-                          <span className="text-slate-300 font-mono text-xs select-none">—</span>
+                          <span className="text-slate-300 dark:text-slate-600 font-mono text-xs select-none">—</span>
                         )}
                       </td>
 
@@ -651,7 +651,7 @@ export const RolePermissionsPage: React.FC = () => {
                             className={`w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center transition-colors shadow-2xs ${
                               selectedPermissions.has(row.deleteKey)
                                 ? 'bg-rose-600 text-white font-bold'
-                                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-500'
+                                : 'bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'
                             }`}
                           >
                             {selectedPermissions.has(row.deleteKey) ? (
@@ -661,7 +661,7 @@ export const RolePermissionsPage: React.FC = () => {
                             )}
                           </button>
                         ) : (
-                          <span className="text-slate-300 font-mono text-xs select-none">—</span>
+                          <span className="text-slate-300 dark:text-slate-600 font-mono text-xs select-none">—</span>
                         )}
                       </td>
 
@@ -679,11 +679,11 @@ export const RolePermissionsPage: React.FC = () => {
                                   className={`px-2.5 py-1 text-xs font-semibold rounded-md border text-left transition-colors flex items-center justify-between gap-2 ${
                                     isGranted
                                       ? sp.risk === 'danger'
-                                        ? 'bg-rose-50 text-rose-800 border-rose-300 shadow-2xs'
+                                        ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800 shadow-2xs'
                                         : sp.risk === 'warning'
-                                        ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-2xs'
-                                        : 'bg-blue-50 text-blue-800 border-blue-300 shadow-2xs'
-                                      : 'bg-white hover:bg-slate-50 text-slate-500 border-slate-200'
+                                        ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 shadow-2xs'
+                                        : 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800 shadow-2xs'
+                                      : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
                                   }`}
                                   title={sp.description}
                                 >
@@ -696,7 +696,7 @@ export const RolePermissionsPage: React.FC = () => {
                                           : sp.risk === 'warning'
                                           ? 'bg-amber-600 text-white'
                                           : 'bg-blue-600 text-white'
-                                        : 'border border-slate-300 text-transparent'
+                                        : 'border border-slate-300 dark:border-slate-600 text-transparent'
                                     }`}
                                   >
                                     ✓
@@ -706,7 +706,7 @@ export const RolePermissionsPage: React.FC = () => {
                             })}
                           </div>
                         ) : (
-                          <span className="text-slate-400 text-xs italic">Standard CRUD only</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-xs italic">Standard CRUD only</span>
                         )}
                       </td>
                     </tr>

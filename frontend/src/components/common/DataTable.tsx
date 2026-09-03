@@ -143,7 +143,7 @@ export function DataTable<T extends Record<string, any>>({
           </thead>
 
           {/* Table Body */}
-          <tbody className="divide-y divide-slate-200 text-sm text-slate-700">
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm text-slate-700 dark:text-slate-300">
             {isLoading ? (
               <tr>
                 <td colSpan={columns.length} className="py-16 text-center text-slate-400">
@@ -156,8 +156,8 @@ export function DataTable<T extends Record<string, any>>({
             ) : paginatedData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="py-16 text-center text-slate-500">
-                  <Inbox className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="font-bold text-slate-800 text-sm">{emptyMessage}</p>
+                  <Inbox className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{emptyMessage}</p>
                 </td>
               </tr>
             ) : (
@@ -189,13 +189,13 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Pagination Footer Toolbar */}
       {!isLoading && totalRecords > 0 && (
-        <div className="bg-slate-50 border-t border-slate-200 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-600 select-none">
+        <div className="bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-600 dark:text-slate-400 select-none">
           {/* Records Counter */}
           <div className="flex items-center gap-4">
             <span>
-              Showing <strong className="text-slate-900 font-semibold">{startRecord}</strong> to{' '}
-              <strong className="text-slate-900 font-semibold">{endRecord}</strong> of{' '}
-              <strong className="text-slate-900 font-semibold">{totalRecords}</strong> records
+              Showing <strong className="text-slate-900 dark:text-slate-100 font-semibold">{startRecord}</strong> to{' '}
+              <strong className="text-slate-900 dark:text-slate-100 font-semibold">{endRecord}</strong> of{' '}
+              <strong className="text-slate-900 dark:text-slate-100 font-semibold">{totalRecords}</strong> records
             </span>
 
             {/* Per Page Selector */}
@@ -207,7 +207,7 @@ export function DataTable<T extends Record<string, any>>({
                   setPerPage(Number(e.target.value));
                   setPage(1);
                 }}
-                className="px-2 py-1 border border-slate-300 rounded-md bg-white text-slate-800 font-medium focus:outline-none focus:border-blue-600"
+                className="px-2 py-1 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-blue-600"
               >
                 {perPageOptions.map((opt) => (
                   <option key={opt} value={opt}>
@@ -220,9 +220,9 @@ export function DataTable<T extends Record<string, any>>({
 
           {/* Page Navigator */}
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 mr-1">
-              Page <strong className="text-slate-900 font-semibold">{currentPage}</strong> of{' '}
-              <strong className="text-slate-900 font-semibold">{totalPages}</strong>
+            <span className="text-slate-500 dark:text-slate-400 mr-1">
+              Page <strong className="text-slate-900 dark:text-slate-100 font-semibold">{currentPage}</strong> of{' '}
+              <strong className="text-slate-900 dark:text-slate-100 font-semibold">{totalPages}</strong>
             </span>
 
             <Button

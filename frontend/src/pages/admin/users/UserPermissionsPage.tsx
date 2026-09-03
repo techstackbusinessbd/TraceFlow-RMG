@@ -378,7 +378,7 @@ export const UserPermissionsPage: React.FC = () => {
 
   const renderCellStatus = (permKey?: string) => {
     if (!permKey) {
-      return <span className="text-slate-300 font-mono text-xs select-none">—</span>;
+      return <span className="text-slate-300 dark:text-slate-600 font-mono text-xs select-none">—</span>;
     }
 
     const isInherited = rolePermissionsSet.has(permKey);
@@ -388,9 +388,9 @@ export const UserPermissionsPage: React.FC = () => {
       return (
         <div
           title={`${permKey} is inherited from role (${user.roles[0] || 'Role'})`}
-          className="w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center bg-slate-100 border border-slate-300 text-slate-700 font-bold shadow-2xs select-none"
+          className="w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold shadow-2xs select-none"
         >
-          <Lock className="w-3.5 h-3.5 text-slate-600" />
+          <Lock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
         </div>
       );
     }
@@ -413,7 +413,7 @@ export const UserPermissionsPage: React.FC = () => {
         type="button"
         title={`Click to grant direct override: ${permKey}`}
         onClick={() => toggleDirectPermission(permKey)}
-        className="w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-600 transition-colors"
+        className="w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-300 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
       >
         <span className="text-xs font-mono">+</span>
       </button>
@@ -423,17 +423,17 @@ export const UserPermissionsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <Link
             to="/admin/users"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors mb-1"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors mb-1"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Users Directory
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               User Privileges: {user.name}
             </h1>
             <Badge variant="neutral" className="font-mono text-xs">
@@ -445,7 +445,7 @@ export const UserPermissionsPage: React.FC = () => {
               </Badge>
             ))}
           </div>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Configure direct user privilege overrides beyond the baseline inherited from their primary role.
           </p>
         </div>
@@ -473,47 +473,47 @@ export const UserPermissionsPage: React.FC = () => {
 
       {/* KPI Metrics Summary Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-md p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Role Inherited
             </span>
-            <div className="text-2xl font-bold text-slate-900 mt-1 font-mono">
+            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1 font-mono">
               {rolePermissionsSet.size}
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Locked baseline from role</div>
+            <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Locked baseline from role</div>
           </div>
-          <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center text-slate-600">
+          <div className="w-10 h-10 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
             <Lock className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-md p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Direct Overrides
             </span>
-            <div className="text-2xl font-bold text-blue-600 mt-1 font-mono">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1 font-mono">
               {directPermissions.size}
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Explicit user-only gates</div>
+            <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Explicit user-only gates</div>
           </div>
-          <div className="w-10 h-10 rounded-md bg-blue-50 flex items-center justify-center text-blue-600">
+          <div className="w-10 h-10 rounded-md bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <Sparkles className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-md p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Total Effective
             </span>
-            <div className="text-2xl font-bold text-emerald-600 mt-1 font-mono">
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
               {new Set([...rolePermissionsSet, ...directPermissions]).size}
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Active operational gates</div>
+            <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Active operational gates</div>
           </div>
-          <div className="w-10 h-10 rounded-md bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <div className="w-10 h-10 rounded-md bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
             <KeyRound className="w-5 h-5" />
           </div>
         </div>
@@ -527,17 +527,17 @@ export const UserPermissionsPage: React.FC = () => {
         {/* ------------------------------------------------------------------ */}
         {/* LEFT COLUMN: SYSTEM MODULES LIST                                  */}
         {/* ------------------------------------------------------------------ */}
-        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden">
-          <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-2xs overflow-hidden">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               System Modules ({Object.keys(manifest).length})
             </span>
-            <span className="text-[11px] font-mono font-semibold text-slate-500">
+            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-slate-400">
               {new Set([...rolePermissionsSet, ...directPermissions]).size} Effective
             </span>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {Object.keys(manifest).map((modName) => {
               const isActive = activeModule === modName;
               const stats = moduleStats[modName] || { total: 0, direct: 0, inherited: 0, effective: 0 };
@@ -550,12 +550,12 @@ export const UserPermissionsPage: React.FC = () => {
                   onClick={() => setActiveModule(modName)}
                   className={`w-full text-left px-4 py-3.5 transition-colors flex items-center justify-between gap-3 ${
                     isActive
-                      ? 'bg-slate-900 text-white font-bold'
-                      : 'hover:bg-slate-50 text-slate-800'
+                      ? 'bg-slate-900 dark:bg-blue-600 text-white font-bold'
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={isActive ? 'text-blue-400' : 'text-slate-400'}>
+                    <div className={isActive ? 'text-blue-400 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
                       {getModuleIcon(modName)}
                     </div>
                     <span className="text-sm truncate">{modName}</span>
@@ -563,7 +563,7 @@ export const UserPermissionsPage: React.FC = () => {
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     {stats.direct > 0 && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 rounded-sm">
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 rounded-sm">
                         +{stats.direct}
                       </span>
                     )}
@@ -583,28 +583,28 @@ export const UserPermissionsPage: React.FC = () => {
         {/* ------------------------------------------------------------------ */}
         {/* RIGHT COLUMN: ENTERPRISE PERMISSION MATRIX TABLE                   */}
         {/* ------------------------------------------------------------------ */}
-        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-2xs overflow-hidden">
           
           {/* Module Toolbar & Legend */}
-          <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
-                <span className="text-blue-600">{getModuleIcon(activeModule)}</span>
+              <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 text-base">
+                <span className="text-blue-600 dark:text-blue-400">{getModuleIcon(activeModule)}</span>
                 <span>{activeModule}</span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Effective: {currentStats.effective} of {currentStats.total} gates ({currentStats.inherited} inherited, {currentStats.direct} direct overrides)
               </p>
             </div>
 
             {/* Visual Legend */}
-            <div className="flex items-center gap-3 text-xs text-slate-600 shrink-0">
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 shrink-0">
               <span className="inline-flex items-center gap-1">
-                <Lock className="w-3 h-3 text-slate-500" />
+                <Lock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                 <span>Role Inherited</span>
               </span>
               <span className="inline-flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-blue-600" />
+                <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                 <span>Direct Grant</span>
               </span>
             </div>
@@ -614,7 +614,7 @@ export const UserPermissionsPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse table-fixed">
               <thead>
-                <tr className="bg-slate-100/70 border-b border-slate-200 text-xs text-slate-700 font-semibold uppercase tracking-wider">
+                <tr className="bg-slate-100/70 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 font-semibold uppercase tracking-wider">
                   <th className="py-3 px-4 w-[240px]">Business Resource</th>
                   <th className="py-3 px-2 w-20 text-center">View</th>
                   <th className="py-3 px-2 w-20 text-center">Create</th>
@@ -624,15 +624,15 @@ export const UserPermissionsPage: React.FC = () => {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-200 text-sm text-slate-700">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm text-slate-700 dark:text-slate-300">
                 {currentRows.map((row) => {
                   return (
-                    <tr key={row.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <tr key={row.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
                       
                       {/* 1. Resource & Description */}
                       <td className="py-3.5 px-4 align-top">
-                        <div className="font-bold text-slate-900 text-sm">{row.resourceName}</div>
-                        <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">{row.description}</div>
+                        <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">{row.resourceName}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{row.description}</div>
                       </td>
 
                       {/* 2. VIEW Action */}
@@ -671,21 +671,21 @@ export const UserPermissionsPage: React.FC = () => {
                                   onClick={() => toggleDirectPermission(sp.key)}
                                   className={`px-2.5 py-1 text-xs font-semibold rounded-md border text-left transition-colors flex items-center justify-between gap-2 ${
                                     isInherited
-                                      ? 'bg-slate-100 text-slate-700 border-slate-300 opacity-90 cursor-default'
+                                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 opacity-90 cursor-default'
                                       : isDirect
-                                      ? 'bg-blue-50 text-blue-800 border-blue-300 shadow-2xs'
-                                      : 'bg-white hover:bg-slate-50 text-slate-500 border-slate-200'
+                                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800 shadow-2xs'
+                                      : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
                                   }`}
                                   title={sp.description}
                                 >
                                   <span className="truncate">{sp.label}</span>
                                   <span className="shrink-0">
                                     {isInherited ? (
-                                      <Lock className="w-3 h-3 text-slate-500" />
+                                      <Lock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                                     ) : isDirect ? (
-                                      <Sparkles className="w-3 h-3 text-blue-600" />
+                                      <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                                     ) : (
-                                      <span className="text-[10px] text-slate-400 font-mono">+</span>
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">+</span>
                                     )}
                                   </span>
                                 </button>
@@ -693,7 +693,7 @@ export const UserPermissionsPage: React.FC = () => {
                             })}
                           </div>
                         ) : (
-                          <span className="text-slate-400 text-xs italic">Standard CRUD only</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-xs italic">Standard CRUD only</span>
                         )}
                       </td>
                     </tr>
