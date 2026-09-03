@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Shield, 
@@ -13,15 +13,19 @@ import {
   SlidersHorizontal
 } from 'lucide-react';
 import { userService, type Role } from '../../../services/userService';
+import { Button } from '../../../components/common/Button';
+import { Badge } from '../../../components/common/Badge';
 
 type StatusFilter = 'all' | 'granted' | 'ungranted';
 
 export const RolePermissionsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const [role, setRole] = useState<Role | null>(null);
   const [manifest, setManifest] = useState<Record<string, Record<string, string>>>({});
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
+  const [initialPermissions, setInitialPermissions] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -49,6 +53,7 @@ export const RolePermissionsPage: React.FC = () => {
         const granted = new Set<string>();
         roleData.permissions?.forEach((p) => granted.add(p.name));
         setSelectedPermissions(granted);
+        setInitialPermissions(new Set(granted));
       } catch (err: unknown) {
         const errorObj = err as { response?: { data?: { detail?: string } } };
         setErrorMessage(errorObj.response?.data?.detail || 'Failed to load permissions matrix.');
@@ -59,6 +64,14 @@ export const RolePermissionsPage: React.FC = () => {
 
     loadData();
   }, [id]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (selectedPermissions.size !== initialPermissions.size) return true;
+    for (const p of selectedPermissions) {
+      if (!initialPermissions.has(p)) return true;
+    }
+    return false;
+  }, [selectedPermissions, initialPermissions]);
 
   const togglePermission = (permKey: string) => {
     setSelectedPermissions((prev) => {
@@ -94,6 +107,7 @@ export const RolePermissionsPage: React.FC = () => {
 
     try {
       await userService.updateRolePermissions(id, Array.from(selectedPermissions));
+      setInitialPermissions(new Set(selectedPermissions));
       setSuccessMessage('Permissions matrix updated successfully.');
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
@@ -205,32 +219,31 @@ export const RolePermissionsPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Configure Permissions: {role.name}
             </h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+            <Badge variant={isSuperAdmin ? 'root' : 'info'}>
               {selectedPermissions.size} Granted
-            </span>
+            </Badge>
           </div>
           <p className="text-sm text-slate-500 mt-0.5">
             Configure module-level access and functional privileges assigned to this system role.
           </p>
         </div>
 
-        {/* Save Button (Flat Solid Blue - STRICT) */}
+        {/* Action Controls */}
         <div className="flex items-center gap-3">
-          <Link
-            to="/admin/roles"
-            className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/admin/roles')}
           >
             Cancel
-          </Link>
-          <button
-            type="button"
-            disabled={isSaving}
+          </Button>
+          <Button
+            variant="primary"
+            icon={<Save className="w-4 h-4" />}
+            isLoading={isSaving}
             onClick={handleSave}
-            className="inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            <Save className="w-4 h-4" />
-            {isSaving ? 'Saving Matrix...' : 'Save Permissions'}
-          </button>
+            Save Permissions
+          </Button>
         </div>
       </div>
 
@@ -486,11 +499,27 @@ export const RolePermissionsPage: React.FC = () => {
                   {permEntries.map(([permKey, permDesc]) => {
                     const isChecked = selectedPermissions.has(permKey);
 
+                    const getActionBadge = (key: string) => {
+                      if (key.endsWith('.view') || key.endsWith('.read') || key.includes('.overview')) {
+                        return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 rounded-sm shrink-0">VIEW</span>;
+                      }
+                      if (key.endsWith('.create') || key.endsWith('.store') || key.includes('.add')) {
+                        return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-sm shrink-0">CREATE</span>;
+                      }
+                      if (key.endsWith('.update') || key.endsWith('.edit') || key.includes('.assign')) {
+                        return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 rounded-sm shrink-0">EDIT</span>;
+                      }
+                      if (key.endsWith('.delete') || key.endsWith('.destroy') || key.includes('.purge')) {
+                        return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 rounded-sm shrink-0">DELETE</span>;
+                      }
+                      return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 rounded-sm shrink-0">ACTION</span>;
+                    };
+
                     return (
                       <label
                         key={permKey}
                         onClick={() => togglePermission(permKey)}
-                        className={`p-3.5 border flex items-start gap-3 cursor-pointer transition-colors select-none ${
+                        className={`p-3.5 border rounded-md flex items-start gap-3 cursor-pointer transition-colors select-none ${
                           isChecked
                             ? 'border-blue-400 bg-blue-50/50'
                             : 'border-slate-200 hover:bg-slate-50/80'
@@ -503,11 +532,12 @@ export const RolePermissionsPage: React.FC = () => {
                             <Square className="w-4 h-4 text-slate-300" />
                           )}
                         </div>
-                        <div className="text-xs">
-                          <div className="font-mono font-bold text-slate-900 flex items-center gap-2">
-                            <span>{permKey}</span>
+                        <div className="text-xs min-w-0 flex-1">
+                          <div className="font-mono font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+                            <span className="truncate">{permKey}</span>
+                            {getActionBadge(permKey)}
                             {isChecked && (
-                              <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
+                              <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 rounded-sm">
                                 Active
                               </span>
                             )}
@@ -521,6 +551,34 @@ export const RolePermissionsPage: React.FC = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Floating Sticky Save Dock (Appears when unsaved edits are present) */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-sm text-white px-5 py-3 rounded-lg shadow-xl border border-slate-700 flex items-center gap-5 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="flex items-center gap-2.5 text-xs font-semibold">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <span>Unsaved permissions matrix changes detected</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setSelectedPermissions(new Set(initialPermissions))}
+            >
+              Discard Changes
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Save className="w-3.5 h-3.5" />}
+              isLoading={isSaving}
+              onClick={handleSave}
+            >
+              Save Matrix
+            </Button>
+          </div>
         </div>
       )}
     </div>

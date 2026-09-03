@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, 
   Shield, 
   ShieldCheck, 
   Save, 
@@ -17,11 +16,14 @@ import {
   Info
 } from 'lucide-react';
 import { userService, type UserPermissionsData } from '../../../services/userService';
+import { Button } from '../../../components/common/Button';
+import { Badge } from '../../../components/common/Badge';
 
 type StatusFilter = 'all' | 'direct' | 'inherited' | 'ungranted';
 
 export const UserPermissionsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const [permissionsData, setPermissionsData] = useState<UserPermissionsData | null>(null);
   const [manifest, setManifest] = useState<Record<string, Record<string, string>>>({});
@@ -216,33 +218,31 @@ export const UserPermissionsPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Manage Custom Privileges: {user.name}
             </h1>
-            <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-800 border border-slate-300">
+            <Badge variant="neutral" className="font-mono">
               {user.emp_id}
-            </span>
+            </Badge>
           </div>
           <p className="text-sm text-slate-500 mt-0.5">
             Grant individual user-level permissions that supplement or override the user's assigned role privileges.
           </p>
         </div>
 
-        {/* Action Buttons (Flat Solid Colors - STRICT) */}
+        {/* Save Button (Centralized Design System - STRICT) */}
         <div className="flex items-center gap-3">
-          <Link
-            to="/admin/privileges"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/admin/privileges')}
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to User Privileges</span>
-          </Link>
-          <button
-            type="button"
-            disabled={isSaving}
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            icon={<Save className="w-4 h-4" />}
+            isLoading={isSaving}
             onClick={handleSave}
-            className="inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-2xs"
           >
-            <Save className="w-4 h-4" />
-            {isSaving ? 'Saving Changes...' : 'Save Privileges'}
-          </button>
+            Save Privileges
+          </Button>
         </div>
       </div>
 

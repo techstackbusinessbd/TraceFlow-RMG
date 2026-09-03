@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Trash2, AlertOctagon, ShieldX, KeyRound } from 'lucide-react';
 import { userService, type UserItem } from '../../../services/userService';
+import { Button } from '../../../components/common/Button';
 
 export const UserPermanentDeletePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -187,22 +188,23 @@ export const UserPermanentDeletePage: React.FC = () => {
               )}
             </div>
 
-            {/* Action Buttons (Flat Solid Colors - STRICT) */}
+            {/* Action Buttons (Centralized Design System - STRICT) */}
             <div className="flex items-center justify-end gap-3 pt-3">
-              <Link
-                to="/admin/users/archived"
-                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate('/admin/users/archived')}
               >
                 Cancel
-              </Link>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                disabled={isPurging}
-                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-red-800 hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                variant="danger"
+                isLoading={isPurging}
+                icon={<Trash2 className="w-4 h-4" />}
               >
-                <Trash2 className="w-4 h-4" />
-                {isPurging ? 'Purging Record...' : 'Permanently Purge Record'}
-              </button>
+                Permanently Purge Record
+              </Button>
             </div>
           </form>
         </div>

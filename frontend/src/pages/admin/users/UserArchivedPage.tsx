@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { userService, type UserItem } from '../../../services/userService';
 import { useAuthStore } from '../../../store/authStore';
+import { Button } from '../../../components/common/Button';
+import { Badge } from '../../../components/common/Badge';
 
 export const UserArchivedPage: React.FC = () => {
   const navigate = useNavigate();
@@ -149,9 +151,9 @@ export const UserArchivedPage: React.FC = () => {
 
                     {/* Role */}
                     <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                      <Badge variant="neutral">
                         {user.roles?.[0]?.name || 'Former Staff'}
-                      </span>
+                      </Badge>
                     </td>
 
                     {/* Department */}
@@ -168,28 +170,29 @@ export const UserArchivedPage: React.FC = () => {
                     <td className="py-3.5 px-4 text-right">
                       <div className="inline-flex items-center gap-2">
                         {/* Restore Button */}
-                        <button
-                          type="button"
+                        <Button
+                          variant="primary"
+                          size="sm"
                           disabled={restoringId === user.id}
+                          isLoading={restoringId === user.id}
                           onClick={() => handleRestore(user.id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                          icon={<RotateCcw className="w-3.5 h-3.5" />}
                           title="Restore this account"
                         >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                          {restoringId === user.id ? 'Restoring...' : 'Restore'}
-                        </button>
+                          Restore
+                        </Button>
 
                         {/* Super Admin Permanent Purge Button */}
                         {isSuperAdmin && (
-                          <button
-                            type="button"
+                          <Button
+                            variant="danger"
+                            size="sm"
                             onClick={() => navigate(`/admin/users/${user.id}/permanent-delete`)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 transition-colors"
+                            icon={<Trash2 className="w-3.5 h-3.5" />}
                             title="Super Admin Permanent Force Delete"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
                             Purge
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </td>

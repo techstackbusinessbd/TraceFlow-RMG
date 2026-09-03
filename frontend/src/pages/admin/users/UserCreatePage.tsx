@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, UserPlus, AlertCircle } from 'lucide-react';
 import { userService, type Role } from '../../../services/userService';
+import { Button } from '../../../components/common/Button';
 
 export const UserCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -342,22 +343,23 @@ export const UserCreatePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Form Action Buttons (Flat Solid Colors - STRICT) */}
+          {/* Form Action Buttons (Centralized Design System - STRICT) */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <Link
-              to="/admin/users"
-              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate('/admin/users')}
             >
               Cancel
-            </Link>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              variant="primary"
+              icon={<UserPlus className="w-4 h-4" />}
+              isLoading={isSubmitting}
             >
-              <UserPlus className="w-4 h-4" />
-              {isSubmitting ? 'Creating User...' : 'Create User'}
-            </button>
+              Create User
+            </Button>
           </div>
         </form>
       </div>

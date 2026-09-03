@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Trash2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { userService, type UserItem } from '../../../services/userService';
+import { Button } from '../../../components/common/Button';
 
 export const UserDeletePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -148,23 +149,24 @@ export const UserDeletePage: React.FC = () => {
             </p>
           </div>
 
-          {/* Buttons (Solid Flat Colors - STRICT) */}
+          {/* Buttons (Centralized Design System - STRICT) */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <Link
-              to="/admin/users"
-              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate('/admin/users')}
             >
               Cancel
-            </Link>
-            <button
+            </Button>
+            <Button
               type="button"
-              disabled={isDeleting}
+              variant="danger"
+              isLoading={isDeleting}
               onClick={handleConfirmDelete}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              icon={<Trash2 className="w-4 h-4" />}
             >
-              <Trash2 className="w-4 h-4" />
-              {isDeleting ? 'Deactivating...' : 'Deactivate & Archive Account'}
-            </button>
+              Deactivate & Archive Account
+            </Button>
           </div>
         </div>
       </div>
