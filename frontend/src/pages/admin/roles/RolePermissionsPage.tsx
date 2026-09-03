@@ -2,21 +2,39 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
-  Shield, 
-  ShieldCheck, 
   Save, 
+  Check, 
   CheckSquare, 
   Square, 
+  Eye, 
+  Users, 
+  Database, 
+  ShoppingBag, 
+  Scissors, 
+  Activity, 
   CheckCircle2, 
-  Search, 
-  RotateCcw,
-  SlidersHorizontal
+  PackageCheck,
+  FileText
 } from 'lucide-react';
 import { userService, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
 
-type StatusFilter = 'all' | 'granted' | 'ungranted';
+interface MatrixRow {
+  id: string;
+  resourceName: string;
+  description: string;
+  viewKey?: string;
+  createKey?: string;
+  editKey?: string;
+  deleteKey?: string;
+  specialKeys?: Array<{
+    key: string;
+    label: string;
+    description: string;
+    risk: 'neutral' | 'warning' | 'danger';
+  }>;
+}
 
 export const RolePermissionsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,10 +49,8 @@ export const RolePermissionsPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Filters State
-  const [selectedModule, setSelectedModule] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  // Active Selected Module in Master-Detail layout
+  const [activeModule, setActiveModule] = useState<string>('User & Access Management');
 
   useEffect(() => {
     if (!id) return;
@@ -54,6 +70,12 @@ export const RolePermissionsPage: React.FC = () => {
         roleData.permissions?.forEach((p) => granted.add(p.name));
         setSelectedPermissions(granted);
         setInitialPermissions(new Set(granted));
+
+        // Default active module to first available
+        const moduleNames = Object.keys(manifestData);
+        if (moduleNames.length > 0) {
+          setActiveModule(moduleNames[0]);
+        }
       } catch (err: unknown) {
         const errorObj = err as { response?: { data?: { detail?: string } } };
         setErrorMessage(errorObj.response?.data?.detail || 'Failed to load permissions matrix.');
@@ -85,20 +107,6 @@ export const RolePermissionsPage: React.FC = () => {
     });
   };
 
-  const toggleModuleAll = (permissions: Record<string, string>, selectAll: boolean) => {
-    setSelectedPermissions((prev) => {
-      const next = new Set(prev);
-      Object.keys(permissions).forEach((key) => {
-        if (selectAll) {
-          next.add(key);
-        } else {
-          next.delete(key);
-        }
-      });
-      return next;
-    });
-  };
-
   const handleSave = async () => {
     if (!id) return;
     setIsSaving(true);
@@ -117,95 +125,277 @@ export const RolePermissionsPage: React.FC = () => {
     }
   };
 
-  // Compute module stats (granted / total per module)
+  // Module Stats Calculator (granted vs total per module)
   const moduleStats = useMemo(() => {
     const stats: Record<string, { total: number; granted: number }> = {};
     Object.entries(manifest).forEach(([modName, perms]) => {
       const total = Object.keys(perms).length;
       let granted = 0;
-      Object.keys(perms).forEach((k) => {
-        if (selectedPermissions.has(k)) granted++;
+      Object.keys(perms).forEach((key) => {
+        if (selectedPermissions.has(key)) granted++;
       });
       stats[modName] = { total, granted };
     });
     return stats;
   }, [manifest, selectedPermissions]);
 
-  // Filtered manifest calculation
-  const filteredManifest = useMemo(() => {
-    const result: Record<string, Record<string, string>> = {};
-    const query = searchQuery.trim().toLowerCase();
-
-    Object.entries(manifest).forEach(([modName, perms]) => {
-      // Module filter check
-      if (selectedModule !== 'ALL' && selectedModule !== modName) {
-        return;
-      }
-
-      const matchingPerms: Record<string, string> = {};
-      Object.entries(perms).forEach(([permKey, permDesc]) => {
-        const isGranted = selectedPermissions.has(permKey);
-
-        // Status filter check
-        if (statusFilter === 'granted' && !isGranted) return;
-        if (statusFilter === 'ungranted' && isGranted) return;
-
-        // Search text filter check
-        if (query) {
-          const matchKey = permKey.toLowerCase().includes(query);
-          const matchDesc = permDesc.toLowerCase().includes(query);
-          if (!matchKey && !matchDesc) return;
-        }
-
-        matchingPerms[permKey] = permDesc;
-      });
-
-      if (Object.keys(matchingPerms).length > 0) {
-        result[modName] = matchingPerms;
-      }
-    });
-
-    return result;
-  }, [manifest, selectedModule, searchQuery, statusFilter, selectedPermissions]);
-
-  const totalVisibleCount = useMemo(() => {
-    return Object.values(filteredManifest).reduce((acc, curr) => acc + Object.keys(curr).length, 0);
-  }, [filteredManifest]);
-
-  const handleResetFilters = () => {
-    setSelectedModule('ALL');
-    setSearchQuery('');
-    setStatusFilter('all');
+  // Module Icons mapping
+  const getModuleIcon = (modName: string) => {
+    switch (modName) {
+      case 'User & Access Management':
+        return <Users className="w-4 h-4 shrink-0" />;
+      case 'Master Data Management':
+        return <Database className="w-4 h-4 shrink-0" />;
+      case 'Order Management & Planning':
+        return <ShoppingBag className="w-4 h-4 shrink-0" />;
+      case 'Cutting & QR Bundling':
+        return <Scissors className="w-4 h-4 shrink-0" />;
+      case 'Sewing Floor Tracking':
+        return <Activity className="w-4 h-4 shrink-0" />;
+      case 'Quality Control (QC)':
+        return <CheckCircle2 className="w-4 h-4 shrink-0" />;
+      case 'Finishing, Packing & Export':
+        return <PackageCheck className="w-4 h-4 shrink-0" />;
+      default:
+        return <FileText className="w-4 h-4 shrink-0" />;
+    }
   };
 
-  if (isLoading) {
+  // Module Matrix Rows Definition (Business Entity vs CRUD Actions)
+  const getModuleRows = (modName: string): MatrixRow[] => {
+    switch (modName) {
+      case 'User & Access Management':
+        return [
+          {
+            id: 'users',
+            resourceName: 'User Directory & Profiles',
+            description: 'Employee login credentials, factory designations, and account status',
+            viewKey: 'users.view',
+            createKey: 'users.create',
+            editKey: 'users.edit',
+            deleteKey: 'users.delete',
+            specialKeys: [
+              {
+                key: 'users.restore',
+                label: 'Restore Account',
+                description: 'Restore deactivated or archived users',
+                risk: 'warning',
+              },
+              {
+                key: 'users.force_delete',
+                label: 'Purge Account',
+                description: 'Permanent hard delete (Super Admin only)',
+                risk: 'danger',
+              },
+            ],
+          },
+          {
+            id: 'roles',
+            resourceName: 'Roles & Authority Boundaries',
+            description: 'Role catalog, custom roles, and module authorization matrices',
+            viewKey: 'roles.view',
+            createKey: 'roles.create',
+            editKey: 'roles.edit',
+            deleteKey: 'roles.delete',
+          },
+          {
+            id: 'audit',
+            resourceName: 'Forensic Audit Vault',
+            description: 'Enterprise immutable WORM audit logs and security telemetry',
+            viewKey: 'audit.view',
+          },
+        ];
+
+      case 'Master Data Management':
+        return [
+          {
+            id: 'master_data',
+            resourceName: 'Core Garment Registry',
+            description: 'Buyer accounts, brand styles, colorways, size matrices, and sewing line IDs',
+            viewKey: 'master_data.view',
+            createKey: 'master_data.create',
+            editKey: 'master_data.edit',
+            deleteKey: 'master_data.delete',
+          },
+        ];
+
+      case 'Order Management & Planning':
+        return [
+          {
+            id: 'orders',
+            resourceName: 'Buyer Purchase Orders (PO)',
+            description: 'Order quantities, export delivery schedules, and style mappings',
+            viewKey: 'orders.view',
+            createKey: 'orders.create',
+            editKey: 'orders.edit',
+            deleteKey: 'orders.delete',
+          },
+          {
+            id: 'planning',
+            resourceName: 'Line Allocation & Capacity Plans',
+            description: 'Sewing line allocations, target daily output, and production scheduling',
+            viewKey: 'planning.view',
+            editKey: 'planning.edit',
+          },
+        ];
+
+      case 'Cutting & QR Bundling':
+        return [
+          {
+            id: 'cutting',
+            resourceName: 'Spreading, Lays & Marker Plans',
+            description: 'Fabric roll consumption, cutting orders, and marker lay efficiency',
+            viewKey: 'cutting.view',
+            createKey: 'cutting.create',
+            specialKeys: [
+              {
+                key: 'cutting.bundle_generate',
+                label: 'Generate QR Bundles',
+                description: 'Generate and print single-piece QR bundle tickets',
+                risk: 'neutral',
+              },
+            ],
+          },
+        ];
+
+      case 'Sewing Floor Tracking':
+        return [
+          {
+            id: 'sewing',
+            resourceName: 'Real-time Bundle Flow Tracking',
+            description: 'Monitor sewing line throughput, real-time pace, and workstation bottlenecks',
+            viewKey: 'sewing.view',
+            specialKeys: [
+              {
+                key: 'sewing.line_in',
+                label: 'Scan Line-In',
+                description: 'Scan bundle tickets entering sewing lines',
+                risk: 'neutral',
+              },
+              {
+                key: 'sewing.line_out',
+                label: 'Scan Line-Out',
+                description: 'Scan completed garments departing sewing lines',
+                risk: 'neutral',
+              },
+            ],
+          },
+        ];
+
+      case 'Quality Control (QC)':
+        return [
+          {
+            id: 'qc',
+            resourceName: 'Garment Inspection & Defect DHU',
+            description: 'End-line quality boards, DHU analytics, and garment defect classification',
+            viewKey: 'qc.view',
+            specialKeys: [
+              {
+                key: 'qc.inspect',
+                label: '100% Inspection',
+                description: 'Perform 100% garment quality inspection scan',
+                risk: 'neutral',
+              },
+              {
+                key: 'qc.defect_log',
+                label: 'Log Defect & Alteration',
+                description: 'Record specific defect points and route garment to alteration line',
+                risk: 'warning',
+              },
+            ],
+          },
+        ];
+
+      case 'Finishing, Packing & Export':
+        return [
+          {
+            id: 'finishing_packing',
+            resourceName: 'Finishing, Cartons & Shipments',
+            description: 'Iron and wash verification, carton scanning, and export invoice stuffing',
+            viewKey: 'finishing.view',
+            specialKeys: [
+              {
+                key: 'packing.view',
+                label: 'View Packing Lists',
+                description: 'View master carton packaging records',
+                risk: 'neutral',
+              },
+              {
+                key: 'packing.carton_scan',
+                label: 'Carton Scan',
+                description: 'Scan inspected garments into shipping cartons',
+                risk: 'neutral',
+              },
+              {
+                key: 'commercial.export',
+                label: 'Export Clearance',
+                description: 'Approve final container stuffing and export commercial invoices',
+                risk: 'danger',
+              },
+            ],
+          },
+        ];
+
+      default:
+        return [];
+    }
+  };
+
+  // Quick Preset Actions for Active Module
+  const selectAllInActiveModule = () => {
+    const activePerms = manifest[activeModule];
+    if (!activePerms) return;
+    setSelectedPermissions((prev) => {
+      const next = new Set(prev);
+      Object.keys(activePerms).forEach((key) => next.add(key));
+      return next;
+    });
+  };
+
+  const deselectAllInActiveModule = () => {
+    const activePerms = manifest[activeModule];
+    if (!activePerms) return;
+    setSelectedPermissions((prev) => {
+      const next = new Set(prev);
+      Object.keys(activePerms).forEach((key) => next.delete(key));
+      return next;
+    });
+  };
+
+  const selectReadOnlyInActiveModule = () => {
+    const activePerms = manifest[activeModule];
+    if (!activePerms) return;
+    setSelectedPermissions((prev) => {
+      const next = new Set(prev);
+      Object.keys(activePerms).forEach((key) => {
+        if (key.endsWith('.view') || key.endsWith('.read')) {
+          next.add(key);
+        } else {
+          next.delete(key);
+        }
+      });
+      return next;
+    });
+  };
+
+  if (isLoading || !role) {
     return (
-      <div className="py-20 text-center text-slate-500">
+      <div className="py-24 text-center text-slate-500">
         <div className="inline-flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin"></div>
-          <span>Loading permissions matrix...</span>
+          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent animate-spin" />
+          <span className="text-sm font-semibold">Loading system authorization matrix...</span>
         </div>
       </div>
     );
   }
 
-  if (!role) {
-    return (
-      <div className="max-w-2xl mx-auto p-6 bg-white border border-slate-200 text-center space-y-4">
-        <h2 className="text-lg font-bold text-slate-900">Role Not Found</h2>
-        <Link to="/admin/roles" className="text-blue-600 font-semibold hover:underline">
-          Return to Roles List
-        </Link>
-      </div>
-    );
-  }
-
   const isSuperAdmin = role.name === 'Super Admin';
-  const allModulesList = Object.keys(manifest);
+  const currentRows = getModuleRows(activeModule);
+  const currentStats = moduleStats[activeModule] || { total: 0, granted: 0 };
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Breadcrumb */}
+      {/* Top Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <Link
@@ -217,18 +407,18 @@ export const RolePermissionsPage: React.FC = () => {
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Configure Permissions: {role.name}
+              Permissions Matrix: {role.name}
             </h1>
             <Badge variant={isSuperAdmin ? 'root' : 'info'}>
               {selectedPermissions.size} Granted
             </Badge>
           </div>
           <p className="text-sm text-slate-500 mt-0.5">
-            Configure module-level access and functional privileges assigned to this system role.
+            Configure module-level access and functional authorization boundaries for this role profile.
           </p>
         </div>
 
-        {/* Action Controls */}
+        {/* Header Action Controls */}
         <div className="flex items-center gap-3">
           <Button
             variant="secondary"
@@ -247,9 +437,9 @@ export const RolePermissionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Success Alert */}
+      {/* Success Alert Banner */}
       {successMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center justify-between">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium rounded-md flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             <span>{successMessage}</span>
@@ -258,303 +448,300 @@ export const RolePermissionsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Error Alert */}
+      {/* Error Alert Banner */}
       {errorMessage && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-center justify-between">
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-sm font-medium rounded-md flex items-center justify-between">
           <span>{errorMessage}</span>
-          <button type="button" onClick={() => setErrorMessage(null)} className="text-red-700 font-bold">✕</button>
-        </div>
-      )}
-
-      {/* Super Admin Notice */}
-      {isSuperAdmin && (
-        <div className="p-4 bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-start gap-3">
-          <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
-          <div>
-            <div className="font-bold">Super Admin Wildcard Authority:</div>
-            <p className="mt-0.5 leading-relaxed">
-              Super Admin possesses root bypass privileges across the entire application. Modifying these checkboxes changes explicit database grants, but system kernel gates ensure Super Admin never gets locked out.
-            </p>
-          </div>
+          <button type="button" onClick={() => setErrorMessage(null)} className="text-rose-700 font-bold">✕</button>
         </div>
       )}
 
       {/* ==================================================================== */}
-      {/* MODULE-WISE FILTER & SEARCH CONSOLE */}
+      {/* MASTER-DETAIL WORKSPACE: LEFT MODULE LIST + RIGHT MATRIX TABLE        */}
       {/* ==================================================================== */}
-      <div className="bg-white border border-slate-200 shadow-xs p-4 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
-            <SlidersHorizontal className="w-4 h-4 text-blue-600" />
-            <span>Filter Permissions Matrix</span>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* ------------------------------------------------------------------ */}
+        {/* LEFT COLUMN: SYSTEM MODULES NAVIGATION LIST                        */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden">
+          <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              System Modules ({Object.keys(manifest).length})
+            </span>
+            <span className="text-[11px] font-mono font-semibold text-slate-500">
+              {selectedPermissions.size} Total Gates
+            </span>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap text-xs">
-            {/* Status Filter Buttons */}
-            <div className="flex items-center border border-slate-300 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setStatusFilter('all')}
-                className={`px-3 py-1.5 font-medium transition-colors ${
-                  statusFilter === 'all'
-                    ? 'bg-slate-800 text-white'
-                    : 'bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                All Status
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('granted')}
-                className={`px-3 py-1.5 font-medium border-l border-slate-300 transition-colors ${
-                  statusFilter === 'granted'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                Granted Only
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('ungranted')}
-                className={`px-3 py-1.5 font-medium border-l border-slate-300 transition-colors ${
-                  statusFilter === 'ungranted'
-                    ? 'bg-slate-600 text-white'
-                    : 'bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                Ungranted Only
-              </button>
+          <div className="divide-y divide-slate-100">
+            {Object.keys(manifest).map((modName) => {
+              const isActive = activeModule === modName;
+              const stats = moduleStats[modName] || { total: 0, granted: 0 };
+              const isFull = stats.granted === stats.total && stats.total > 0;
+              const isPartial = stats.granted > 0 && stats.granted < stats.total;
+
+              return (
+                <button
+                  key={modName}
+                  type="button"
+                  onClick={() => setActiveModule(modName)}
+                  className={`w-full text-left px-4 py-3.5 transition-colors flex items-center justify-between gap-3 ${
+                    isActive
+                      ? 'bg-slate-900 text-white font-bold'
+                      : 'hover:bg-slate-50 text-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={isActive ? 'text-blue-400' : 'text-slate-400'}>
+                      {getModuleIcon(modName)}
+                    </div>
+                    <span className="text-sm truncate">{modName}</span>
+                  </div>
+
+                  <Badge
+                    variant={
+                      isActive
+                        ? 'root'
+                        : isFull
+                        ? 'success'
+                        : isPartial
+                        ? 'info'
+                        : 'neutral'
+                    }
+                    className="text-[11px] shrink-0 font-mono"
+                  >
+                    {stats.granted}/{stats.total}
+                  </Badge>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ------------------------------------------------------------------ */}
+        {/* RIGHT COLUMN: ENTERPRISE PERMISSION MATRIX TABLE                   */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden space-y-0">
+          
+          {/* Module Toolbar & Quick Presets */}
+          <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
+                <span className="text-blue-600">{getModuleIcon(activeModule)}</span>
+                <span>{activeModule}</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Authorized {currentStats.granted} of {currentStats.total} security gates in this module
+              </p>
             </div>
 
-            {/* Reset Button */}
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors"
-              title="Reset all filters"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Reset Filters
-            </button>
-          </div>
-        </div>
-
-        {/* Search & Module Dropdown Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Text Search Input */}
-          <div className="relative md:col-span-2">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search permission slug (e.g. users.delete) or description..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 bg-white text-slate-900 focus:outline-none focus:border-blue-600"
-            />
-          </div>
-
-          {/* Module Selector Dropdown */}
-          <div>
-            <select
-              value={selectedModule}
-              onChange={(e) => setSelectedModule(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 bg-white text-slate-900 focus:outline-none focus:border-blue-600 font-medium"
-            >
-              <option value="ALL">All Modules ({allModulesList.length})</option>
-              {allModulesList.map((modName) => {
-                const stat = moduleStats[modName];
-                return (
-                  <option key={modName} value={modName}>
-                    {modName} ({stat ? `${stat.granted}/${stat.total}` : ''})
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-        </div>
-
-        {/* Horizontal Module Filter Pills (Clickable Tabs) */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-thin">
-          <button
-            type="button"
-            onClick={() => setSelectedModule('ALL')}
-            className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors border ${
-              selectedModule === 'ALL'
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-            }`}
-          >
-            All Modules ({allModulesList.length})
-          </button>
-
-          {allModulesList.map((modName) => {
-            const isSelected = selectedModule === modName;
-            const stat = moduleStats[modName];
-            const isFullyGranted = stat && stat.granted === stat.total;
-
-            return (
-              <button
-                key={modName}
-                type="button"
-                onClick={() => setSelectedModule(modName)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors border ${
-                  isSelected
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
+            {/* 1-Click Action Presets */}
+            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+              <Button
+                variant="subtle"
+                size="sm"
+                icon={<CheckSquare className="w-3.5 h-3.5" />}
+                onClick={selectAllInActiveModule}
               >
-                <span>{modName}</span>
-                <span className={`px-1.5 py-0.2 text-[10px] ${
-                  isSelected
-                    ? 'bg-blue-800 text-blue-100'
-                    : isFullyGranted
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-slate-200 text-slate-700'
-                }`}>
-                  {stat ? `${stat.granted}/${stat.total}` : ''}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                All ({currentStats.total})
+              </Button>
+              <Button
+                variant="subtle"
+                size="sm"
+                icon={<Eye className="w-3.5 h-3.5" />}
+                onClick={selectReadOnlyInActiveModule}
+              >
+                Read-Only
+              </Button>
+              <Button
+                variant="subtle"
+                size="sm"
+                icon={<Square className="w-3.5 h-3.5" />}
+                onClick={deselectAllInActiveModule}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
 
-        {/* Results Info Counter */}
-        <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <span>
-            Showing <strong className="text-slate-800">{totalVisibleCount}</strong> permissions across{' '}
-            <strong className="text-slate-800">{Object.keys(filteredManifest).length}</strong> active module(s)
-          </span>
-          {searchQuery && (
-            <span className="text-blue-600 font-medium">
-              Filtered by: "{searchQuery}"
-            </span>
-          )}
+          {/* Clean Dense Enterprise Matrix Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse table-fixed">
+              <thead>
+                <tr className="bg-slate-100/70 border-b border-slate-200 text-xs text-slate-700 font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4 w-[240px]">Business Resource</th>
+                  <th className="py-3 px-2 w-20 text-center">View</th>
+                  <th className="py-3 px-2 w-20 text-center">Create</th>
+                  <th className="py-3 px-2 w-20 text-center">Edit</th>
+                  <th className="py-3 px-2 w-20 text-center">Delete</th>
+                  <th className="py-3 px-4 w-60">Advanced Operations</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-slate-200 text-sm text-slate-700">
+                {currentRows.map((row) => {
+                  return (
+                    <tr key={row.id} className="hover:bg-slate-50/80 transition-colors group">
+                      
+                      {/* 1. Resource & Description */}
+                      <td className="py-3.5 px-4 align-top">
+                        <div className="font-bold text-slate-900 text-sm">{row.resourceName}</div>
+                        <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">{row.description}</div>
+                      </td>
+
+                      {/* 2. VIEW Action */}
+                      <td className="py-3.5 px-2 text-center align-middle">
+                        {row.viewKey ? (
+                          <button
+                            type="button"
+                            title={`Toggle ${row.viewKey}`}
+                            onClick={() => togglePermission(row.viewKey!)}
+                            className={`w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center transition-colors shadow-2xs ${
+                              selectedPermissions.has(row.viewKey)
+                                ? 'bg-blue-600 text-white font-bold'
+                                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-500'
+                            }`}
+                          >
+                            {selectedPermissions.has(row.viewKey) ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <span className="text-xs font-mono">—</span>
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-slate-300 font-mono text-xs select-none">—</span>
+                        )}
+                      </td>
+
+                      {/* 3. CREATE Action */}
+                      <td className="py-3.5 px-2 text-center align-middle">
+                        {row.createKey ? (
+                          <button
+                            type="button"
+                            title={`Toggle ${row.createKey}`}
+                            onClick={() => togglePermission(row.createKey!)}
+                            className={`w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center transition-colors shadow-2xs ${
+                              selectedPermissions.has(row.createKey)
+                                ? 'bg-emerald-600 text-white font-bold'
+                                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-500'
+                            }`}
+                          >
+                            {selectedPermissions.has(row.createKey) ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <span className="text-xs font-mono">—</span>
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-slate-300 font-mono text-xs select-none">—</span>
+                        )}
+                      </td>
+
+                      {/* 4. EDIT Action */}
+                      <td className="py-3.5 px-2 text-center align-middle">
+                        {row.editKey ? (
+                          <button
+                            type="button"
+                            title={`Toggle ${row.editKey}`}
+                            onClick={() => togglePermission(row.editKey!)}
+                            className={`w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center transition-colors shadow-2xs ${
+                              selectedPermissions.has(row.editKey)
+                                ? 'bg-amber-500 text-white font-bold'
+                                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-500'
+                            }`}
+                          >
+                            {selectedPermissions.has(row.editKey) ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <span className="text-xs font-mono">—</span>
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-slate-300 font-mono text-xs select-none">—</span>
+                        )}
+                      </td>
+
+                      {/* 5. DELETE Action */}
+                      <td className="py-3.5 px-2 text-center align-middle">
+                        {row.deleteKey ? (
+                          <button
+                            type="button"
+                            title={`Toggle ${row.deleteKey}`}
+                            onClick={() => togglePermission(row.deleteKey!)}
+                            className={`w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center transition-colors shadow-2xs ${
+                              selectedPermissions.has(row.deleteKey)
+                                ? 'bg-rose-600 text-white font-bold'
+                                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-500'
+                            }`}
+                          >
+                            {selectedPermissions.has(row.deleteKey) ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <span className="text-xs font-mono">—</span>
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-slate-300 font-mono text-xs select-none">—</span>
+                        )}
+                      </td>
+
+                      {/* 6. Special / Advanced Action Badges */}
+                      <td className="py-3.5 px-4 align-middle">
+                        {row.specialKeys && row.specialKeys.length > 0 ? (
+                          <div className="flex flex-col gap-1.5">
+                            {row.specialKeys.map((sp) => {
+                              const isGranted = selectedPermissions.has(sp.key);
+                              return (
+                                <button
+                                  key={sp.key}
+                                  type="button"
+                                  onClick={() => togglePermission(sp.key)}
+                                  className={`px-2.5 py-1 text-xs font-semibold rounded-md border text-left transition-colors flex items-center justify-between gap-2 ${
+                                    isGranted
+                                      ? sp.risk === 'danger'
+                                        ? 'bg-rose-50 text-rose-800 border-rose-300 shadow-2xs'
+                                        : sp.risk === 'warning'
+                                        ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-2xs'
+                                        : 'bg-blue-50 text-blue-800 border-blue-300 shadow-2xs'
+                                      : 'bg-white hover:bg-slate-50 text-slate-500 border-slate-200'
+                                  }`}
+                                  title={sp.description}
+                                >
+                                  <span className="truncate">{sp.label}</span>
+                                  <span
+                                    className={`w-4 h-4 rounded-sm flex items-center justify-center text-[10px] font-bold ${
+                                      isGranted
+                                        ? sp.risk === 'danger'
+                                          ? 'bg-rose-600 text-white'
+                                          : sp.risk === 'warning'
+                                          ? 'bg-amber-600 text-white'
+                                          : 'bg-blue-600 text-white'
+                                        : 'border border-slate-300 text-transparent'
+                                    }`}
+                                  >
+                                    ✓
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-xs italic">Standard CRUD only</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {/* ==================================================================== */}
-      {/* PERMISSIONS MATRIX CARDS */}
+      {/* FLOATING STICKY SAVE DOCK (DISCARD / SAVE ON ACTIVE UNSAVED EDITS)   */}
       {/* ==================================================================== */}
-      {Object.keys(filteredManifest).length === 0 ? (
-        <div className="bg-white border border-slate-200 p-12 text-center space-y-3">
-          <Search className="w-8 h-8 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No matching permissions found</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
-            No functional permissions match your selected filter criteria. Try searching for a different keyword or resetting your filters.
-          </p>
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-          >
-            Reset All Filters
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(filteredManifest).map(([moduleName, permissions]) => {
-            const permEntries = Object.entries(permissions);
-            const originalModulePerms = manifest[moduleName] || {};
-            const stat = moduleStats[moduleName];
-
-            return (
-              <div key={moduleName} className="bg-white border border-slate-200 shadow-xs overflow-hidden">
-                {/* Module Group Header */}
-                <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-blue-50 border border-blue-200 text-blue-700">
-                      <Shield className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-900 text-sm block sm:inline">{moduleName}</span>
-                      <span className="text-xs text-slate-500 font-medium ml-0 sm:ml-2">
-                        ({stat ? `${stat.granted} of ${stat.total} granted` : `${permEntries.length} permissions`})
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Group Select All / Deselect All */}
-                  <div className="flex items-center gap-3 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => toggleModuleAll(originalModulePerms, true)}
-                      className="text-blue-600 hover:text-blue-800 font-semibold"
-                    >
-                      Select All in Module
-                    </button>
-                    <span className="text-slate-300">|</span>
-                    <button
-                      type="button"
-                      onClick={() => toggleModuleAll(originalModulePerms, false)}
-                      className="text-slate-500 hover:text-slate-700 font-semibold"
-                    >
-                      Deselect All
-                    </button>
-                  </div>
-                </div>
-
-                {/* Permissions Checkbox Grid */}
-                <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {permEntries.map(([permKey, permDesc]) => {
-                    const isChecked = selectedPermissions.has(permKey);
-
-                    const getActionBadge = (key: string) => {
-                      if (key.endsWith('.view') || key.endsWith('.read') || key.includes('.overview')) {
-                        return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 rounded-sm shrink-0">VIEW</span>;
-                      }
-                      if (key.endsWith('.create') || key.endsWith('.store') || key.includes('.add')) {
-                        return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-sm shrink-0">CREATE</span>;
-                      }
-                      if (key.endsWith('.update') || key.endsWith('.edit') || key.includes('.assign')) {
-                        return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 rounded-sm shrink-0">EDIT</span>;
-                      }
-                      if (key.endsWith('.delete') || key.endsWith('.destroy') || key.includes('.purge')) {
-                        return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 rounded-sm shrink-0">DELETE</span>;
-                      }
-                      return <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 rounded-sm shrink-0">ACTION</span>;
-                    };
-
-                    return (
-                      <label
-                        key={permKey}
-                        onClick={() => togglePermission(permKey)}
-                        className={`p-3.5 border rounded-md flex items-start gap-3 cursor-pointer transition-colors select-none ${
-                          isChecked
-                            ? 'border-blue-400 bg-blue-50/50'
-                            : 'border-slate-200 hover:bg-slate-50/80'
-                        }`}
-                      >
-                        <div className="mt-0.5 text-blue-600 shrink-0">
-                          {isChecked ? (
-                            <CheckSquare className="w-4 h-4 text-blue-600" />
-                          ) : (
-                            <Square className="w-4 h-4 text-slate-300" />
-                          )}
-                        </div>
-                        <div className="text-xs min-w-0 flex-1">
-                          <div className="font-mono font-bold text-slate-900 flex items-center gap-2 flex-wrap">
-                            <span className="truncate">{permKey}</span>
-                            {getActionBadge(permKey)}
-                            {isChecked && (
-                              <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 rounded-sm">
-                                Active
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-slate-600 mt-1 leading-relaxed">{permDesc}</div>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Floating Sticky Save Dock (Appears when unsaved edits are present) */}
       {hasUnsavedChanges && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-sm text-white px-5 py-3 rounded-lg shadow-xl border border-slate-700 flex items-center gap-5 animate-in fade-in slide-in-from-bottom-3 duration-200">
           <div className="flex items-center gap-2.5 text-xs font-semibold">
