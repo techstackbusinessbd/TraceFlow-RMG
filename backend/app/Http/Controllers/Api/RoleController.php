@@ -80,7 +80,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Display a listing of all roles with counts.
+     * Display a listing of all roles with counts and slug.
      */
     public function index(Request $request): JsonResponse
     {
@@ -89,7 +89,12 @@ class RoleController extends Controller
         $roles = Role::with(['permissions'])
             ->withCount('users')
             ->orderBy('name', 'asc')
-            ->get();
+            ->get()
+            ->map(function ($role) {
+                $roleArray = $role->toArray();
+                $roleArray['slug'] = Str::slug($role->name);
+                return $roleArray;
+            });
 
         return response()->json([
             'success' => true,
@@ -125,34 +130,39 @@ class RoleController extends Controller
             'created_at' => now(),
         ]);
 
+        $roleData = $role->load('permissions')->toArray();
+        $roleData['slug'] = Str::slug($role->name);
+
         return response()->json([
             'success' => true,
             'message' => 'System role created successfully.',
-            'data' => $role->load('permissions'),
+            'data' => $roleData,
         ], 201);
     }
 
     /**
-     * Display the specified role.
+     * Display the specified role by ID or slug.
      */
     public function show(Request $request, string $id): JsonResponse
     {
         $this->authorizePermission($request->user(), 'roles.view');
 
-        $role = Role::with('permissions')->withCount('users')->findOrFail($id);
+        $role = $this->resolveRole($id);
+        $roleData = $role->toArray();
+        $roleData['slug'] = Str::slug($role->name);
 
         return response()->json([
             'success' => true,
-            'data' => $role,
+            'data' => $roleData,
         ]);
     }
 
     /**
-     * Update permissions for a specific role.
+     * Update permissions for a specific role by ID or slug.
      */
     public function updatePermissions(UpdateRolePermissionsRequest $request, string $id): JsonResponse
     {
-        $role = Role::findOrFail($id);
+        $role = $this->resolveRole($id);
 
         if ($role->name === 'Super Admin' && ! $request->user()->hasRole('Super Admin')) {
             return response()->json([
@@ -195,7 +205,7 @@ class RoleController extends Controller
     {
         $this->authorizePermission($request->user(), 'roles.delete');
 
-        $role = Role::withCount('users')->findOrFail($id);
+        $role = $this->resolveRole($id);
 
         if ($role->name === 'Super Admin') {
             return response()->json([
@@ -224,7 +234,7 @@ class RoleController extends Controller
             'emp_id' => $request->user()->emp_id,
             'action' => 'DELETE_ROLE',
             'entity_type' => 'Role',
-            'entity_id' => (string) $id,
+            'entity_id' => (string) $role->id,
             'old_values' => json_encode(['name' => $role->name]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
@@ -235,6 +245,39 @@ class RoleController extends Controller
             'success' => true,
             'message' => 'Role deleted successfully.',
         ]);
+    }
+
+    /**
+     * Resolve Role model by numeric ID or URL Slug.
+     */
+    private function resolveRole(string $identifier): Role
+    {
+        if (is_numeric($identifier)) {
+            return Role::with('permissions')->withCount('users')->findOrFail((int) $identifier);
+        }
+
+        $normalized = str_replace('-', ' ', $identifier);
+        $role = Role::with('permissions')
+            ->withCount('users')
+            ->whereRaw('LOWER(name) = ?', [strtolower($normalized)])
+            ->orWhereRaw('LOWER(name) = ?', [strtolower($identifier)])
+            ->first();
+
+        if (! $role) {
+            $allRoles = Role::with('permissions')->withCount('users')->get();
+            $role = $allRoles->first(fn ($r) => Str::slug($r->name) === strtolower($identifier));
+        }
+
+        if (! $role) {
+            abort(response()->json([
+                'type' => 'https://tools.ietf.org/html/rfc7807',
+                'title' => 'Role Not Found',
+                'status' => 404,
+                'detail' => "No system role found matching identifier [{$identifier}].",
+            ], 404));
+        }
+
+        return $role;
     }
 
     private function authorizePermission(User $user, string $permission): void
@@ -253,3 +296,4 @@ class RoleController extends Controller
         }
     }
 }
+

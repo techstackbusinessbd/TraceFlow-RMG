@@ -202,7 +202,7 @@ export const RoleListPage: React.FC = () => {
                 <div className="pt-4 mt-4 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => navigate(`/admin/roles/${role.id}/permissions`)}
+                    onClick={() => navigate(`/admin/roles/${role.slug || role.id}/permissions`)}
                     className={`w-full py-2 px-3 text-xs font-semibold flex items-center justify-center gap-2 transition-colors ${
                       isSuperAdmin
                         ? 'bg-purple-700 hover:bg-purple-800 text-white'

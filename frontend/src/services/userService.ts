@@ -3,6 +3,7 @@ import apiClient from './apiClient';
 export interface Role {
   id: number;
   name: string;
+  slug?: string;
   guard_name: string;
   permissions?: { id: number; name: string }[];
   users_count?: number;
