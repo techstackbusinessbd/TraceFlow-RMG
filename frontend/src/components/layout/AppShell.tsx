@@ -115,10 +115,10 @@ export const AppShell: React.FC = () => {
     return ALL_SYSTEM_MODULES.find((m) => m.id === 'system-admin') || ALL_SYSTEM_MODULES[0];
   }, [location.pathname]);
 
-  // Auto-expand submodule for current route inside active module
+  // Auto-expand ONLY the submodule containing the current active route
   useEffect(() => {
     const currentPath = location.pathname;
-    const newSubs: Record<string, boolean> = { ...expandedSubmodules };
+    const newSubs: Record<string, boolean> = {};
 
     for (const sub of activeModule.submodules) {
       let subHasActiveRoute = false;
@@ -499,7 +499,7 @@ export const AppShell: React.FC = () => {
             )}
 
             {activeModule.submodules.map((sub) => {
-              const isSubExpanded = expandedSubmodules[sub.id] !== false; // default expanded
+              const isSubExpanded = Boolean(expandedSubmodules[sub.id]);
 
               return (
                 <div key={sub.id} className="space-y-1">
