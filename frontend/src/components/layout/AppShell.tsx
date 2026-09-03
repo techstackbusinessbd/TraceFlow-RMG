@@ -25,6 +25,7 @@ import {
   Package,
   Building2,
   Sliders,
+  Library,
   CheckCheck,
   TrendingUp,
   Lock,
@@ -216,6 +217,8 @@ export const AppShell: React.FC = () => {
         return <CheckCheck className={className} />;
       case 'Sliders':
         return <Sliders className={className} />;
+      case 'Library':
+        return <Library className={className} />;
       case 'Lock':
         return <Lock className={className} />;
       case 'Shield':

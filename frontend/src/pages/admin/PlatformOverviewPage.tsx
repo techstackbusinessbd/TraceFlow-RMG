@@ -233,7 +233,7 @@ export const PlatformOverviewPage: React.FC = () => {
         </Link>
 
         <Link
-          to="/master-data/buyers"
+          to="/master-data/organization"
           className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 transition-colors group shadow-xs"
         >
           <div className="flex items-center justify-between">
@@ -242,8 +242,8 @@ export const PlatformOverviewPage: React.FC = () => {
                 <FileCheck className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Master Data</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Buyers, Lines, Defects</p>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Master Library</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Organization, Buyers, Standards</p>
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all" />

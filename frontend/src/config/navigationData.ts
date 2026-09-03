@@ -62,15 +62,25 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
     ],
   },
 
-  // 2. MOD-02: Master Data Configurations
+  // 2. MOD-02: Enterprise Master Library
   {
     id: 'master-data',
     code: 'MOD-02',
-    title: 'Factory & Partner Master Data',
-    shortTitle: 'Master Data',
-    iconName: 'Sliders',
-    defaultPath: '/master-data/buyers',
+    title: 'Enterprise Master Library',
+    shortTitle: 'Master Library',
+    iconName: 'Library',
+    defaultPath: '/master-data/organization',
     submodules: [
+      {
+        id: 'master-organization',
+        title: 'Organization Setup',
+        children: [
+          { id: 'master-org', title: 'Group Organization', path: '/master-data/organization' },
+          { id: 'master-companies', title: 'Sister Companies', path: '/master-data/companies' },
+          { id: 'master-units', title: 'Factory Plants', path: '/master-data/units' },
+          { id: 'master-lines', title: 'Lines & Sections', path: '/master-data/lines' },
+        ],
+      },
       {
         id: 'master-partners',
         title: 'Business Partners',
@@ -80,12 +90,21 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
         ],
       },
       {
-        id: 'master-plant',
-        title: 'Plant Infrastructure',
+        id: 'master-product',
+        title: 'Product Specifications',
         children: [
-          { id: 'master-lines', title: 'Sewing Lines & Tables', path: '/master-data/lines' },
-          { id: 'master-sizes', title: 'Size Ranges & Sort Order', path: '/master-data/sizes' },
-          { id: 'master-defects', title: 'Defect Taxonomy & Codes', path: '/master-data/defects' },
+          { id: 'master-styles', title: 'Style & Articles', path: '/master-data/styles' },
+          { id: 'master-colors', title: 'Colors & Lab Dips', path: '/master-data/colors' },
+          { id: 'master-sizes', title: 'Size & Inseam Matrix', path: '/master-data/sizes' },
+        ],
+      },
+      {
+        id: 'master-standards',
+        title: 'Standards & IE',
+        children: [
+          { id: 'master-operations', title: 'IE Operation Breakdown', path: '/master-data/operations' },
+          { id: 'master-defects', title: 'QC Defect Taxonomy', path: '/master-data/defects' },
+          { id: 'master-uom', title: 'Units of Measure (UOM)', path: '/master-data/uom' },
         ],
       },
     ],
