@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Trash2, AlertOctagon, ShieldX, KeyRound } from 'lucide-react';
 import { userService, type UserItem } from '../../../services/userService';
+import { alertService } from '../../../services/alertService';
 import { Button } from '../../../components/common/Button';
 
 export const UserPermanentDeletePage: React.FC = () => {
@@ -12,7 +13,6 @@ export const UserPermanentDeletePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isPurging, setIsPurging] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
-  const [globalError, setGlobalError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export const UserPermanentDeletePage: React.FC = () => {
         setUser(data);
       } catch (err: unknown) {
         const errorObj = err as { response?: { data?: { detail?: string } } };
-        setGlobalError(errorObj.response?.data?.detail || 'Failed to load user information.');
+        alertService.error('Loading Error', errorObj.response?.data?.detail || 'Failed to load user information.');
       } finally {
         setIsLoading(false);
       }
@@ -39,11 +39,11 @@ export const UserPermanentDeletePage: React.FC = () => {
     if (!id) return;
 
     setIsPurging(true);
-    setGlobalError(null);
     setPasswordError(null);
 
     try {
       await userService.forceDeleteUser(id, password);
+      alertService.success('Purged', 'Account record permanently purged from database.');
       navigate('/admin/users/archived');
     } catch (err: unknown) {
       const errorObj = err as {
@@ -60,9 +60,9 @@ export const UserPermanentDeletePage: React.FC = () => {
       if (errorObj.response?.status === 422 && errorObj.response.data?.errors?.super_admin_password) {
         setPasswordError(errorObj.response.data.errors.super_admin_password[0]);
       } else if (errorObj.response?.status === 409) {
-        setGlobalError(errorObj.response.data?.detail || 'Referential Integrity Block: Cannot purge user with linked compliance history.');
+        alertService.error('Referential Block', errorObj.response.data?.detail || 'Referential Integrity Block: Cannot purge user with linked compliance history.');
       } else {
-        setGlobalError(errorObj.response?.data?.detail || 'Failed to authorize permanent purge operation.');
+        alertService.error('Authorization Error', errorObj.response?.data?.detail || 'Failed to authorize permanent purge operation.');
       }
     } finally {
       setIsPurging(false);
@@ -103,14 +103,6 @@ export const UserPermanentDeletePage: React.FC = () => {
           Back to Archived Accounts
         </Link>
       </div>
-
-      {/* Global Error Banner */}
-      {globalError && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-start gap-3">
-          <AlertOctagon className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-          <div>{globalError}</div>
-        </div>
-      )}
 
       {/* Purge Card */}
       <div className="bg-white border-2 border-red-700 shadow-xs overflow-hidden">

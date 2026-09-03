@@ -4,11 +4,11 @@ import {
   ArrowLeft, 
   Archive, 
   RotateCcw, 
-  Trash2, 
-  CheckCircle2 
+  Trash2 
 } from 'lucide-react';
 import { userService, type UserItem } from '../../../services/userService';
 import { useAuthStore } from '../../../store/authStore';
+import { alertService } from '../../../services/alertService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
 
@@ -19,19 +19,16 @@ export const UserArchivedPage: React.FC = () => {
 
   const [archivedUsers, setArchivedUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [restoringId, setRestoringId] = useState<string | null>(null);
 
   const fetchArchivedUsers = async () => {
     setIsLoading(true);
-    setErrorMessage(null);
     try {
       const response = await userService.getArchivedUsers();
       setArchivedUsers(response.data);
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      setErrorMessage(errorObj.response?.data?.detail || 'Failed to load archived accounts.');
+      alertService.error('Load Error', errorObj.response?.data?.detail || 'Failed to load archived accounts.');
     } finally {
       setIsLoading(false);
     }
@@ -43,16 +40,14 @@ export const UserArchivedPage: React.FC = () => {
 
   const handleRestore = async (id: string) => {
     setRestoringId(id);
-    setActionSuccess(null);
-    setErrorMessage(null);
 
     try {
       const res = await userService.restoreUser(id);
-      setActionSuccess(res.message || 'User account restored successfully.');
+      alertService.success('Restored', res.message || 'User account restored successfully.');
       await fetchArchivedUsers();
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      setErrorMessage(errorObj.response?.data?.detail || 'Failed to restore user account.');
+      alertService.error('Restore Error', errorObj.response?.data?.detail || 'Failed to restore user account.');
     } finally {
       setRestoringId(null);
     }
@@ -81,25 +76,6 @@ export const UserArchivedPage: React.FC = () => {
           </p>
         </div>
       </div>
-
-      {/* Success Alert */}
-      {actionSuccess && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{actionSuccess}</span>
-          </div>
-          <button type="button" onClick={() => setActionSuccess(null)} className="text-emerald-700 font-bold">✕</button>
-        </div>
-      )}
-
-      {/* Error Alert */}
-      {errorMessage && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-center justify-between">
-          <span>{errorMessage}</span>
-          <button type="button" onClick={() => setErrorMessage(null)} className="text-red-700 font-bold">✕</button>
-        </div>
-      )}
 
       {/* Data Table */}
       <div className="bg-white border border-slate-200 shadow-xs overflow-hidden">

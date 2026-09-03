@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Trash2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { userService, type UserItem } from '../../../services/userService';
+import { alertService } from '../../../services/alertService';
 import { Button } from '../../../components/common/Button';
 
 export const UserDeletePage: React.FC = () => {
@@ -11,7 +12,6 @@ export const UserDeletePage: React.FC = () => {
   const [user, setUser] = useState<UserItem | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -23,7 +23,7 @@ export const UserDeletePage: React.FC = () => {
         setUser(data);
       } catch (err: unknown) {
         const errorObj = err as { response?: { data?: { detail?: string } } };
-        setErrorMessage(errorObj.response?.data?.detail || 'Failed to load user information.');
+        alertService.error('Loading Error', errorObj.response?.data?.detail || 'Failed to load user information.');
       } finally {
         setIsLoading(false);
       }
@@ -35,14 +35,14 @@ export const UserDeletePage: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (!id) return;
     setIsDeleting(true);
-    setErrorMessage(null);
 
     try {
       await userService.softDeleteUser(id);
+      alertService.success('Deactivated', 'User account successfully moved to archive.');
       navigate('/admin/users');
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      setErrorMessage(errorObj.response?.data?.detail || 'Failed to deactivate account.');
+      alertService.error('Deactivation Error', errorObj.response?.data?.detail || 'Failed to deactivate account.');
     } finally {
       setIsDeleting(false);
     }
@@ -87,13 +87,6 @@ export const UserDeletePage: React.FC = () => {
           Back to Users Directory
         </Link>
       </div>
-
-      {/* Error Alert */}
-      {errorMessage && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
-          {errorMessage}
-        </div>
-      )}
 
       {/* Confirmation Card */}
       <div className="bg-white border border-red-200 shadow-xs overflow-hidden">

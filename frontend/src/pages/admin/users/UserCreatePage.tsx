@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus, AlertCircle } from 'lucide-react';
+import { ArrowLeft, UserPlus } from 'lucide-react';
 import { userService, type Role } from '../../../services/userService';
+import { alertService } from '../../../services/alertService';
 import { Button } from '../../../components/common/Button';
 
 export const UserCreatePage: React.FC = () => {
@@ -9,7 +10,6 @@ export const UserCreatePage: React.FC = () => {
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [globalError, setGlobalError] = useState<string | null>(null);
   const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
 
   // Form State
@@ -36,7 +36,7 @@ export const UserCreatePage: React.FC = () => {
           setFormData((prev) => ({ ...prev, role: defaultRole.name }));
         }
       } catch {
-        setGlobalError('Failed to load system roles list.');
+        alertService.error('Loading Error', 'Failed to load system roles list.');
       }
     };
     loadRoles();
@@ -63,11 +63,11 @@ export const UserCreatePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setGlobalError(null);
     setServerErrors({});
 
     try {
       await userService.createUser(formData);
+      alertService.success('Created', 'User account successfully created.');
       navigate('/admin/users');
     } catch (err: unknown) {
       const errorObj = err as {
@@ -83,9 +83,9 @@ export const UserCreatePage: React.FC = () => {
 
       if (errorObj.response?.status === 422 && errorObj.response.data?.errors) {
         setServerErrors(errorObj.response.data.errors);
-        setGlobalError(errorObj.response.data.detail || 'Validation failed. Please correct the highlighted errors.');
+        alertService.error('Validation Error', errorObj.response.data.detail || 'Validation failed. Please correct the highlighted errors.');
       } else {
-        setGlobalError(errorObj.response?.data?.detail || 'An unexpected error occurred while creating the account.');
+        alertService.error('Creation Error', errorObj.response?.data?.detail || 'An unexpected error occurred while creating the account.');
       }
     } finally {
       setIsSubmitting(false);
@@ -110,14 +110,6 @@ export const UserCreatePage: React.FC = () => {
           </p>
         </div>
       </div>
-
-      {/* Global Alert */}
-      {globalError && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-          <div>{globalError}</div>
-        </div>
-      )}
 
       {/* Main Dedicated Form (Pure Server Validation - noValidate) */}
       <div className="bg-white border border-slate-200 shadow-xs p-6">

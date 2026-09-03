@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { userService, type Role } from '../../../services/userService';
+import { alertService } from '../../../services/alertService';
 import { Button } from '../../../components/common/Button';
 
 export const UserEditPage: React.FC = () => {
@@ -12,7 +13,6 @@ export const UserEditPage: React.FC = () => {
   const [originalRole, setOriginalRole] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [globalError, setGlobalError] = useState<string | null>(null);
   const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
 
   const [formData, setFormData] = useState({
@@ -33,7 +33,6 @@ export const UserEditPage: React.FC = () => {
 
     const loadData = async () => {
       setIsLoading(true);
-      setGlobalError(null);
       try {
         const [rolesList, userData] = await Promise.all([
           userService.getRoles(),
@@ -55,8 +54,9 @@ export const UserEditPage: React.FC = () => {
           role: userRole,
           is_active: userData.is_active,
         });
-      } catch {
-        setGlobalError('Failed to load user profile details.');
+      } catch (err: unknown) {
+        const errorObj = err as { response?: { data?: { detail?: string } } };
+        alertService.error('Loading Error', errorObj.response?.data?.detail || 'Failed to load user information.');
       } finally {
         setIsLoading(false);
       }
@@ -87,7 +87,6 @@ export const UserEditPage: React.FC = () => {
     if (!id) return;
 
     setIsSubmitting(true);
-    setGlobalError(null);
     setServerErrors({});
 
     try {
@@ -103,6 +102,7 @@ export const UserEditPage: React.FC = () => {
         role: formData.role,
         is_active: formData.is_active,
       });
+      alertService.success('Updated', 'User account successfully updated.');
       navigate('/admin/users');
     } catch (err: unknown) {
       const errorObj = err as {
@@ -118,9 +118,9 @@ export const UserEditPage: React.FC = () => {
 
       if (errorObj.response?.status === 422 && errorObj.response.data?.errors) {
         setServerErrors(errorObj.response.data.errors);
-        setGlobalError(errorObj.response.data.detail || 'Validation failed. Please correct the highlighted errors.');
+        alertService.error('Validation Error', errorObj.response.data.detail || 'Validation failed. Please correct the highlighted errors.');
       } else {
-        setGlobalError(errorObj.response?.data?.detail || 'An unexpected error occurred while saving user changes.');
+        alertService.error('Update Error', errorObj.response?.data?.detail || 'An unexpected error occurred while saving user changes.');
       }
     } finally {
       setIsSubmitting(false);
@@ -156,14 +156,6 @@ export const UserEditPage: React.FC = () => {
           </p>
         </div>
       </div>
-
-      {/* Global Error Banner */}
-      {globalError && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-          <div>{globalError}</div>
-        </div>
-      )}
 
       {/* Main Edit Form (Strict noValidate) */}
       <div className="bg-white border border-slate-200 shadow-xs p-6">
