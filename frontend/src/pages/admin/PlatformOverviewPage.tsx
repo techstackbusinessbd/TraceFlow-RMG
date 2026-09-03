@@ -60,10 +60,10 @@ export const PlatformOverviewPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
             <Shield className="w-7 h-7 text-blue-600 dark:text-blue-500" />
-            <span>Platform Command Center</span>
+            <span>System Dashboard</span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Global RMG Platform Health, PostgreSQL 17 Database, and Security Vault
+            System health, database metrics, and active service status
           </p>
         </div>
         <button

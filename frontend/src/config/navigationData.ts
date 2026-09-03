@@ -33,27 +33,27 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
     submodules: [
       {
         id: 'admin-platform',
-        title: 'Platform Operations',
+        title: 'General',
         children: [
-          { id: 'admin-dash', title: 'Platform Command Center', path: '/admin/platform-overview' },
-          { id: 'admin-devices', title: 'Tablet Fleet & Hardware', path: '/admin/devices' },
+          { id: 'admin-dash', title: 'Dashboard', path: '/admin/platform-overview' },
+          { id: 'admin-devices', title: 'Tablets & Devices', path: '/admin/devices' },
         ],
       },
       {
         id: 'admin-access-control',
-        title: 'Identity & Access Control (RBAC)',
+        title: 'Users & Access',
         children: [
-          { id: 'admin-users', title: 'User Management', path: '/admin/users' },
-          { id: 'admin-roles', title: 'Role Permissions', path: '/admin/roles' },
-          { id: 'admin-privileges', title: 'Custom Privileges', path: '/admin/privileges' },
+          { id: 'admin-users', title: 'Users', path: '/admin/users' },
+          { id: 'admin-roles', title: 'Roles & Permissions', path: '/admin/roles' },
+          { id: 'admin-privileges', title: 'User Privileges', path: '/admin/privileges' },
         ],
       },
       {
         id: 'admin-security',
-        title: 'Security & Compliance',
+        title: 'Security & Logs',
         children: [
-          { id: 'admin-worm', title: 'WORM Immutable Audit Vault', path: '/admin/audit-vault' },
-          { id: 'admin-purge', title: 'Two-Tier Purge Console', path: '/admin/purge-console' },
+          { id: 'admin-worm', title: 'Audit Logs', path: '/admin/audit-vault' },
+          { id: 'admin-purge', title: 'Archived Accounts', path: '/admin/purge-console' },
         ],
       },
     ],
