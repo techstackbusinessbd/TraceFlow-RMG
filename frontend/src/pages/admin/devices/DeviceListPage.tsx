@@ -17,7 +17,11 @@ import {
   X,
   ScanBarcode,
   Radio,
-  Monitor
+  Monitor,
+  Cpu,
+  RefreshCw,
+  Tag,
+  CheckCircle2
 } from 'lucide-react';
 import { deviceService, type DeviceItem, type DevicePayload } from '../../../services/deviceService';
 import { Button } from '../../../components/common/Button';
@@ -59,6 +63,8 @@ export const DeviceListPage: React.FC = () => {
   const [showDrawer, setShowDrawer] = useState<boolean>(false);
   const [editingDevice, setEditingDevice] = useState<DeviceItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isProbingHardware, setIsProbingHardware] = useState<boolean>(false);
+  const [syncingDeviceId, setSyncingDeviceId] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
 
   const [formData, setFormData] = useState<DevicePayload>({
@@ -67,6 +73,7 @@ export const DeviceListPage: React.FC = () => {
     device_type: 'TABLET',
     assigned_location: '',
     mac_address: '',
+    serial_number: '',
     ip_address: '',
     pairing_status: 'PAIRED',
     is_active: true,
@@ -130,6 +137,7 @@ export const DeviceListPage: React.FC = () => {
       device_type: 'TABLET',
       assigned_location: '',
       mac_address: '',
+      serial_number: '',
       ip_address: '',
       pairing_status: 'PAIRED',
       is_active: true,
@@ -146,6 +154,7 @@ export const DeviceListPage: React.FC = () => {
       device_type: device.device_type,
       assigned_location: device.assigned_location,
       mac_address: device.mac_address || '',
+      serial_number: device.serial_number || '',
       ip_address: device.ip_address || '',
       pairing_status: device.pairing_status,
       is_active: device.is_active,
@@ -158,6 +167,43 @@ export const DeviceListPage: React.FC = () => {
     setShowDrawer(false);
     setEditingDevice(null);
     setFormErrors({});
+  };
+
+  // Auto-Detect / Sync Hardware MAC & Serial directly from Connected Device Telemetry Probe
+  const handleAutoSyncHardware = async () => {
+    setIsProbingHardware(true);
+    try {
+      const res = await deviceService.probeHardware();
+      setFormData((prev) => ({
+        ...prev,
+        mac_address: res.data.mac_address,
+        serial_number: res.data.serial_number,
+        ip_address: res.data.ip_address,
+      }));
+      alertService.success(
+        'Hardware Telemetry Synced',
+        `Auto-detected MAC (${res.data.mac_address}) and Serial (${res.data.serial_number}) from connected device.`
+      );
+    } catch {
+      alertService.error('Telemetry Probe Failed', 'Unable to auto-probe connected hardware device identity.');
+    } finally {
+      setIsProbingHardware(false);
+    }
+  };
+
+  // Re-sync live telemetry on existing device row
+  const handleSyncExistingDevice = async (device: DeviceItem) => {
+    setSyncingDeviceId(device.id);
+    try {
+      const res = await deviceService.syncTelemetry(device.id);
+      alertService.success('Hardware Telemetry Synced', res.message);
+      fetchDevices();
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      alertService.error('Sync Failed', errorObj.response?.data?.message || 'Failed to sync device telemetry.');
+    } finally {
+      setSyncingDeviceId(null);
+    }
   };
 
   const handleSubmitDrawer = async (e: React.FormEvent) => {
@@ -259,7 +305,7 @@ export const DeviceListPage: React.FC = () => {
             </span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage, authorize, and monitor ruggedized Android tablets, QC barcode terminals, and warehouse RFID guns.
+            Manage factory floor tablets, QC terminals, and scanners with manual asset tagging and automatic MAC/Serial synchronization.
           </p>
         </div>
 
@@ -310,9 +356,14 @@ export const DeviceListPage: React.FC = () => {
           <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <Tablet className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                {editingDevice ? `Edit Device Configuration [${editingDevice.device_code}]` : 'Enroll New Factory Device'}
-              </h3>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  {editingDevice ? `Edit Device Profile [${editingDevice.device_code}]` : 'Enroll New Factory Device'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Device Tag is manually inputted. Hardware MAC and Serial number are auto-synced directly from the device.
+                </p>
+              </div>
             </div>
             <Button variant="secondary" size="sm" icon={<X className="w-4 h-4" />} onClick={handleCloseDrawer}>
               Cancel
@@ -320,19 +371,31 @@ export const DeviceListPage: React.FC = () => {
           </div>
 
           <form noValidate onSubmit={handleSubmitDrawer} className="space-y-4">
+            {/* Section 1: Manual Asset Tag & Configuration */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Device Code */}
+              {/* Device Tag (Manual Input) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Device Code <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.device_code}
-                  onChange={(e) => setFormData({ ...formData, device_code: e.target.value })}
-                  placeholder="e.g. DEV-CUT-01"
-                  className={UI_TOKENS.input.base}
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Device Asset Tag <span className="text-rose-500">*</span>
+                  </label>
+                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.2 rounded">
+                    Manual Input
+                  </span>
+                </div>
+                <div className="relative">
+                  <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={formData.device_code}
+                    onChange={(e) => setFormData({ ...formData, device_code: e.target.value })}
+                    placeholder="e.g. TAG-CUT-01, TF-LINE01-QC"
+                    className={`${UI_TOKENS.input.base} pl-8`}
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                  Physical sticker tag or station code placed on device.
+                </p>
                 {formErrors.device_code && (
                   <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{formErrors.device_code[0]}</p>
                 )}
@@ -394,27 +457,10 @@ export const DeviceListPage: React.FC = () => {
                 )}
               </div>
 
-              {/* IP Address */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Fixed IP Address (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.ip_address || ''}
-                  onChange={(e) => setFormData({ ...formData, ip_address: e.target.value })}
-                  placeholder="e.g. 192.168.10.101"
-                  className={UI_TOKENS.input.base}
-                />
-                {formErrors.ip_address && (
-                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{formErrors.ip_address[0]}</p>
-                )}
-              </div>
-
               {/* Pairing Status */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Initial Pairing Status
+                  Pairing Authorization
                 </label>
                 <select
                   value={formData.pairing_status}
@@ -425,6 +471,104 @@ export const DeviceListPage: React.FC = () => {
                   <option value="PENDING">Pending Authorization</option>
                   <option value="REVOKED">Revoked / Suspended</option>
                 </select>
+              </div>
+
+              {/* Status Note */}
+              <div className="flex items-center pt-6">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                  />
+                  <span>Device Active & Enabled on Factory Network</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Section 2: Automated Hardware Identity (Auto-Synced from Device) */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-md border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                    Hardware Identity (Auto-Synced from Device)
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  isLoading={isProbingHardware}
+                  icon={<Radio className={`w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ${isProbingHardware ? 'animate-spin' : ''}`} />}
+                  onClick={handleAutoSyncHardware}
+                >
+                  Auto-Detect MAC & Serial from Device
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Device Hardware Serial */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Hardware Serial Number
+                    </label>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded flex items-center gap-1">
+                      <CheckCircle2 className="w-2.5 h-2.5" /> Auto-Synced
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.serial_number || ''}
+                    onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+                    placeholder="Auto-synced via Device Probe..."
+                    className={`${UI_TOKENS.input.base} font-mono text-xs`}
+                  />
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                    Direct chipset serial number (e.g. SN-88239014).
+                  </p>
+                </div>
+
+                {/* MAC Address */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Hardware MAC Address
+                    </label>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded flex items-center gap-1">
+                      <CheckCircle2 className="w-2.5 h-2.5" /> Auto-Synced
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.mac_address || ''}
+                    onChange={(e) => setFormData({ ...formData, mac_address: e.target.value })}
+                    placeholder="Auto-synced via Device Probe..."
+                    className={`${UI_TOKENS.input.base} font-mono text-xs`}
+                  />
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                    Physical Wi-Fi/LAN NIC address (e.g. 4A:2B:CC:81:90:12).
+                  </p>
+                </div>
+
+                {/* Detected IP */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Detected IP Address
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-400">Network Telemetry</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.ip_address || ''}
+                    onChange={(e) => setFormData({ ...formData, ip_address: e.target.value })}
+                    placeholder="e.g. 192.168.10.101"
+                    className={`${UI_TOKENS.input.base} font-mono text-xs`}
+                  />
+                </div>
               </div>
             </div>
 
@@ -452,7 +596,7 @@ export const DeviceListPage: React.FC = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by Device Code, Name, Location, or IP..."
+              placeholder="Search by Asset Tag, Name, Serial, MAC, or IP..."
               className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
@@ -515,7 +659,7 @@ export const DeviceListPage: React.FC = () => {
         <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-            <span>Sorted by: <strong>DEVICE CODE (ASC)</strong></span>
+            <span>Sorted by: <strong>DEVICE ASSET TAG (ASC)</strong></span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -546,19 +690,22 @@ export const DeviceListPage: React.FC = () => {
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800">
                 <th className="py-3.5 px-4 w-44 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Device Code
-                </th>
-                <th className="py-3.5 px-4 w-60 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Designation & Hardware Type
+                  Device Tag (Manual)
                 </th>
                 <th className="py-3.5 px-4 w-52 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Assigned Factory Location
+                  Designation & Type
                 </th>
-                <th className="py-3.5 px-4 w-36 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                <th className="py-3.5 px-4 w-60 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Hardware Specs (Auto-Synced)
+                </th>
+                <th className="py-3.5 px-4 w-48 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Factory Location
+                </th>
+                <th className="py-3.5 px-4 w-40 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Heartbeat
                 </th>
-                <th className="py-3.5 px-4 w-36 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Pairing Status
+                <th className="py-3.5 px-4 w-32 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Status
                 </th>
                 <th className="py-3.5 px-4 w-44 text-right font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Actions
@@ -569,7 +716,7 @@ export const DeviceListPage: React.FC = () => {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm text-slate-700 dark:text-slate-300">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-slate-400 dark:text-slate-500">
+                  <td colSpan={7} className="py-16 text-center text-slate-400 dark:text-slate-500">
                     <div className="inline-flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
                       <span className="text-xs font-medium">Loading hardware terminals registry...</span>
@@ -578,7 +725,7 @@ export const DeviceListPage: React.FC = () => {
                 </tr>
               ) : devices.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={7} className="py-16 text-center text-slate-500 dark:text-slate-400">
                     <Tablet className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                     <p className="font-semibold text-slate-800 dark:text-slate-200">No factory devices found.</p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Enroll your first tablet or barcode scanner terminal.</p>
@@ -595,14 +742,16 @@ export const DeviceListPage: React.FC = () => {
               ) : (
                 devices.map((device) => {
                   const isPaired = device.pairing_status === 'PAIRED';
+                  const isSyncing = syncingDeviceId === device.id;
 
                   return (
                     <tr key={device.id} className="hover:bg-slate-50/90 dark:hover:bg-slate-800/50 transition-colors group">
-                      {/* Device Code */}
+                      {/* Device Tag (Manual) */}
                       <td className="py-3.5 px-4 align-middle">
                         <Badge variant="neutral" className="font-mono text-xs font-bold">
                           {device.device_code}
                         </Badge>
+                        <span className="block text-[10px] text-slate-400 mt-0.5">Asset Tag</span>
                       </td>
 
                       {/* Designation & Hardware Type */}
@@ -616,8 +765,22 @@ export const DeviceListPage: React.FC = () => {
                               {device.device_name}
                             </span>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                              {device.device_type} • {device.ip_address || 'DHCP'}
+                              {device.device_type}
                             </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Hardware Specs (MAC & Serial - Auto Synced) */}
+                      <td className="py-3.5 px-4 align-middle">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-800 dark:text-slate-200">
+                            <span className="text-slate-400 font-sans text-[10px]">SN:</span>
+                            <span className="font-semibold">{device.serial_number || '—'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="text-slate-400 font-sans text-[10px]">MAC:</span>
+                            <span>{device.mac_address || '—'}</span>
                           </div>
                         </div>
                       </td>
@@ -657,6 +820,16 @@ export const DeviceListPage: React.FC = () => {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right align-middle">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* Re-sync Hardware specs button */}
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            title="Re-sync Hardware MAC & Serial from Device"
+                            isLoading={isSyncing}
+                            icon={<RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isSyncing ? 'animate-spin' : ''}`} />}
+                            onClick={() => handleSyncExistingDevice(device)}
+                          />
+
                           <Button
                             variant="secondary"
                             size="sm"

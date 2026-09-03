@@ -49,6 +49,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/admin/audit-vault/{id}', [AuditVaultController::class, 'show']);
 
     // Factory Device Management
+    Route::post('/admin/devices/probe-hardware', [DeviceController::class, 'probeHardware']);
+    Route::post('/admin/devices/{id}/sync-telemetry', [DeviceController::class, 'syncTelemetry']);
     Route::post('/admin/devices/{id}/toggle-pairing', [DeviceController::class, 'togglePairing']);
     Route::apiResource('admin/devices', DeviceController::class);
 });

@@ -24,6 +24,7 @@ class UpdateDeviceRequest extends FormRequest
             'device_type' => ['required', 'string', 'in:TABLET,BARCODE_TERMINAL,RFID_SCANNER,WORKSTATION'],
             'assigned_location' => ['required', 'string', 'max:150'],
             'mac_address' => ['nullable', 'string', 'max:50'],
+            'serial_number' => ['nullable', 'string', 'max:80'],
             'ip_address' => ['nullable', 'ip'],
             'pairing_status' => ['nullable', 'string', 'in:PAIRED,PENDING,REVOKED'],
             'is_active' => ['nullable', 'boolean'],

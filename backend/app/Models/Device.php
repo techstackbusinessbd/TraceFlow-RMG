@@ -20,6 +20,7 @@ class Device extends Model
         'device_type',
         'assigned_location',
         'mac_address',
+        'serial_number',
         'ip_address',
         'pairing_status',
         'is_active',

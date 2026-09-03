@@ -7,6 +7,7 @@ export interface DeviceItem {
   device_type: 'TABLET' | 'BARCODE_TERMINAL' | 'RFID_SCANNER' | 'WORKSTATION';
   assigned_location: string;
   mac_address: string | null;
+  serial_number: string | null;
   ip_address: string | null;
   pairing_status: 'PAIRED' | 'PENDING' | 'REVOKED';
   is_active: boolean;
@@ -51,6 +52,7 @@ export interface DevicePayload {
   device_type: string;
   assigned_location: string;
   mac_address?: string | null;
+  serial_number?: string | null;
   ip_address?: string | null;
   pairing_status?: string;
   is_active?: boolean;
@@ -84,6 +86,16 @@ export const deviceService = {
 
   togglePairing: async (id: string): Promise<{ status: string; message: string; data: DeviceItem }> => {
     const response = await apiClient.post<{ status: string; message: string; data: DeviceItem }>(`/v1/admin/devices/${id}/toggle-pairing`);
+    return response.data;
+  },
+
+  probeHardware: async (): Promise<{ status: string; message: string; data: { mac_address: string; serial_number: string; ip_address: string } }> => {
+    const response = await apiClient.post<{ status: string; message: string; data: { mac_address: string; serial_number: string; ip_address: string } }>('/v1/admin/devices/probe-hardware');
+    return response.data;
+  },
+
+  syncTelemetry: async (id: string, payload?: { mac_address?: string; serial_number?: string }): Promise<{ status: string; message: string; data: DeviceItem }> => {
+    const response = await apiClient.post<{ status: string; message: string; data: DeviceItem }>(`/v1/admin/devices/${id}/sync-telemetry`, payload);
     return response.data;
   },
 };
