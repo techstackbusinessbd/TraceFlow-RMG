@@ -23,6 +23,7 @@ import { deviceService, type DeviceItem, type DevicePayload } from '../../../ser
 import { Button } from '../../../components/common/Button';
 import { Badge, type BadgeVariant } from '../../../components/common/Badge';
 import { alertService } from '../../../services/alertService';
+import { formatDateTime } from '../../../utils/dateUtils';
 import { UI_TOKENS } from '../../../config/designTokens';
 
 export const DeviceListPage: React.FC = () => {
@@ -629,9 +630,14 @@ export const DeviceListPage: React.FC = () => {
                       {/* Heartbeat Ping */}
                       <td className="py-3.5 px-4 align-middle">
                         {device.last_ping_at ? (
-                          <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                            <Wifi className="w-3.5 h-3.5" />
-                            <span className="font-mono text-[11px]">Online</span>
+                          <div>
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                              <Wifi className="w-3.5 h-3.5" />
+                              <span className="text-[11px]">Online</span>
+                            </div>
+                            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5" title={device.last_ping_at}>
+                              {formatDateTime(device.last_ping_at)}
+                            </span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">

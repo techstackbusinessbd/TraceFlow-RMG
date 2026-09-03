@@ -18,6 +18,7 @@ import { auditVaultService, type AuditVaultItem } from '../../../services/auditV
 import { Button } from '../../../components/common/Button';
 import { Badge, type BadgeVariant } from '../../../components/common/Badge';
 import { alertService } from '../../../services/alertService';
+import { formatDateTime } from '../../../utils/dateUtils';
 
 export const AuditVaultPage: React.FC = () => {
   const [, startTransition] = useTransition();
@@ -231,8 +232,10 @@ export const AuditVaultPage: React.FC = () => {
           {/* Metadata Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs bg-slate-50 dark:bg-slate-800/60 p-4 rounded-md border border-slate-200 dark:border-slate-700">
             <div>
-              <span className="text-slate-400 block mb-0.5">Timestamp (UTC)</span>
-              <strong className="font-mono text-slate-800 dark:text-slate-200">{selectedLog.created_at}</strong>
+              <span className="text-slate-400 block mb-0.5">Recorded Timestamp</span>
+              <strong className="font-mono text-slate-800 dark:text-slate-200">
+                {formatDateTime(selectedLog.created_at)}
+              </strong>
             </div>
             <div>
               <span className="text-slate-400 block mb-0.5">Operator ID / Name</span>
@@ -437,7 +440,6 @@ export const AuditVaultPage: React.FC = () => {
               ) : (
                 logs.map((log) => {
                   const isSelected = selectedLog?.id === log.id;
-                  const formattedDate = new Date(log.created_at).toLocaleString();
 
                   return (
                     <tr
@@ -448,7 +450,7 @@ export const AuditVaultPage: React.FC = () => {
                     >
                       {/* Timestamp */}
                       <td className="py-3.5 px-4 align-middle font-mono text-xs text-slate-600 dark:text-slate-400">
-                        {formattedDate}
+                        {formatDateTime(log.created_at)}
                       </td>
 
                       {/* Action */}
