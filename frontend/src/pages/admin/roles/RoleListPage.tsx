@@ -174,11 +174,15 @@ export const RoleListPage: React.FC = () => {
                       <ShieldCheck className={`w-4 h-4 ${isSuperAdmin ? 'text-purple-600' : 'text-blue-600'}`} />
                       {role.name}
                     </span>
-                    {isSuperAdmin && (
-                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
-                        Root Authority
+                    {isSuperAdmin ? (
+                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200" title="Strictly one active user allowed">
+                        Singleton (1 User)
                       </span>
-                    )}
+                    ) : role.name === 'IT Admin' ? (
+                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200" title="Supports multiple administrators">
+                        Multi-User Admin
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="space-y-1 text-xs text-slate-500 mt-3">

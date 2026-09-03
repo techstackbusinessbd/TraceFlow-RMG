@@ -254,4 +254,74 @@ class UserAdminTest extends TestCase
         // Clean up
         $targetUser->forceDelete();
     }
+
+    public function test_system_enforces_singleton_super_admin_and_allows_multiple_it_admins(): void
+    {
+        // 1. Attempting to create a second Super Admin must fail with 422
+        $duplicateSuperAdminRes = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->postJson('/api/v1/admin/users', [
+                'emp_id' => 'EMP-SUPER-2',
+                'username' => 'second.super.admin',
+                'name' => 'Second Super Admin',
+                'email' => 'super2@traceflow.com',
+                'password' => 'Pass#123456',
+                'department' => 'IT',
+                'role' => 'Super Admin',
+            ]);
+
+        $duplicateSuperAdminRes->assertStatus(422)
+            ->assertJson([
+                'status' => 422,
+                'title' => 'Singleton Super Admin Restriction',
+            ]);
+
+        // 2. Creating multiple IT Admin accounts must succeed
+        $itAdmin1Res = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->postJson('/api/v1/admin/users', [
+                'emp_id' => 'EMP-IT-01',
+                'username' => 'it.admin.01',
+                'name' => 'IT Admin One',
+                'email' => 'it1@traceflow.com',
+                'password' => 'Pass#123456',
+                'department' => 'Information Technology',
+                'role' => 'IT Admin',
+            ]);
+
+        $itAdmin1Res->assertStatus(201);
+
+        $itAdmin2Res = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->postJson('/api/v1/admin/users', [
+                'emp_id' => 'EMP-IT-02',
+                'username' => 'it.admin.02',
+                'name' => 'IT Admin Two',
+                'email' => 'it2@traceflow.com',
+                'password' => 'Pass#123456',
+                'department' => 'Information Technology',
+                'role' => 'IT Admin',
+            ]);
+
+        $itAdmin2Res->assertStatus(201);
+
+        // 3. Demoting the root Super Admin must fail with 403
+        $demoteRes = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->putJson("/api/v1/admin/users/{$this->superAdmin->id}", [
+                'emp_id' => $this->superAdmin->emp_id,
+                'username' => $this->superAdmin->username,
+                'name' => $this->superAdmin->name,
+                'email' => $this->superAdmin->email,
+                'is_active' => true,
+                'role' => 'IT Admin',
+            ]);
+
+        $demoteRes->assertStatus(403)
+            ->assertJson([
+                'status' => 403,
+                'title' => 'Protected Root Account',
+            ]);
+
+        // Clean up IT admins
+        User::where('username', 'it.admin.01')->forceDelete();
+        User::where('username', 'it.admin.02')->forceDelete();
+    }
 }
+

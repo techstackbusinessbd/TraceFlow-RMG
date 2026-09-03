@@ -30,8 +30,9 @@ export const UserCreatePage: React.FC = () => {
       try {
         const data = await userService.getRoles();
         setRoles(data);
-        if (data.length > 0) {
-          setFormData((prev) => ({ ...prev, role: data[0].name }));
+        const defaultRole = data.find((r) => r.name === 'IT Admin') || data.find((r) => r.name !== 'Super Admin') || data[0];
+        if (defaultRole) {
+          setFormData((prev) => ({ ...prev, role: defaultRole.name }));
         }
       } catch {
         setGlobalError('Failed to load system roles list.');
@@ -248,16 +249,28 @@ export const UserCreatePage: React.FC = () => {
                   onChange={handleChange}
                   className={`w-full px-3 py-2 text-sm border ${
                     serverErrors.role ? 'border-red-500 bg-red-50/30' : 'border-slate-300'
-                  } bg-white focus:outline-none focus:border-blue-600`}
+                  } bg-white focus:outline-none focus:border-blue-600 font-medium`}
                 >
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.name}>
-                      {r.name}
-                    </option>
-                  ))}
+                  {roles.map((r) => {
+                    const isSuperAdmin = r.name === 'Super Admin';
+                    return (
+                      <option 
+                        key={r.id} 
+                        value={r.name}
+                        disabled={isSuperAdmin}
+                        className={isSuperAdmin ? 'text-slate-400 bg-slate-100' : ''}
+                      >
+                        {r.name} {isSuperAdmin ? '(Singleton: 1 active account limit)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
-                {serverErrors.role && (
+                {serverErrors.role ? (
                   <p className="text-xs text-red-600 font-medium mt-1">{serverErrors.role[0]}</p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    For administrator privileges, choose <strong>IT Admin</strong> (supports multiple administrators).
+                  </p>
                 )}
               </div>
 

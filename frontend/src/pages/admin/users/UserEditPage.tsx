@@ -8,6 +8,7 @@ export const UserEditPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [roles, setRoles] = useState<Role[]>([]);
+  const [originalRole, setOriginalRole] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -38,7 +39,9 @@ export const UserEditPage: React.FC = () => {
           userService.getUser(id),
         ]);
 
+        const userRole = userData.roles?.[0]?.name || (rolesList[0]?.name ?? '');
         setRoles(rolesList);
+        setOriginalRole(userRole);
         setFormData({
           emp_id: userData.emp_id,
           username: userData.username,
@@ -48,7 +51,7 @@ export const UserEditPage: React.FC = () => {
           phone: userData.phone || '',
           department: userData.department || 'Information Technology',
           designation: userData.designation || '',
-          role: userData.roles?.[0]?.name || (rolesList[0]?.name ?? ''),
+          role: userRole,
           is_active: userData.is_active,
         });
       } catch {
@@ -283,15 +286,36 @@ export const UserEditPage: React.FC = () => {
                 <select
                   name="role"
                   value={formData.role}
+                  disabled={originalRole === 'Super Admin'}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 bg-white focus:outline-none focus:border-blue-600"
+                  className={`w-full px-3 py-2 text-sm border border-slate-300 bg-white focus:outline-none focus:border-blue-600 font-medium ${
+                    originalRole === 'Super Admin' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''
+                  }`}
                 >
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.name}>
-                      {r.name}
-                    </option>
-                  ))}
+                  {roles.map((r) => {
+                    const isSuperAdminRole = r.name === 'Super Admin';
+                    const isAllowed = originalRole === 'Super Admin' || !isSuperAdminRole;
+                    return (
+                      <option 
+                        key={r.id} 
+                        value={r.name}
+                        disabled={!isAllowed}
+                        className={!isAllowed ? 'text-slate-400 bg-slate-100' : ''}
+                      >
+                        {r.name} {!isAllowed ? '(Singleton: 1 account limit)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
+                {originalRole === 'Super Admin' ? (
+                  <p className="text-[11px] text-purple-700 font-medium mt-1">
+                    Super Admin role is protected and cannot be demoted.
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    For administrator privileges, choose <strong>IT Admin</strong> (supports multiple administrators).
+                  </p>
+                )}
               </div>
 
               {/* Department */}

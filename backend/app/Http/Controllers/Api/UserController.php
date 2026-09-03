@@ -83,6 +83,22 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
+        // Singleton Super Admin Governance Guard
+        if ($validated['role'] === 'Super Admin') {
+            $existingSuperAdmin = User::role('Super Admin')->first();
+            if ($existingSuperAdmin) {
+                return response()->json([
+                    'type' => 'https://tools.ietf.org/html/rfc7807',
+                    'title' => 'Singleton Super Admin Restriction',
+                    'status' => 422,
+                    'detail' => 'The system permits strictly one Super Admin account. Multiple Admin/IT Admin accounts are supported instead.',
+                    'errors' => [
+                        'role' => ["The system already has an active Super Admin ({$existingSuperAdmin->username}). Only one Super Admin account is allowed. Please select 'IT Admin' for additional administrators."],
+                    ],
+                ], 422);
+            }
+        }
+
         $user = DB::transaction(function () use ($validated, $request) {
             $newUser = User::create([
                 'emp_id' => strtoupper(trim($validated['emp_id'])),
@@ -153,6 +169,32 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         $validated = $request->validated();
+
+        // 1. Singleton Super Admin Restriction: Cannot assign Super Admin to another user if one already exists
+        if ($validated['role'] === 'Super Admin' && ! $user->hasRole('Super Admin')) {
+            $existingSuperAdmin = User::role('Super Admin')->where('id', '!=', $user->id)->first();
+            if ($existingSuperAdmin) {
+                return response()->json([
+                    'type' => 'https://tools.ietf.org/html/rfc7807',
+                    'title' => 'Singleton Super Admin Restriction',
+                    'status' => 422,
+                    'detail' => 'The system permits strictly one Super Admin account. Multiple Admin/IT Admin accounts are supported instead.',
+                    'errors' => [
+                        'role' => ["The system already has an active Super Admin ({$existingSuperAdmin->username}). Only one Super Admin account is allowed. Please select 'IT Admin' for additional administrators."],
+                    ],
+                ], 422);
+            }
+        }
+
+        // 2. Protected Root Account: Cannot demote the sole Super Admin
+        if ($user->hasRole('Super Admin') && $validated['role'] !== 'Super Admin') {
+            return response()->json([
+                'type' => 'https://tools.ietf.org/html/rfc7807',
+                'title' => 'Protected Root Account',
+                'status' => 403,
+                'detail' => 'Cannot demote the root Super Admin account. The platform must always retain an active Super Admin.',
+            ], 403);
+        }
 
         $oldSnapshot = [
             'emp_id' => $user->emp_id,
