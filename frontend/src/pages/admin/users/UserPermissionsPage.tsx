@@ -196,7 +196,7 @@ export const UserPermissionsPage: React.FC = () => {
   }
 
   const { user } = permissionsData;
-  const isSuperAdminUser = user.username === 'super.admin';
+  const isSuperAdminUser = user.roles?.includes('Super Admin');
   const allModulesList = Object.keys(manifest);
   const totalEffectiveCount = new Set([...directPermissions, ...rolePermissionsSet]).size;
 

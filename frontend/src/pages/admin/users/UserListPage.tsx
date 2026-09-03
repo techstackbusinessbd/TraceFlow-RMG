@@ -393,7 +393,7 @@ export const UserListPage: React.FC = () => {
               ) : (
                 users.map((user) => {
                   const primaryRole = user.roles?.[0]?.name || 'No Role';
-                  const isSuperAdmin = user.username === 'super.admin';
+                  const isSuperAdmin = user.roles?.some((r) => r.name === 'Super Admin') || primaryRole === 'Super Admin';
                   const initials = getInitials(user.name);
 
                   return (
