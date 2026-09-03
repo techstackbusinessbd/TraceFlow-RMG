@@ -17,6 +17,8 @@ import {
   Lock
 } from 'lucide-react';
 import { userService, type UserItem, type Role } from '../../../services/userService';
+import { Button } from '../../../components/common/Button';
+import { Badge } from '../../../components/common/Badge';
 
 export const UserPrivilegesOverviewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -404,15 +406,15 @@ export const UserPrivilegesOverviewPage: React.FC = () => {
                     <tr key={user.id} className="hover:bg-slate-50/90 transition-colors group">
                       {/* Employee ID */}
                       <td className="py-3.5 px-4 align-middle">
-                        <span className="font-mono text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-800 border border-slate-300 tracking-wide">
+                        <Badge variant="neutral" className="font-mono">
                           {user.emp_id}
-                        </span>
+                        </Badge>
                       </td>
 
                       {/* User Identity */}
                       <td className="py-3.5 px-4 align-middle">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-slate-800 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 bg-slate-800 text-white font-bold text-xs flex items-center justify-center rounded-md shrink-0">
                             {initials}
                           </div>
                           <div className="min-w-0">
@@ -424,42 +426,39 @@ export const UserPrivilegesOverviewPage: React.FC = () => {
 
                       {/* Assigned Role */}
                       <td className="py-3.5 px-4 align-middle">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-300">
-                          <Lock className="w-3 h-3 text-slate-500" />
-                          <span>{primaryRole}</span>
-                        </span>
+                        <Badge variant="neutral" icon={<Lock className="w-3 h-3 text-slate-500" />}>
+                          {primaryRole}
+                        </Badge>
                       </td>
 
                       {/* Direct Privilege Status */}
                       <td className="py-3.5 px-4 align-middle">
                         {hasDirectOverrides ? (
                           <div className="space-y-1">
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                              <Sparkles className="w-3 h-3 text-blue-600" />
-                              <span>{directPerms.length} Direct Custom Privilege(s)</span>
-                            </div>
+                            <Badge variant="info" icon={<Sparkles className="w-3 h-3 text-blue-600" />}>
+                              {directPerms.length} Direct Custom Privilege(s)
+                            </Badge>
                             <div className="text-xs text-slate-500 font-mono truncate max-w-md">
                               {directPerms.map((p) => p.name).join(', ')}
                             </div>
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200">
-                            <CheckCircle2 className="w-3 h-3 text-slate-400" />
-                            <span>Standard Role Defaults (0 Overrides)</span>
-                          </span>
+                          <Badge variant="neutral" icon={<CheckCircle2 className="w-3 h-3 text-slate-400" />}>
+                            Standard Role Defaults (0 Overrides)
+                          </Badge>
                         )}
                       </td>
 
                       {/* Action Button */}
                       <td className="py-3.5 px-4 text-right align-middle">
-                        <button
-                          type="button"
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={<KeyRound className="w-3.5 h-3.5" />}
                           onClick={() => navigate(`/admin/privileges/${user.username || user.id}`)}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 transition-colors shadow-2xs whitespace-nowrap"
                         >
-                          <KeyRound className="w-3.5 h-3.5 shrink-0" />
-                          <span>Configure Privileges</span>
-                        </button>
+                          Configure Privileges
+                        </Button>
                       </td>
                     </tr>
                   );

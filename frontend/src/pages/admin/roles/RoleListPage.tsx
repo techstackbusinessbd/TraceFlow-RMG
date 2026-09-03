@@ -9,6 +9,8 @@ import {
   Plus 
 } from 'lucide-react';
 import { userService, type Role } from '../../../services/userService';
+import { Button } from '../../../components/common/Button';
+import { Badge } from '../../../components/common/Badge';
 
 export const RoleListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -83,14 +85,13 @@ export const RoleListPage: React.FC = () => {
         </div>
 
         <div>
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            icon={<Plus className="w-4 h-4" />}
             onClick={() => setShowCreateCard(!showCreateCard)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
           >
-            <Plus className="w-4 h-4" />
             {showCreateCard ? 'Hide Form' : 'Create Custom Role'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -121,23 +122,23 @@ export const RoleListPage: React.FC = () => {
               value={newRoleName}
               onChange={(e) => setNewRoleName(e.target.value)}
               placeholder="e.g. Fabric QA Specialist"
-              className="flex-1 px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:border-blue-600"
+              className="flex-1 px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:border-blue-600 rounded-md"
             />
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="submit"
-                disabled={isCreating}
-                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                variant="primary"
+                isLoading={isCreating}
               >
-                {isCreating ? 'Saving...' : 'Save Role'}
-              </button>
-              <button
+                Save Role
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setShowCreateCard(false)}
-                className="px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -175,13 +176,13 @@ export const RoleListPage: React.FC = () => {
                       {role.name}
                     </span>
                     {isSuperAdmin ? (
-                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200" title="Strictly one active user allowed">
+                      <Badge variant="root">
                         Singleton (1 User)
-                      </span>
+                      </Badge>
                     ) : role.name === 'IT Admin' ? (
-                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200" title="Supports multiple administrators">
+                      <Badge variant="info">
                         Multi-User Admin
-                      </span>
+                      </Badge>
                     ) : null}
                   </div>
 
@@ -204,18 +205,15 @@ export const RoleListPage: React.FC = () => {
 
                 {/* Configure Action Button */}
                 <div className="pt-4 mt-4 border-t border-slate-100">
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full"
+                    icon={<Sliders className="w-3.5 h-3.5" />}
                     onClick={() => navigate(`/admin/roles/${role.slug || role.id}/permissions`)}
-                    className={`w-full py-2 px-3 text-xs font-semibold flex items-center justify-center gap-2 transition-colors ${
-                      isSuperAdmin
-                        ? 'bg-purple-700 hover:bg-purple-800 text-white'
-                        : 'bg-slate-800 hover:bg-slate-900 text-white'
-                    }`}
                   >
-                    <Sliders className="w-3.5 h-3.5" />
                     Configure Permissions Matrix
-                  </button>
+                  </Button>
                 </div>
               </div>
             );
