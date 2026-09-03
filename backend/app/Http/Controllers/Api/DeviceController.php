@@ -329,10 +329,12 @@ class DeviceController extends Controller
             mt_rand(0, 255), mt_rand(0, 255), mt_rand(0, 255), mt_rand(0, 255), mt_rand(0, 255), mt_rand(0, 255)
         );
         $serial = $request->input('serial_number') ?: $device->serial_number ?: ('SN-' . strtoupper(Str::random(10)));
+        $currentIp = $request->input('ip_address') ?: $request->ip() ?: $device->ip_address;
 
         $device->update([
             'mac_address' => $mac,
             'serial_number' => $serial,
+            'ip_address' => $currentIp,
             'last_ping_at' => Carbon::now(),
             'pairing_status' => 'PAIRED',
             'is_active' => true,
@@ -356,8 +358,64 @@ class DeviceController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => "Hardware identity (MAC: {$mac}, Serial: {$serial}) synced successfully for [{$device->device_code}].",
+            'message' => "Hardware identity (MAC: {$mac}, Serial: {$serial}) & Current DHCP IP ({$currentIp}) synced successfully for [{$device->device_code}].",
             'data' => $device,
+        ]);
+    }
+
+    /**
+     * Heartbeat ping from tablet or floor device.
+     * Automatically captures the dynamic DHCP IP address and updates last ping.
+     */
+    public function heartbeat(Request $request): JsonResponse
+    {
+        $deviceCode = $request->input('device_code');
+        $serial = $request->input('serial_number');
+        $mac = $request->input('mac_address');
+
+        $device = Device::where('device_code', $deviceCode)
+            ->orWhere('serial_number', $serial)
+            ->orWhere('mac_address', $mac)
+            ->first();
+
+        if (!$device) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unrecognized device.',
+            ], 404);
+        }
+
+        $currentIp = $request->ip() ?: $device->ip_address;
+        $ipChanged = ($device->ip_address !== $currentIp);
+        $oldIp = $device->ip_address;
+
+        $device->ip_address = $currentIp;
+        $device->last_ping_at = Carbon::now();
+        $device->save();
+
+        if ($ipChanged) {
+            AuditVaultLog::create([
+                'id' => (string) Str::uuid(),
+                'action' => 'UPDATE',
+                'entity_type' => 'Device',
+                'entity_id' => $device->device_code,
+                'old_values' => ['ip_address' => $oldIp],
+                'new_values' => ['ip_address' => $currentIp, 'trigger' => 'DHCP_AUTO_RENEWAL'],
+                'ip_address' => $currentIp,
+                'user_agent' => $request->userAgent(),
+                'created_at' => Carbon::now(),
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Heartbeat acknowledged. Current DHCP IP synced.',
+            'data' => [
+                'device_code' => $device->device_code,
+                'current_ip' => $currentIp,
+                'ip_changed' => $ipChanged,
+                'last_ping_at' => $device->last_ping_at,
+            ],
         ]);
     }
 }

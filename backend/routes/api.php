@@ -55,3 +55,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::apiResource('admin/devices', DeviceController::class);
 });
 
+// Device Floor Telemetry & Dynamic DHCP Heartbeat (Called by factory tablets/scanners)
+Route::post('/v1/devices/heartbeat', [DeviceController::class, 'heartbeat']);
+

@@ -782,6 +782,13 @@ export const DeviceListPage: React.FC = () => {
                             <span className="text-slate-400 font-sans text-[10px]">MAC:</span>
                             <span>{device.mac_address || '—'}</span>
                           </div>
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-blue-600 dark:text-blue-400">
+                            <span className="text-slate-400 font-sans text-[10px]">IP:</span>
+                            <span className="font-semibold">{device.ip_address || 'DHCP Pending'}</span>
+                            <span className="text-[9px] font-sans font-bold px-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800">
+                              DHCP Live
+                            </span>
+                          </div>
                         </div>
                       </td>
 
