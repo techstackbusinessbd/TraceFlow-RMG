@@ -18,12 +18,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
 
   if (requiredRole && !hasRole(requiredRole)) {
     return (
-      <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-xl">
-        <h2 className="text-xl font-bold text-rose-500 mb-2">Access Denied</h2>
-        <p className="text-sm text-slate-400">
-          You do not have the required enterprise role ({requiredRole}) to access this page.
-        </p>
-      </div>
+      <Navigate
+        to="/unauthorized"
+        state={{ attemptedPath: location.pathname, requiredRole }}
+        replace
+      />
     );
   }
 

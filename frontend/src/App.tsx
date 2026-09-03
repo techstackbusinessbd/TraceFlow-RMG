@@ -16,6 +16,8 @@ import { RoleListPage } from './pages/admin/roles/RoleListPage';
 import { RolePermissionsPage } from './pages/admin/roles/RolePermissionsPage';
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
 import { ALL_SYSTEM_MODULES } from './config/navigationData';
+import { UnauthorizedPage } from './pages/common/UnauthorizedPage';
+import { NotFoundPage } from './pages/common/NotFoundPage';
 import { useAuthStore } from './store/authStore';
 import { resolveLandingPath } from './routes/RoleLandingEngine';
 
@@ -64,6 +66,11 @@ export const App: React.FC = () => {
           <Route path="/admin/privileges" element={<UserPrivilegesOverviewPage />} />
           <Route path="/admin/privileges/:id" element={<UserPermissionsPage />} />
 
+          {/* Security & System Error Pages */}
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="/403" element={<Navigate to="/unauthorized" replace />} />
+          <Route path="/404" element={<NotFoundPage />} />
+
           {/* Dynamic Module Routes from Master Configuration */}
           {ALL_SYSTEM_MODULES.map((mod) =>
             mod.submodules.map((group) =>
@@ -92,8 +99,8 @@ export const App: React.FC = () => {
             )
           )}
 
-          {/* Fallback Catch-All inside Shell */}
-          <Route path="*" element={<ModulePlaceholderPage title="Dedicated Workspace" />} />
+          {/* Dedicated 404 Catch-All inside Shell */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
