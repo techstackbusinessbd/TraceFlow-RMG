@@ -50,7 +50,7 @@ class DatabaseSeeder extends Seeder
             [
                 'emp_id' => 'EMP-0001',
                 'name' => 'System Super Administrator',
-                'email' => 'admin@traceflow.com',
+                'email' => 'super.admin@traceflow.com',
                 'password' => Hash::make('Admin@123456'),
                 'phone' => '+8801700000000',
                 'department' => 'Information Technology',

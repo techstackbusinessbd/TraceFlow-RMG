@@ -155,4 +155,35 @@ export const userService = {
     );
     return response.data.manifest;
   },
+
+  // 10. User-Level Custom Permissions & Overrides
+  async getUserPermissions(id: string): Promise<UserPermissionsData> {
+    const response = await apiClient.get<{ success: boolean; data: UserPermissionsData }>(
+      `/v1/admin/users/${id}/permissions`
+    );
+    return response.data.data;
+  },
+
+  async updateUserPermissions(id: string, permissions: string[]): Promise<UserPermissionsData> {
+    const response = await apiClient.put<{ success: boolean; data: UserPermissionsData }>(
+      `/v1/admin/users/${id}/permissions`,
+      { permissions }
+    );
+    return response.data.data;
+  },
 };
+
+export interface UserPermissionsData {
+  user: {
+    id: string;
+    emp_id: string;
+    name: string;
+    username: string;
+    department: string;
+    designation: string;
+    roles: string[];
+  };
+  direct_permissions: string[];
+  role_permissions: string[];
+  all_permissions: string[];
+}

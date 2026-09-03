@@ -10,6 +10,7 @@ import { UserEditPage } from './pages/admin/users/UserEditPage';
 import { UserDeletePage } from './pages/admin/users/UserDeletePage';
 import { UserArchivedPage } from './pages/admin/users/UserArchivedPage';
 import { UserPermanentDeletePage } from './pages/admin/users/UserPermanentDeletePage';
+import { UserPermissionsPage } from './pages/admin/users/UserPermissionsPage';
 import { RoleListPage } from './pages/admin/roles/RoleListPage';
 import { RolePermissionsPage } from './pages/admin/roles/RolePermissionsPage';
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
@@ -54,6 +55,7 @@ export const App: React.FC = () => {
           <Route path="/admin/users/create" element={<UserCreatePage />} />
           <Route path="/admin/users/archived" element={<UserArchivedPage />} />
           <Route path="/admin/users/:id/edit" element={<UserEditPage />} />
+          <Route path="/admin/users/:id/permissions" element={<UserPermissionsPage />} />
           <Route path="/admin/users/:id/delete" element={<UserDeletePage />} />
           <Route path="/admin/users/:id/permanent-delete" element={<UserPermanentDeletePage />} />
           <Route path="/admin/roles" element={<RoleListPage />} />

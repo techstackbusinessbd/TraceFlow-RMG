@@ -17,7 +17,8 @@ import {
   ArrowDown,
   Mail,
   User as UserIcon,
-  SlidersHorizontal
+  SlidersHorizontal,
+  KeyRound
 } from 'lucide-react';
 import { userService, type UserItem, type Role } from '../../../services/userService';
 
@@ -357,7 +358,7 @@ export const UserListPage: React.FC = () => {
                 </th>
                 {renderSortHeader('department', 'Department & Role', 'w-56')}
                 {renderSortHeader('is_active', 'Status', 'w-32')}
-                <th className="py-3.5 px-4 w-28 text-center font-semibold text-xs text-slate-700 uppercase tracking-wider">
+                <th className="py-3.5 px-4 w-36 text-center font-semibold text-xs text-slate-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -470,6 +471,16 @@ export const UserListPage: React.FC = () => {
                       {/* Row Actions (Fixed-Grid Alignment) */}
                       <td className="py-3.5 px-4 text-center align-middle">
                         <div className="inline-flex items-center justify-center gap-1.5">
+                          {/* Custom Privileges Button */}
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/admin/users/${user.id}/permissions`)}
+                            className="p-1.5 text-slate-600 hover:text-purple-700 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 transition-colors"
+                            title="Manage User Custom Privileges"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                          </button>
+
                           {/* Edit Button */}
                           <button
                             type="button"
@@ -480,7 +491,7 @@ export const UserListPage: React.FC = () => {
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Delete Button (Always occupies space or renders disabled placeholder to prevent shifting) */}
+                          {/* Delete Button */}
                           {!isSuperAdmin ? (
                             <button
                               type="button"

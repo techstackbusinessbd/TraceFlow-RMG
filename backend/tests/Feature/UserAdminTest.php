@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -186,5 +187,71 @@ class UserAdminTest extends TestCase
                 'success',
                 'data',
             ]);
+    }
+
+    public function test_can_manage_user_direct_custom_permissions(): void
+    {
+        $targetUser = User::create([
+            'emp_id' => 'EMP-TEST-PERMS',
+            'username' => 'test.perms.user',
+            'name' => 'Custom Perms Tester',
+            'email' => 'perms.tester@traceflow.com',
+            'password' => Hash::make('Secret#123'),
+            'department' => 'Cutting Floor',
+            'designation' => 'Cutting Assistant',
+            'is_active' => true,
+        ]);
+        $targetUser->assignRole('Cutting Master');
+
+        // 1. Get user permissions
+        $getResponse = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->getJson("/api/v1/admin/users/{$targetUser->id}/permissions");
+
+        $getResponse->assertStatus(200)
+            ->assertJsonStructure([
+                'success',
+                'data' => [
+                    'user',
+                    'direct_permissions',
+                    'role_permissions',
+                    'all_permissions',
+                ],
+            ]);
+
+        // 2. Grant custom direct privilege
+        $updateResponse = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->putJson("/api/v1/admin/users/{$targetUser->id}/permissions", [
+                'permissions' => ['orders.view', 'qc.view'],
+            ]);
+
+        $updateResponse->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'direct_permissions' => ['orders.view', 'qc.view'],
+                ],
+            ]);
+
+        $this->assertTrue($targetUser->fresh()->hasDirectPermission('orders.view'));
+        $this->assertTrue($targetUser->fresh()->hasDirectPermission('qc.view'));
+
+        // 3. Clear direct permissions
+        $clearResponse = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->putJson("/api/v1/admin/users/{$targetUser->id}/permissions", [
+                'permissions' => [],
+            ]);
+
+        $clearResponse->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'direct_permissions' => [],
+                ],
+            ]);
+
+        $this->assertFalse($targetUser->fresh()->hasDirectPermission('orders.view'));
+
+        // Clean up
+        $targetUser->forceDelete();
     }
 }
