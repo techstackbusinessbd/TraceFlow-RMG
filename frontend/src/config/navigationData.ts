@@ -33,11 +33,19 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
     submodules: [
       {
         id: 'admin-platform',
-        title: 'Platform Management',
+        title: 'Platform Operations',
         children: [
           { id: 'admin-dash', title: 'Platform Command Center', path: '/admin/platform-overview' },
-          { id: 'admin-users', title: 'Users & Roles Management', path: '/admin/users' },
           { id: 'admin-devices', title: 'Tablet Fleet & Hardware', path: '/admin/devices' },
+        ],
+      },
+      {
+        id: 'admin-access-control',
+        title: 'Identity & Access Control (RBAC)',
+        children: [
+          { id: 'admin-users', title: 'User Management', path: '/admin/users' },
+          { id: 'admin-roles', title: 'Role Permissions', path: '/admin/roles' },
+          { id: 'admin-privileges', title: 'Custom Privileges', path: '/admin/privileges' },
         ],
       },
       {

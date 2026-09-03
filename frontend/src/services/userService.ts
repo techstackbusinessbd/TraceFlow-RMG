@@ -23,6 +23,7 @@ export interface UserItem {
   created_at: string;
   deleted_at?: string | null;
   roles: { id: number; name: string }[];
+  permissions?: { id: number; name: string }[];
 }
 
 export interface UserFormData {
@@ -44,6 +45,7 @@ export interface UserListParams {
   role?: string;
   department?: string;
   is_active?: string;
+  has_overrides?: string;
   sort_by?: string;
   sort_direction?: 'asc' | 'desc';
   page?: number;

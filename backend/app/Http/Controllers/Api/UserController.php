@@ -23,7 +23,7 @@ class UserController extends Controller
     {
         $this->authorizePermission($request->user(), 'users.view');
 
-        $query = User::query()->with('roles');
+        $query = User::query()->with(['roles', 'permissions']);
 
         // Text Search across emp_id, username, name, email
         if ($search = $request->input('search')) {
@@ -50,6 +50,15 @@ class UserController extends Controller
         // Active state filter
         if ($request->has('is_active') && $request->input('is_active') !== '') {
             $query->where('is_active', filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        // Custom Privileges override filter
+        if ($request->has('has_overrides') && $request->input('has_overrides') !== '') {
+            if ($request->input('has_overrides') === 'true') {
+                $query->has('permissions');
+            } elseif ($request->input('has_overrides') === 'false') {
+                $query->doesntHave('permissions');
+            }
         }
 
         // Sorting

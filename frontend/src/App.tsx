@@ -11,6 +11,7 @@ import { UserDeletePage } from './pages/admin/users/UserDeletePage';
 import { UserArchivedPage } from './pages/admin/users/UserArchivedPage';
 import { UserPermanentDeletePage } from './pages/admin/users/UserPermanentDeletePage';
 import { UserPermissionsPage } from './pages/admin/users/UserPermissionsPage';
+import { UserPrivilegesOverviewPage } from './pages/admin/users/UserPrivilegesOverviewPage';
 import { RoleListPage } from './pages/admin/roles/RoleListPage';
 import { RolePermissionsPage } from './pages/admin/roles/RolePermissionsPage';
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
@@ -60,6 +61,7 @@ export const App: React.FC = () => {
           <Route path="/admin/users/:id/permanent-delete" element={<UserPermanentDeletePage />} />
           <Route path="/admin/roles" element={<RoleListPage />} />
           <Route path="/admin/roles/:id/permissions" element={<RolePermissionsPage />} />
+          <Route path="/admin/privileges" element={<UserPrivilegesOverviewPage />} />
 
           {/* Dynamic Module Routes from Master Configuration */}
           {ALL_SYSTEM_MODULES.map((mod) =>
@@ -69,6 +71,7 @@ export const App: React.FC = () => {
                   '/admin/platform-overview',
                   '/admin/users',
                   '/admin/roles',
+                  '/admin/privileges',
                 ];
                 if (explicitPaths.includes(item.path)) return null;
                 return (
