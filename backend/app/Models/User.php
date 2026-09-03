@@ -15,6 +15,11 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, HasRoles, HasUuids, Notifiable, SoftDeletes;
 
     /**
+     * Spatie Permission guard name.
+     */
+    protected $guard_name = 'web';
+
+    /**
      * The primary key type is UUID string.
      */
     protected $keyType = 'string';

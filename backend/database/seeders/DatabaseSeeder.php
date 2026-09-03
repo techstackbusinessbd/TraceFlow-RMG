@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(PermissionSeeder::class);
         // 1. Seed Core Enterprise Roles
         $roles = [
             'Super Admin',
