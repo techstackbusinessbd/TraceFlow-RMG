@@ -1,42 +1,56 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { 
-  Shield, 
-  ShieldCheck, 
+  ArrowLeft, 
   Save, 
-  CheckSquare, 
-  Square, 
-  Search, 
+  Lock, 
+  Sparkles, 
+  Users, 
+  Database, 
+  ShoppingBag, 
+  Scissors, 
+  Activity, 
+  CheckCircle2, 
+  PackageCheck,
+  FileText,
   RotateCcw,
-  SlidersHorizontal,
-  KeyRound,
-  Lock,
-  Sparkles,
-  Info
+  KeyRound
 } from 'lucide-react';
 import { userService, type UserPermissionsData } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
 import { Alert } from '../../../components/common/Alert';
 
-type StatusFilter = 'all' | 'direct' | 'inherited' | 'ungranted';
+interface MatrixRow {
+  id: string;
+  resourceName: string;
+  description: string;
+  viewKey?: string;
+  createKey?: string;
+  editKey?: string;
+  deleteKey?: string;
+  specialKeys?: Array<{
+    key: string;
+    label: string;
+    description: string;
+    risk: 'neutral' | 'warning' | 'danger';
+  }>;
+}
 
 export const UserPermissionsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
   const [permissionsData, setPermissionsData] = useState<UserPermissionsData | null>(null);
   const [manifest, setManifest] = useState<Record<string, Record<string, string>>>({});
   const [directPermissions, setDirectPermissions] = useState<Set<string>>(new Set());
+  const [initialDirectPermissions, setInitialDirectPermissions] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Filters State
-  const [selectedModule, setSelectedModule] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  // Active Selected Module in Master-Detail layout
+  const [activeModule, setActiveModule] = useState<string>('User & Access Management');
 
   useEffect(() => {
     if (!id) return;
@@ -52,6 +66,12 @@ export const UserPermissionsPage: React.FC = () => {
         setPermissionsData(userData);
         setManifest(manifestData);
         setDirectPermissions(new Set(userData.direct_permissions));
+        setInitialDirectPermissions(new Set(userData.direct_permissions));
+
+        const moduleNames = Object.keys(manifestData);
+        if (moduleNames.length > 0) {
+          setActiveModule(moduleNames[0]);
+        }
       } catch (err: unknown) {
         const errorObj = err as { response?: { data?: { detail?: string } } };
         setErrorMessage(errorObj.response?.data?.detail || 'Failed to load user privileges matrix.');
@@ -67,7 +87,18 @@ export const UserPermissionsPage: React.FC = () => {
     return new Set(permissionsData?.role_permissions || []);
   }, [permissionsData]);
 
+  const hasUnsavedChanges = useMemo(() => {
+    if (directPermissions.size !== initialDirectPermissions.size) return true;
+    for (const p of directPermissions) {
+      if (!initialDirectPermissions.has(p)) return true;
+    }
+    return false;
+  }, [directPermissions, initialDirectPermissions]);
+
   const toggleDirectPermission = (permKey: string) => {
+    // If the permission is already inherited by the role, we don't need a direct grant
+    if (rolePermissionsSet.has(permKey)) return;
+
     setDirectPermissions((prev) => {
       const next = new Set(prev);
       if (next.has(permKey)) {
@@ -91,12 +122,17 @@ export const UserPermissionsPage: React.FC = () => {
 
     try {
       const updated = await userService.updateUserPermissions(id, Array.from(directPermissions));
-      setPermissionsData((prev) => prev ? {
-        ...prev,
-        direct_permissions: updated.direct_permissions,
-        all_permissions: updated.all_permissions,
-      } : null);
+      setPermissionsData((prev) =>
+        prev
+          ? {
+              ...prev,
+              direct_permissions: updated.direct_permissions,
+              all_permissions: updated.all_permissions,
+            }
+          : null
+      );
       setDirectPermissions(new Set(updated.direct_permissions));
+      setInitialDirectPermissions(new Set(updated.direct_permissions));
       setSuccessMessage('User custom privileges updated and synced successfully.');
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
@@ -106,7 +142,7 @@ export const UserPermissionsPage: React.FC = () => {
     }
   };
 
-  // Module stats
+  // Module Stats
   const moduleStats = useMemo(() => {
     const stats: Record<string, { total: number; direct: number; inherited: number; effective: number }> = {};
     Object.entries(manifest).forEach(([modName, perms]) => {
@@ -118,9 +154,9 @@ export const UserPermissionsPage: React.FC = () => {
       Object.keys(perms).forEach((k) => {
         const isInherited = rolePermissionsSet.has(k);
         const isDirect = directPermissions.has(k);
-        if (isDirect) direct++;
         if (isInherited) inherited++;
-        if (isDirect || isInherited) effective++;
+        if (isDirect && !isInherited) direct++;
+        if (isInherited || isDirect) effective++;
       });
 
       stats[modName] = { total, direct, inherited, effective };
@@ -128,112 +164,305 @@ export const UserPermissionsPage: React.FC = () => {
     return stats;
   }, [manifest, rolePermissionsSet, directPermissions]);
 
-  // Filtered manifest
-  const filteredManifest = useMemo(() => {
-    const result: Record<string, Record<string, string>> = {};
-    const query = searchQuery.trim().toLowerCase();
-
-    Object.entries(manifest).forEach(([modName, perms]) => {
-      if (selectedModule !== 'ALL' && selectedModule !== modName) {
-        return;
-      }
-
-      const matchingPerms: Record<string, string> = {};
-      Object.entries(perms).forEach(([permKey, permDesc]) => {
-        const isInherited = rolePermissionsSet.has(permKey);
-        const isDirect = directPermissions.has(permKey);
-        const isEffective = isInherited || isDirect;
-
-        if (statusFilter === 'direct' && !isDirect) return;
-        if (statusFilter === 'inherited' && !isInherited) return;
-        if (statusFilter === 'ungranted' && isEffective) return;
-
-        if (query) {
-          const matchKey = permKey.toLowerCase().includes(query);
-          const matchDesc = permDesc.toLowerCase().includes(query);
-          if (!matchKey && !matchDesc) return;
-        }
-
-        matchingPerms[permKey] = permDesc;
-      });
-
-      if (Object.keys(matchingPerms).length > 0) {
-        result[modName] = matchingPerms;
-      }
-    });
-
-    return result;
-  }, [manifest, selectedModule, searchQuery, statusFilter, rolePermissionsSet, directPermissions]);
-
-  const totalVisibleCount = useMemo(() => {
-    return Object.values(filteredManifest).reduce((acc, curr) => acc + Object.keys(curr).length, 0);
-  }, [filteredManifest]);
-
-  const handleResetFilters = () => {
-    setSelectedModule('ALL');
-    setSearchQuery('');
-    setStatusFilter('all');
+  const getModuleIcon = (modName: string) => {
+    switch (modName) {
+      case 'User & Access Management':
+        return <Users className="w-4 h-4 shrink-0" />;
+      case 'Master Data Management':
+        return <Database className="w-4 h-4 shrink-0" />;
+      case 'Order Management & Planning':
+        return <ShoppingBag className="w-4 h-4 shrink-0" />;
+      case 'Cutting & QR Bundling':
+        return <Scissors className="w-4 h-4 shrink-0" />;
+      case 'Sewing Floor Tracking':
+        return <Activity className="w-4 h-4 shrink-0" />;
+      case 'Quality Control (QC)':
+        return <CheckCircle2 className="w-4 h-4 shrink-0" />;
+      case 'Finishing, Packing & Export':
+        return <PackageCheck className="w-4 h-4 shrink-0" />;
+      default:
+        return <FileText className="w-4 h-4 shrink-0" />;
+    }
   };
 
-  if (isLoading) {
-    return (
-      <div className="py-20 text-center text-slate-500">
-        <div className="inline-flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin"></div>
-          <span>Loading user privileges matrix...</span>
-        </div>
-      </div>
-    );
-  }
+  // Matrix Row Structure
+  const getModuleRows = (modName: string): MatrixRow[] => {
+    switch (modName) {
+      case 'User & Access Management':
+        return [
+          {
+            id: 'users',
+            resourceName: 'User Directory & Profiles',
+            description: 'Employee login credentials, factory designations, and account status',
+            viewKey: 'users.view',
+            createKey: 'users.create',
+            editKey: 'users.edit',
+            deleteKey: 'users.delete',
+            specialKeys: [
+              {
+                key: 'users.restore',
+                label: 'Restore Account',
+                description: 'Restore deactivated or archived users',
+                risk: 'warning',
+              },
+              {
+                key: 'users.force_delete',
+                label: 'Purge Account',
+                description: 'Permanent hard delete (Super Admin only)',
+                risk: 'danger',
+              },
+            ],
+          },
+          {
+            id: 'roles',
+            resourceName: 'Roles & Authority Boundaries',
+            description: 'Role catalog, custom roles, and module authorization matrices',
+            viewKey: 'roles.view',
+            createKey: 'roles.create',
+            editKey: 'roles.edit',
+            deleteKey: 'roles.delete',
+          },
+          {
+            id: 'audit',
+            resourceName: 'Forensic Audit Vault',
+            description: 'Enterprise immutable WORM audit logs and security telemetry',
+            viewKey: 'audit.view',
+          },
+        ];
 
-  if (!permissionsData) {
+      case 'Master Data Management':
+        return [
+          {
+            id: 'master_data',
+            resourceName: 'Core Garment Registry',
+            description: 'Buyer accounts, brand styles, colorways, size matrices, and sewing line IDs',
+            viewKey: 'master_data.view',
+            createKey: 'master_data.create',
+            editKey: 'master_data.edit',
+            deleteKey: 'master_data.delete',
+          },
+        ];
+
+      case 'Order Management & Planning':
+        return [
+          {
+            id: 'orders',
+            resourceName: 'Buyer Purchase Orders (PO)',
+            description: 'Order quantities, export delivery schedules, and style mappings',
+            viewKey: 'orders.view',
+            createKey: 'orders.create',
+            editKey: 'orders.edit',
+            deleteKey: 'orders.delete',
+          },
+          {
+            id: 'planning',
+            resourceName: 'Line Allocation & Capacity Plans',
+            description: 'Sewing line allocations, target daily output, and production scheduling',
+            viewKey: 'planning.view',
+            editKey: 'planning.edit',
+          },
+        ];
+
+      case 'Cutting & QR Bundling':
+        return [
+          {
+            id: 'cutting',
+            resourceName: 'Spreading, Lays & Marker Plans',
+            description: 'Fabric roll consumption, cutting orders, and marker lay efficiency',
+            viewKey: 'cutting.view',
+            createKey: 'cutting.create',
+            specialKeys: [
+              {
+                key: 'cutting.bundle_generate',
+                label: 'Generate QR Bundles',
+                description: 'Generate and print single-piece QR bundle tickets',
+                risk: 'neutral',
+              },
+            ],
+          },
+        ];
+
+      case 'Sewing Floor Tracking':
+        return [
+          {
+            id: 'sewing',
+            resourceName: 'Real-time Bundle Flow Tracking',
+            description: 'Monitor sewing line throughput, real-time pace, and workstation bottlenecks',
+            viewKey: 'sewing.view',
+            specialKeys: [
+              {
+                key: 'sewing.line_in',
+                label: 'Scan Line-In',
+                description: 'Scan bundle tickets entering sewing lines',
+                risk: 'neutral',
+              },
+              {
+                key: 'sewing.line_out',
+                label: 'Scan Line-Out',
+                description: 'Scan completed garments departing sewing lines',
+                risk: 'neutral',
+              },
+            ],
+          },
+        ];
+
+      case 'Quality Control (QC)':
+        return [
+          {
+            id: 'qc',
+            resourceName: 'Garment Inspection & Defect DHU',
+            description: 'End-line quality boards, DHU analytics, and garment defect classification',
+            viewKey: 'qc.view',
+            specialKeys: [
+              {
+                key: 'qc.inspect',
+                label: '100% Inspection',
+                description: 'Perform 100% garment quality inspection scan',
+                risk: 'neutral',
+              },
+              {
+                key: 'qc.defect_log',
+                label: 'Log Defect & Alteration',
+                description: 'Record specific defect points and route garment to alteration line',
+                risk: 'warning',
+              },
+            ],
+          },
+        ];
+
+      case 'Finishing, Packing & Export':
+        return [
+          {
+            id: 'finishing_packing',
+            resourceName: 'Finishing, Cartons & Shipments',
+            description: 'Iron and wash verification, carton scanning, and export invoice stuffing',
+            viewKey: 'finishing.view',
+            specialKeys: [
+              {
+                key: 'packing.view',
+                label: 'View Packing Lists',
+                description: 'View master carton packaging records',
+                risk: 'neutral',
+              },
+              {
+                key: 'packing.carton_scan',
+                label: 'Carton Scan',
+                description: 'Scan inspected garments into shipping cartons',
+                risk: 'neutral',
+              },
+              {
+                key: 'commercial.export',
+                label: 'Export Clearance',
+                description: 'Approve final container stuffing and export commercial invoices',
+                risk: 'danger',
+              },
+            ],
+          },
+        ];
+
+      default:
+        return [];
+    }
+  };
+
+  if (isLoading || !permissionsData) {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-white border border-slate-200 text-center space-y-4">
-        <h2 className="text-lg font-bold text-slate-900">User Record Not Found</h2>
-        <Link to="/admin/users" className="text-blue-600 font-semibold hover:underline">
-          Return to User Directory
-        </Link>
+      <div className="py-24 text-center text-slate-500">
+        <div className="inline-flex items-center gap-2">
+          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent animate-spin rounded-full" />
+          <span className="text-sm font-semibold">Loading user privileges matrix...</span>
+        </div>
       </div>
     );
   }
 
   const { user } = permissionsData;
-  const isSuperAdminUser = user.roles?.includes('Super Admin');
-  const allModulesList = Object.keys(manifest);
-  const totalEffectiveCount = new Set([...directPermissions, ...rolePermissionsSet]).size;
+  const currentRows = getModuleRows(activeModule);
+  const currentStats = moduleStats[activeModule] || { total: 0, direct: 0, inherited: 0, effective: 0 };
+
+  const renderCellStatus = (permKey?: string) => {
+    if (!permKey) {
+      return <span className="text-slate-300 font-mono text-xs select-none">—</span>;
+    }
+
+    const isInherited = rolePermissionsSet.has(permKey);
+    const isDirect = directPermissions.has(permKey);
+
+    if (isInherited) {
+      return (
+        <div
+          title={`${permKey} is inherited from role (${user.roles[0] || 'Role'})`}
+          className="w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center bg-slate-100 border border-slate-300 text-slate-700 font-bold shadow-2xs select-none"
+        >
+          <Lock className="w-3.5 h-3.5 text-slate-600" />
+        </div>
+      );
+    }
+
+    if (isDirect) {
+      return (
+        <button
+          type="button"
+          title={`Click to remove direct override: ${permKey}`}
+          onClick={() => toggleDirectPermission(permKey)}
+          className="w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors shadow-2xs"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+        </button>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        title={`Click to grant direct override: ${permKey}`}
+        onClick={() => toggleDirectPermission(permKey)}
+        className="w-7 h-7 mx-auto rounded-md inline-flex items-center justify-center bg-white hover:bg-slate-100 border border-slate-300 text-slate-300 hover:text-slate-600 transition-colors"
+      >
+        <span className="text-xs font-mono">+</span>
+      </button>
+    );
+  };
 
   return (
     <div className="space-y-6">
-      {/* Top Breadcrumb & Title Bar */}
+      {/* Top Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mb-1">
-            <Link to="/admin/privileges" className="hover:text-blue-600 transition-colors">User Privileges</Link>
-            <span>/</span>
-            <span className="text-slate-800">{user.name}</span>
-            <span>/</span>
-            <span className="text-slate-800 font-semibold">Custom Privileges</span>
-          </div>
+          <Link
+            to="/admin/users"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors mb-1"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Users Directory
+          </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Manage Custom Privileges: {user.name}
+              User Privileges: {user.name}
             </h1>
-            <Badge variant="neutral" className="font-mono">
-              {user.emp_id}
+            <Badge variant="neutral" className="font-mono text-xs">
+              @{user.username}
             </Badge>
+            {user.roles.map((r) => (
+              <Badge key={r} variant="info">
+                Role: {r}
+              </Badge>
+            ))}
           </div>
           <p className="text-sm text-slate-500 mt-0.5">
-            Grant individual user-level permissions that supplement or override the user's assigned role privileges.
+            Configure direct user privilege overrides beyond the baseline inherited from their primary role.
           </p>
         </div>
 
-        {/* Save Button (Centralized Design System - STRICT) */}
-        <div className="flex items-center gap-3">
+        {/* Header Action Controls */}
+        <div className="flex items-center gap-2.5">
           <Button
             variant="secondary"
-            onClick={() => navigate('/admin/privileges')}
+            icon={<RotateCcw className="w-3.5 h-3.5" />}
+            onClick={handleResetToRoleDefaults}
+            disabled={directPermissions.size === 0}
           >
-            Cancel
+            Reset to Role
           </Button>
           <Button
             variant="primary"
@@ -243,6 +472,54 @@ export const UserPermissionsPage: React.FC = () => {
           >
             Save Privileges
           </Button>
+        </div>
+      </div>
+
+      {/* KPI Metrics Summary Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white border border-slate-200 rounded-md p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Role Inherited
+            </span>
+            <div className="text-2xl font-bold text-slate-900 mt-1 font-mono">
+              {rolePermissionsSet.size}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Locked baseline from role</div>
+          </div>
+          <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center text-slate-600">
+            <Lock className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-md p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Direct Overrides
+            </span>
+            <div className="text-2xl font-bold text-blue-600 mt-1 font-mono">
+              {directPermissions.size}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Explicit user-only gates</div>
+          </div>
+          <div className="w-10 h-10 rounded-md bg-blue-50 flex items-center justify-center text-blue-600">
+            <Sparkles className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-md p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Total Effective
+            </span>
+            <div className="text-2xl font-bold text-emerald-600 mt-1 font-mono">
+              {new Set([...rolePermissionsSet, ...directPermissions]).size}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Active operational gates</div>
+          </div>
+          <div className="w-10 h-10 rounded-md bg-emerald-50 flex items-center justify-center text-emerald-600">
+            <KeyRound className="w-5 h-5" />
+          </div>
         </div>
       </div>
 
@@ -260,338 +537,217 @@ export const UserPermissionsPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* User Identity & Scope Overview Card */}
-      <div className="bg-white border border-slate-200 shadow-xs p-5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-slate-800 text-white font-bold text-base flex items-center justify-center shrink-0">
-              <KeyRound className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900 text-base">{user.name}</span>
-                <span className="text-xs text-blue-600 font-mono">@{user.username}</span>
-                <span className="px-2 py-0.5 text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">
-                  Role: {user.roles.join(', ') || 'No Assigned Role'}
-                </span>
-              </div>
-              <div className="text-xs text-slate-500 mt-1">
-                <span>{user.department || 'General Plant'}</span> • <span>{user.designation || 'Staff'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Metric Badges */}
-          <div className="flex items-center gap-2 flex-wrap text-xs">
-            <div className="p-2.5 bg-slate-50 border border-slate-200 text-slate-700">
-              <div className="text-[10px] uppercase font-bold text-slate-400">Role Inherited</div>
-              <div className="text-base font-bold text-slate-900">{rolePermissionsSet.size}</div>
-            </div>
-
-            <div className="p-2.5 bg-blue-50 border border-blue-200 text-blue-900">
-              <div className="text-[10px] uppercase font-bold text-blue-500">Direct Overrides</div>
-              <div className="text-base font-bold text-blue-700">{directPermissions.size}</div>
-            </div>
-
-            <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-900">
-              <div className="text-[10px] uppercase font-bold text-emerald-600">Total Effective</div>
-              <div className="text-base font-bold text-emerald-700">{totalEffectiveCount}</div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleResetToRoleDefaults}
-              className="px-3 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors self-end"
-              title="Remove all direct permissions so user has only role permissions"
-            >
-              Reset to Role Defaults
-            </button>
-          </div>
-        </div>
-
-        {/* Explainability Note */}
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-          <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-          <span>
-            <strong>Role Permissions</strong> (marked with lock badge) are granted through the user's role and cannot be unchecked here. 
-            Checking any additional item grants a <strong>Direct User Privilege</strong> specifically to this user account.
-          </span>
-        </div>
-      </div>
-
-      {/* Super Admin Notice */}
-      {isSuperAdminUser && (
-        <div className="p-4 bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-start gap-3">
-          <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
-          <div>
-            <div className="font-bold">Root Super Administrator Notice:</div>
-            <p className="mt-0.5 leading-relaxed">
-              This account possesses root application bypass privileges. Custom grants take effect in the RBAC table, but system gates ensure Super Admin always has full access.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* ==================================================================== */}
-      {/* MODULE-WISE FILTER CONSOLE */}
+      {/* MASTER-DETAIL WORKSPACE: LEFT MODULE LIST + RIGHT MATRIX TABLE        */}
       {/* ==================================================================== */}
-      <div className="bg-white border border-slate-200 shadow-xs p-4 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
-            <SlidersHorizontal className="w-4 h-4 text-blue-600" />
-            <span>Filter Privileges Matrix</span>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* ------------------------------------------------------------------ */}
+        {/* LEFT COLUMN: SYSTEM MODULES LIST                                  */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden">
+          <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              System Modules ({Object.keys(manifest).length})
+            </span>
+            <span className="text-[11px] font-mono font-semibold text-slate-500">
+              {new Set([...rolePermissionsSet, ...directPermissions]).size} Effective
+            </span>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap text-xs">
-            {/* Status Filter Buttons */}
-            <div className="flex items-center border border-slate-300 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setStatusFilter('all')}
-                className={`px-3 py-1.5 font-medium transition-colors ${
-                  statusFilter === 'all'
-                    ? 'bg-slate-800 text-white'
-                    : 'bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                All Privileges
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('direct')}
-                className={`px-3 py-1.5 font-medium border-l border-slate-300 transition-colors ${
-                  statusFilter === 'direct'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                Direct Only ({directPermissions.size})
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('inherited')}
-                className={`px-3 py-1.5 font-medium border-l border-slate-300 transition-colors ${
-                  statusFilter === 'inherited'
-                    ? 'bg-slate-700 text-white'
-                    : 'bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                Role Inherited ({rolePermissionsSet.size})
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('ungranted')}
-                className={`px-3 py-1.5 font-medium border-l border-slate-300 transition-colors ${
-                  statusFilter === 'ungranted'
-                    ? 'bg-slate-600 text-white'
-                    : 'bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                Ungranted
-              </button>
-            </div>
+          <div className="divide-y divide-slate-100">
+            {Object.keys(manifest).map((modName) => {
+              const isActive = activeModule === modName;
+              const stats = moduleStats[modName] || { total: 0, direct: 0, inherited: 0, effective: 0 };
+              const isFull = stats.effective === stats.total && stats.total > 0;
 
-            {/* Reset Button */}
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors"
-              title="Reset all filters"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Reset Filters
-            </button>
-          </div>
-        </div>
-
-        {/* Search & Module Dropdown Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="relative md:col-span-2">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search permission slug or description..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 bg-white text-slate-900 focus:outline-none focus:border-blue-600"
-            />
-          </div>
-
-          <div>
-            <select
-              value={selectedModule}
-              onChange={(e) => setSelectedModule(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 bg-white text-slate-900 focus:outline-none focus:border-blue-600 font-medium"
-            >
-              <option value="ALL">All Modules ({allModulesList.length})</option>
-              {allModulesList.map((modName) => {
-                const stat = moduleStats[modName];
-                return (
-                  <option key={modName} value={modName}>
-                    {modName} ({stat ? `${stat.effective}/${stat.total}` : ''})
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-        </div>
-
-        {/* Horizontal Module Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-thin">
-          <button
-            type="button"
-            onClick={() => setSelectedModule('ALL')}
-            className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors border ${
-              selectedModule === 'ALL'
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-            }`}
-          >
-            All Modules ({allModulesList.length})
-          </button>
-
-          {allModulesList.map((modName) => {
-            const isSelected = selectedModule === modName;
-            const stat = moduleStats[modName];
-
-            return (
-              <button
-                key={modName}
-                type="button"
-                onClick={() => setSelectedModule(modName)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors border ${
-                  isSelected
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                <span>{modName}</span>
-                <span className={`px-1.5 py-0.2 text-[10px] ${
-                  isSelected
-                    ? 'bg-blue-800 text-blue-100'
-                    : stat && stat.direct > 0
-                    ? 'bg-blue-100 text-blue-800 font-bold'
-                    : 'bg-slate-200 text-slate-700'
-                }`}>
-                  {stat ? `${stat.effective}/${stat.total}` : ''}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Counter Info */}
-        <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <span>
-            Showing <strong className="text-slate-800">{totalVisibleCount}</strong> permissions across{' '}
-            <strong className="text-slate-800">{Object.keys(filteredManifest).length}</strong> active module(s)
-          </span>
-          {searchQuery && (
-            <span className="text-blue-600 font-medium">Filtered by: "{searchQuery}"</span>
-          )}
-        </div>
-      </div>
-
-      {/* ==================================================================== */}
-      {/* PRIVILEGES MATRIX CARDS */}
-      {/* ==================================================================== */}
-      {Object.keys(filteredManifest).length === 0 ? (
-        <div className="bg-white border border-slate-200 p-12 text-center space-y-3">
-          <Search className="w-8 h-8 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No matching privileges found</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
-            No permissions match your filter criteria. Try resetting your search terms.
-          </p>
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-          >
-            Reset All Filters
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(filteredManifest).map(([moduleName, permissions]) => {
-            const permEntries = Object.entries(permissions);
-            const stat = moduleStats[moduleName];
-
-            return (
-              <div key={moduleName} className="bg-white border border-slate-200 shadow-xs overflow-hidden">
-                {/* Module Header */}
-                <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <Shield className="w-4 h-4 text-slate-600" />
-                    <span className="font-bold text-slate-900 text-sm">{moduleName}</span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      ({stat ? `${stat.effective} active of ${stat.total}` : `${permEntries.length} permissions`})
-                    </span>
+              return (
+                <button
+                  key={modName}
+                  type="button"
+                  onClick={() => setActiveModule(modName)}
+                  className={`w-full text-left px-4 py-3.5 transition-colors flex items-center justify-between gap-3 ${
+                    isActive
+                      ? 'bg-slate-900 text-white font-bold'
+                      : 'hover:bg-slate-50 text-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={isActive ? 'text-blue-400' : 'text-slate-400'}>
+                      {getModuleIcon(modName)}
+                    </div>
+                    <span className="text-sm truncate">{modName}</span>
                   </div>
-                </div>
 
-                {/* Privileges Grid */}
-                <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {permEntries.map(([permKey, permDesc]) => {
-                    const isInherited = rolePermissionsSet.has(permKey);
-                    const isDirect = directPermissions.has(permKey);
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {stats.direct > 0 && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 rounded-sm">
+                        +{stats.direct}
+                      </span>
+                    )}
+                    <Badge
+                      variant={isActive ? 'root' : isFull ? 'success' : 'neutral'}
+                      className="text-[11px] font-mono"
+                    >
+                      {stats.effective}/{stats.total}
+                    </Badge>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-                    return (
-                      <div
-                        key={permKey}
-                        onClick={() => {
-                          if (!isInherited) {
-                            toggleDirectPermission(permKey);
-                          }
-                        }}
-                        className={`p-3.5 border flex items-start gap-3 transition-colors select-none ${
-                          isInherited
-                            ? 'border-slate-200 bg-slate-50/70 cursor-default opacity-85'
-                            : isDirect
-                            ? 'border-blue-400 bg-blue-50/50 cursor-pointer'
-                            : 'border-slate-200 hover:bg-slate-50/80 cursor-pointer'
-                        }`}
-                      >
-                        {/* Checkbox / Lock Icon */}
-                        <div className="mt-0.5 shrink-0">
-                          {isInherited ? (
-                            <span title="Inherited from role (locked)">
-                              <Lock className="w-4 h-4 text-slate-400" />
-                            </span>
-                          ) : isDirect ? (
-                            <CheckSquare className="w-4 h-4 text-blue-600" />
-                          ) : (
-                            <Square className="w-4 h-4 text-slate-300" />
-                          )}
-                        </div>
-
-                        {/* Details */}
-                        <div className="text-xs flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-mono font-bold text-slate-900">{permKey}</span>
-
-                            {/* Badge */}
-                            {isInherited ? (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 text-[9px] font-semibold bg-slate-200 text-slate-700">
-                                <Lock className="w-2.5 h-2.5" />
-                                Role Inherited
-                              </span>
-                            ) : isDirect ? (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-blue-600 text-white">
-                                <Sparkles className="w-2.5 h-2.5" />
-                                Direct Privilege
-                              </span>
-                            ) : null}
-                          </div>
-
-                          <div className="text-slate-600 mt-1 leading-relaxed">{permDesc}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+        {/* ------------------------------------------------------------------ */}
+        {/* RIGHT COLUMN: ENTERPRISE PERMISSION MATRIX TABLE                   */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden">
+          
+          {/* Module Toolbar & Legend */}
+          <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
+                <span className="text-blue-600">{getModuleIcon(activeModule)}</span>
+                <span>{activeModule}</span>
               </div>
-            );
-          })}
+              <p className="text-xs text-slate-500 mt-0.5">
+                Effective: {currentStats.effective} of {currentStats.total} gates ({currentStats.inherited} inherited, {currentStats.direct} direct overrides)
+              </p>
+            </div>
+
+            {/* Visual Legend */}
+            <div className="flex items-center gap-3 text-xs text-slate-600 shrink-0">
+              <span className="inline-flex items-center gap-1">
+                <Lock className="w-3 h-3 text-slate-500" />
+                <span>Role Inherited</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-blue-600" />
+                <span>Direct Grant</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Matrix Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse table-fixed">
+              <thead>
+                <tr className="bg-slate-100/70 border-b border-slate-200 text-xs text-slate-700 font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4 w-[240px]">Business Resource</th>
+                  <th className="py-3 px-2 w-20 text-center">View</th>
+                  <th className="py-3 px-2 w-20 text-center">Create</th>
+                  <th className="py-3 px-2 w-20 text-center">Edit</th>
+                  <th className="py-3 px-2 w-20 text-center">Delete</th>
+                  <th className="py-3 px-4 w-60">Advanced Operations</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-slate-200 text-sm text-slate-700">
+                {currentRows.map((row) => {
+                  return (
+                    <tr key={row.id} className="hover:bg-slate-50/80 transition-colors group">
+                      
+                      {/* 1. Resource & Description */}
+                      <td className="py-3.5 px-4 align-top">
+                        <div className="font-bold text-slate-900 text-sm">{row.resourceName}</div>
+                        <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">{row.description}</div>
+                      </td>
+
+                      {/* 2. VIEW Action */}
+                      <td className="py-3.5 px-2 text-center align-middle">
+                        {renderCellStatus(row.viewKey)}
+                      </td>
+
+                      {/* 3. CREATE Action */}
+                      <td className="py-3.5 px-2 text-center align-middle">
+                        {renderCellStatus(row.createKey)}
+                      </td>
+
+                      {/* 4. EDIT Action */}
+                      <td className="py-3.5 px-2 text-center align-middle">
+                        {renderCellStatus(row.editKey)}
+                      </td>
+
+                      {/* 5. DELETE Action */}
+                      <td className="py-3.5 px-2 text-center align-middle">
+                        {renderCellStatus(row.deleteKey)}
+                      </td>
+
+                      {/* 6. Special / Advanced Actions */}
+                      <td className="py-3.5 px-4 align-middle">
+                        {row.specialKeys && row.specialKeys.length > 0 ? (
+                          <div className="flex flex-col gap-1.5">
+                            {row.specialKeys.map((sp) => {
+                              const isInherited = rolePermissionsSet.has(sp.key);
+                              const isDirect = directPermissions.has(sp.key);
+
+                              return (
+                                <button
+                                  key={sp.key}
+                                  type="button"
+                                  disabled={isInherited}
+                                  onClick={() => toggleDirectPermission(sp.key)}
+                                  className={`px-2.5 py-1 text-xs font-semibold rounded-md border text-left transition-colors flex items-center justify-between gap-2 ${
+                                    isInherited
+                                      ? 'bg-slate-100 text-slate-700 border-slate-300 opacity-90 cursor-default'
+                                      : isDirect
+                                      ? 'bg-blue-50 text-blue-800 border-blue-300 shadow-2xs'
+                                      : 'bg-white hover:bg-slate-50 text-slate-500 border-slate-200'
+                                  }`}
+                                  title={sp.description}
+                                >
+                                  <span className="truncate">{sp.label}</span>
+                                  <span className="shrink-0">
+                                    {isInherited ? (
+                                      <Lock className="w-3 h-3 text-slate-500" />
+                                    ) : isDirect ? (
+                                      <Sparkles className="w-3 h-3 text-blue-600" />
+                                    ) : (
+                                      <span className="text-[10px] text-slate-400 font-mono">+</span>
+                                    )}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-xs italic">Standard CRUD only</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Sticky Save Dock */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-sm text-white px-5 py-3 rounded-lg shadow-xl border border-slate-700 flex items-center gap-5 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="flex items-center gap-2.5 text-xs font-semibold">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <span>Unsaved privilege override changes detected</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setDirectPermissions(new Set(initialDirectPermissions))}
+            >
+              Discard Changes
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Save className="w-3.5 h-3.5" />}
+              isLoading={isSaving}
+              onClick={handleSave}
+            >
+              Save Privileges
+            </Button>
+          </div>
         </div>
       )}
     </div>

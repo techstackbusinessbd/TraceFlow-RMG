@@ -18,6 +18,7 @@ import { userService, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
 import { Alert } from '../../../components/common/Alert';
+import { DataTable, type ColumnDef } from '../../../components/common/DataTable';
 import { UI_TOKENS } from '../../../config/designTokens';
 
 export const RoleListPage: React.FC = () => {
@@ -113,6 +114,146 @@ export const RoleListPage: React.FC = () => {
 
     return { totalRoles, totalAssignedUsers, rootRoles };
   }, [roles]);
+
+  const roleColumns: ColumnDef<Role>[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        header: 'Role Title & Slug',
+        width: 'w-[280px]',
+        sortable: true,
+        render: (role) => {
+          const isSuperAdmin = role.name === 'Super Admin';
+          const isITAdmin = role.name === 'IT Admin';
+          return (
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
+                  isSuperAdmin
+                    ? 'bg-purple-100 text-purple-800'
+                    : isITAdmin
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-bold text-slate-900 text-sm truncate flex items-center gap-1.5">
+                  <span>{role.name}</span>
+                  {isSuperAdmin && (
+                    <span className="px-1.5 py-0.2 text-[9px] font-bold bg-purple-100 text-purple-800 rounded-sm border border-purple-300">
+                      Root
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-slate-400 font-mono mt-0.5 truncate">
+                  slug: {role.slug || role.id}
+                </div>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        key: 'category',
+        header: 'Category',
+        width: 'w-44',
+        sortable: true,
+        render: (role) => {
+          const cat = getRoleCategory(role.name);
+          return <Badge variant={cat.badge}>{cat.label}</Badge>;
+        },
+      },
+      {
+        key: 'users_count',
+        header: 'Active Staff',
+        width: 'w-36',
+        sortable: true,
+        render: (role) => (
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+            <Users className="w-3.5 h-3.5 text-slate-400" />
+            <span>
+              {role.users_count ?? 0} {role.users_count === 1 ? 'User' : 'Users'}
+            </span>
+          </span>
+        ),
+      },
+      {
+        key: 'coverage',
+        header: 'Permission Coverage',
+        width: 'w-64',
+        sortable: true,
+        render: (role) => {
+          const isSuperAdmin = role.name === 'Super Admin';
+          const permCount = role.permissions?.length || 0;
+          const percent = isSuperAdmin
+            ? 100
+            : Math.min(100, Math.round((permCount / totalSystemPerms) * 100));
+
+          return (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs font-medium text-slate-600">
+                <span>
+                  {isSuperAdmin ? 'Full Wildcard Access' : `${permCount} of ${totalSystemPerms} gates`}
+                </span>
+                <span className="font-bold font-mono text-slate-800">{percent}%</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    isSuperAdmin
+                      ? 'bg-purple-600'
+                      : percent > 75
+                      ? 'bg-blue-600'
+                      : percent > 30
+                      ? 'bg-amber-500'
+                      : 'bg-slate-400'
+                  }`}
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        key: 'scope',
+        header: 'Authority Scope',
+        width: 'w-40',
+        render: (role) => {
+          const isSuperAdmin = role.name === 'Super Admin';
+          const isITAdmin = role.name === 'IT Admin';
+          return isSuperAdmin ? (
+            <Badge variant="root">Singleton Root</Badge>
+          ) : isITAdmin ? (
+            <Badge variant="info">Multi-Admin</Badge>
+          ) : (
+            <Badge variant="neutral">Departmental</Badge>
+          );
+        },
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        width: 'w-48',
+        align: 'right',
+        render: (role) => (
+          <div className="inline-flex items-center justify-end gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Sliders className="w-3.5 h-3.5" />}
+              onClick={() => navigate(`/admin/roles/${role.slug || role.id}/permissions`)}
+            >
+              Configure Matrix
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [totalSystemPerms, navigate]
+  );
 
   const handleCreateRole = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -353,153 +494,15 @@ export const RoleListPage: React.FC = () => {
       {/* 1. TABLE VIEW (EXECUTIVE GRADE DATA TABLE - ZERO REPETITIVE SEA) */}
       {/* ==================================================================== */}
       {viewMode === 'table' ? (
-        <div className="bg-white border border-slate-200 rounded-md shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse table-fixed">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-700 font-semibold uppercase tracking-wider">
-                  <th className="py-3.5 px-4 w-[280px]">Role Title & Slug</th>
-                  <th className="py-3.5 px-4 w-44">Category</th>
-                  <th className="py-3.5 px-4 w-36">Active Staff</th>
-                  <th className="py-3.5 px-4 w-64">Permission Coverage</th>
-                  <th className="py-3.5 px-4 w-40">Authority Scope</th>
-                  <th className="py-3.5 px-4 w-52 text-right">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-200 text-sm text-slate-700">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-slate-400">
-                      <div className="inline-flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin" />
-                        <span className="text-xs font-semibold">Loading system roles registry...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredRoles.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-slate-500">
-                      <Shield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="font-bold text-slate-800">No matching system roles found.</p>
-                      <p className="text-xs text-slate-400 mt-1">Try changing your search query or department filter.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRoles.map((role) => {
-                    const isSuperAdmin = role.name === 'Super Admin';
-                    const isITAdmin = role.name === 'IT Admin';
-                    const permCount = role.permissions?.length || 0;
-                    const percent = isSuperAdmin
-                      ? 100
-                      : Math.min(100, Math.round((permCount / totalSystemPerms) * 100));
-                    const cat = getRoleCategory(role.name);
-
-                    return (
-                      <tr key={role.id} className="hover:bg-slate-50/90 transition-colors group">
-                        {/* Role Title & Slug */}
-                        <td className="py-3.5 px-4 align-middle">
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-                                isSuperAdmin
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : isITAdmin
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-slate-100 text-slate-700'
-                              }`}
-                            >
-                              <ShieldCheck className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="font-bold text-slate-900 text-sm truncate flex items-center gap-1.5">
-                                <span>{role.name}</span>
-                                {isSuperAdmin && (
-                                  <span className="px-1.5 py-0.2 text-[9px] font-bold bg-purple-100 text-purple-800 rounded-sm border border-purple-300">
-                                    Root
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-slate-400 font-mono mt-0.5 truncate">
-                                slug: {role.slug || role.id}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Category */}
-                        <td className="py-3.5 px-4 align-middle">
-                          <Badge variant={cat.badge}>{cat.label}</Badge>
-                        </td>
-
-                        {/* Active Staff */}
-                        <td className="py-3.5 px-4 align-middle">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                            <Users className="w-3.5 h-3.5 text-slate-400" />
-                            <span>
-                              {role.users_count ?? 0} {role.users_count === 1 ? 'User' : 'Users'}
-                            </span>
-                          </span>
-                        </td>
-
-                        {/* Permission Coverage Progress Bar */}
-                        <td className="py-3.5 px-4 align-middle">
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs font-medium text-slate-600">
-                              <span>
-                                {isSuperAdmin ? 'Full Wildcard Access' : `${permCount} of ${totalSystemPerms} gates`}
-                              </span>
-                              <span className="font-bold font-mono text-slate-800">{percent}%</span>
-                            </div>
-                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                              <div
-                                className={`h-full transition-all duration-300 ${
-                                  isSuperAdmin
-                                    ? 'bg-purple-600'
-                                    : percent > 75
-                                    ? 'bg-blue-600'
-                                    : percent > 30
-                                    ? 'bg-amber-500'
-                                    : 'bg-slate-400'
-                                }`}
-                                style={{ width: `${percent}%` }}
-                              />
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Authority Scope */}
-                        <td className="py-3.5 px-4 align-middle">
-                          {isSuperAdmin ? (
-                            <Badge variant="root">Singleton Root</Badge>
-                          ) : isITAdmin ? (
-                            <Badge variant="info">Multi-Admin</Badge>
-                          ) : (
-                            <Badge variant="neutral">Departmental</Badge>
-                          )}
-                        </td>
-
-                        {/* Actions */}
-                        <td className="py-3.5 px-4 text-right align-middle">
-                          <div className="inline-flex items-center justify-end gap-2">
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              icon={<Sliders className="w-3.5 h-3.5" />}
-                              onClick={() => navigate(`/admin/roles/${role.slug || role.id}/permissions`)}
-                            >
-                              Configure Matrix
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable<Role>
+          columns={roleColumns}
+          data={filteredRoles}
+          keyExtractor={(role) => role.id}
+          isLoading={isLoading}
+          emptyMessage="No matching system roles found."
+          initialSortKey="name"
+          defaultPerPage={10}
+        />
       ) : (
         /* ==================================================================== */
         /* 2. COMPACT CARDS VIEW (CLEAN, MUTED, ELEGANT PROPORTIONS)            */
