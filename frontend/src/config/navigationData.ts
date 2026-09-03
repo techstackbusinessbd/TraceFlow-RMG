@@ -18,6 +18,7 @@ export interface EnterpriseModule {
   shortTitle: string;   // Short name for horizontal menu bar
   iconName: string;
   defaultPath: string;
+  standaloneItems?: NavLeafItem[];
   submodules: NavSubmoduleItem[];
 }
 
@@ -30,15 +31,10 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
     shortTitle: 'Admin',
     iconName: 'Shield',
     defaultPath: '/admin/platform-overview',
+    standaloneItems: [
+      { id: 'admin-dash', title: 'Dashboard', path: '/admin/platform-overview' },
+    ],
     submodules: [
-      {
-        id: 'admin-platform',
-        title: 'General',
-        children: [
-          { id: 'admin-dash', title: 'Dashboard', path: '/admin/platform-overview' },
-          { id: 'admin-devices', title: 'Tablets & Devices', path: '/admin/devices' },
-        ],
-      },
       {
         id: 'admin-access-control',
         title: 'Users & Access',
@@ -46,6 +42,13 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
           { id: 'admin-users', title: 'Users', path: '/admin/users' },
           { id: 'admin-roles', title: 'Roles & Permissions', path: '/admin/roles' },
           { id: 'admin-privileges', title: 'User Privileges', path: '/admin/privileges' },
+        ],
+      },
+      {
+        id: 'admin-devices',
+        title: 'Device Management',
+        children: [
+          { id: 'admin-tablets', title: 'Tablets & Devices', path: '/admin/devices' },
         ],
       },
       {

@@ -28,6 +28,7 @@ import {
   CheckCheck,
   TrendingUp,
   Lock,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
@@ -204,6 +205,15 @@ export const AppShell: React.FC = () => {
     const items: { label: string; path?: string }[] = [{ label: 'TraceFlow', path: '/admin/platform-overview' }];
 
     for (const mod of ALL_SYSTEM_MODULES) {
+      if (mod.standaloneItems) {
+        for (const item of mod.standaloneItems) {
+          if (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))) {
+            items.push({ label: mod.title, path: mod.defaultPath });
+            items.push({ label: item.title, path: item.path });
+            return items;
+          }
+        }
+      }
       for (const sub of mod.submodules) {
         for (const leaf of sub.children) {
           if (location.pathname === leaf.path || (leaf.path !== '/' && location.pathname.startsWith(leaf.path))) {
@@ -449,6 +459,45 @@ export const AppShell: React.FC = () => {
 
           {/* Child Items of Active Module */}
           <div className="flex-1 overflow-y-auto px-2 py-3 space-y-2">
+            {/* Direct Top-Level Standalone Links (e.g. Dashboard) */}
+            {activeModule.standaloneItems && activeModule.standaloneItems.length > 0 && (
+              <div className="space-y-1 pb-2 mb-2 border-b border-black/10 dark:border-white/10">
+                {activeModule.standaloneItems.map((item) => {
+                  const isActive =
+                    location.pathname === item.path ||
+                    (item.path !== '/' && location.pathname.startsWith(item.path));
+
+                  return !isCollapsed ? (
+                    <Link
+                      key={item.id}
+                      to={item.path}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                        isActive
+                          ? sidebarStyles.activeLink
+                          : sidebarStyles.level3Inactive
+                      }`}
+                    >
+                      <LayoutDashboard className="w-4 h-4 shrink-0 text-blue-400" />
+                      <span className="truncate">{item.title}</span>
+                    </Link>
+                  ) : (
+                    <Link
+                      key={item.id}
+                      to={item.path}
+                      title={item.title}
+                      className={`flex justify-center p-2 rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-400 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
             {activeModule.submodules.map((sub) => {
               const isSubExpanded = expandedSubmodules[sub.id] !== false; // default expanded
 
