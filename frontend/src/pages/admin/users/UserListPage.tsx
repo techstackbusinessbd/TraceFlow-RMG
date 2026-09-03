@@ -21,13 +21,12 @@ import {
   KeyRound,
   Lock,
   Unlock,
-  AlertTriangle,
 } from 'lucide-react';
 import { userService, type UserItem, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
 import { TableActionButton } from '../../../components/common/TableActionButton';
-import { Alert } from '../../../components/common/Alert';
+import { alertService } from '../../../services/alertService';
 
 export const UserListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,8 +35,6 @@ export const UserListPage: React.FC = () => {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [unlockingUserId, setUnlockingUserId] = useState<string | null>(null);
 
   // Filters and Sorting State
@@ -61,7 +58,6 @@ export const UserListPage: React.FC = () => {
 
   const fetchUsers = async () => {
     setIsLoading(true);
-    setErrorMessage(null);
     try {
       const [userData, rolesData] = await Promise.all([
         userService.getUsers({
@@ -89,7 +85,7 @@ export const UserListPage: React.FC = () => {
       setRoles(rolesData);
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      setErrorMessage(errorObj.response?.data?.detail || 'Failed to load user directory.');
+      alertService.error('Directory Error', errorObj.response?.data?.detail || 'Failed to load user directory.');
     } finally {
       setIsLoading(false);
     }
@@ -132,18 +128,12 @@ export const UserListPage: React.FC = () => {
   const handleUnlockUser = async (user: UserItem) => {
     try {
       setUnlockingUserId(user.id);
-      setActionFeedback(null);
       const res = await userService.unlockUser(user.id);
-      setActionFeedback({
-        type: 'success',
-        message: res.message || `Account for ${user.name} (${user.username}) has been unlocked successfully.`,
-      });
+      alertService.success('Account Unlocked', res.message || `Account for ${user.name} (${user.username}) has been unlocked successfully.`);
       fetchUsers();
-    } catch (err: any) {
-      setActionFeedback({
-        type: 'error',
-        message: err.response?.data?.detail || 'Failed to unlock user account. Please try again.',
-      });
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { detail?: string } } };
+      alertService.error('Unlock Failed', errorObj.response?.data?.detail || 'Failed to unlock user account. Please try again.');
     } finally {
       setUnlockingUserId(null);
     }
@@ -222,13 +212,6 @@ export const UserListPage: React.FC = () => {
           </Button>
         </div>
       </div>
-
-      {/* Error Notice */}
-      {errorMessage && (
-        <Alert variant="error" onClose={() => setErrorMessage(null)}>
-          {errorMessage}
-        </Alert>
-      )}
 
       {/* ==================================================================== */}
       {/* ENTERPRISE FILTER TOOLBAR */}
@@ -349,32 +332,6 @@ export const UserListPage: React.FC = () => {
           </div>
         </div>
       </div>
-      {/* Action Feedback Notification */}
-      {actionFeedback && (
-        <div
-          className={`px-4 py-3 border flex items-center justify-between transition-all ${
-            actionFeedback.type === 'success'
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-              : 'bg-rose-50 border-rose-300 text-rose-800'
-          }`}
-        >
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            {actionFeedback.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-            )}
-            <span>{actionFeedback.message}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setActionFeedback(null)}
-            className="text-xs font-bold hover:underline ml-4"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
 
       {/* ==================================================================== */}
       {/* USERS DATA TABLE (PIXEL-PERFECT PROPORTIONS & SORTING) */}

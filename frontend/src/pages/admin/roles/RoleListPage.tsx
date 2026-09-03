@@ -17,7 +17,7 @@ import {
 import { userService, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
-import { Alert } from '../../../components/common/Alert';
+import { alertService } from '../../../services/alertService';
 import { DataTable, type ColumnDef } from '../../../components/common/DataTable';
 import { UI_TOKENS } from '../../../config/designTokens';
 
@@ -27,7 +27,6 @@ export const RoleListPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [totalSystemPerms, setTotalSystemPerms] = useState<number>(34);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -38,11 +37,9 @@ export const RoleListPage: React.FC = () => {
   const [showCreateCard, setShowCreateCard] = useState<boolean>(false);
   const [newRoleName, setNewRoleName] = useState<string>('');
   const [isCreating, setIsCreating] = useState<boolean>(false);
-  const [createError, setCreateError] = useState<string | null>(null);
 
   const fetchRolesData = async () => {
     setIsLoading(true);
-    setErrorMessage(null);
     try {
       const [rolesData, manifestData] = await Promise.all([
         userService.getRoles(),
@@ -60,7 +57,7 @@ export const RoleListPage: React.FC = () => {
       }
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      setErrorMessage(errorObj.response?.data?.detail || 'Failed to load system roles registry.');
+      alertService.error('Roles Registry Error', errorObj.response?.data?.detail || 'Failed to load system roles registry.');
     } finally {
       setIsLoading(false);
     }
@@ -258,21 +255,22 @@ export const RoleListPage: React.FC = () => {
   const handleCreateRole = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoleName.trim()) {
-      setCreateError('Role name cannot be blank.');
+      alertService.warning('Validation Required', 'Role name cannot be blank.');
       return;
     }
 
     setIsCreating(true);
-    setCreateError(null);
 
     try {
-      await userService.createRole(newRoleName.trim(), []);
+      const createdName = newRoleName.trim();
+      await userService.createRole(createdName, []);
       setNewRoleName('');
       setShowCreateCard(false);
+      alertService.success('Role Created', `System role "${createdName}" has been established successfully.`);
       await fetchRolesData();
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string; errors?: { name?: string[] } } } };
-      setCreateError(errorObj.response?.data?.errors?.name?.[0] || errorObj.response?.data?.detail || 'Failed to create role.');
+      alertService.error('Role Creation Failed', errorObj.response?.data?.errors?.name?.[0] || errorObj.response?.data?.detail || 'Failed to create custom role.');
     } finally {
       setIsCreating(false);
     }
@@ -353,26 +351,13 @@ export const RoleListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Error Alert */}
-      {errorMessage && (
-        <Alert variant="error" onClose={() => setErrorMessage(null)}>
-          {errorMessage}
-        </Alert>
-      )}
-
       {/* Inline Creation Drawer (No Modals Rule) */}
       {showCreateCard && (
-        <div className="p-5 bg-white border-2 border-blue-600 rounded-md shadow-xs space-y-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+        <div className="p-5 bg-white dark:bg-slate-900 border-2 border-blue-600 rounded-md shadow-xs space-y-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-slate-100">
             <Shield className="w-4 h-4 text-blue-600" />
             <span>Create New System Role</span>
           </div>
-
-          {createError && (
-            <Alert variant="error" onClose={() => setCreateError(null)}>
-              {createError}
-            </Alert>
-          )}
 
           <form noValidate onSubmit={handleCreateRole} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <input
