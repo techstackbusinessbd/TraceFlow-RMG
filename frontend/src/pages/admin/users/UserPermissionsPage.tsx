@@ -6,7 +6,6 @@ import {
   Save, 
   CheckSquare, 
   Square, 
-  CheckCircle2, 
   Search, 
   RotateCcw,
   SlidersHorizontal,
@@ -18,6 +17,7 @@ import {
 import { userService, type UserPermissionsData } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
+import { Alert } from '../../../components/common/Alert';
 
 type StatusFilter = 'all' | 'direct' | 'inherited' | 'ungranted';
 
@@ -248,21 +248,16 @@ export const UserPermissionsPage: React.FC = () => {
 
       {/* Success Alert */}
       {successMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{successMessage}</span>
-          </div>
-          <button type="button" onClick={() => setSuccessMessage(null)} className="text-emerald-700 font-bold">✕</button>
-        </div>
+        <Alert variant="success" onClose={() => setSuccessMessage(null)}>
+          {successMessage}
+        </Alert>
       )}
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-center justify-between">
-          <span>{errorMessage}</span>
-          <button type="button" onClick={() => setErrorMessage(null)} className="text-red-700 font-bold">✕</button>
-        </div>
+        <Alert variant="error" onClose={() => setErrorMessage(null)}>
+          {errorMessage}
+        </Alert>
       )}
 
       {/* User Identity & Scope Overview Card */}

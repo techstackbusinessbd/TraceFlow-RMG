@@ -19,6 +19,7 @@ import {
 import { userService, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
+import { Alert } from '../../../components/common/Alert';
 
 interface MatrixRow {
   id: string;
@@ -437,23 +438,18 @@ export const RolePermissionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Success Alert Banner */}
+      {/* Success Alert Banner (Centralized Component) */}
       {successMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium rounded-md flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{successMessage}</span>
-          </div>
-          <button type="button" onClick={() => setSuccessMessage(null)} className="text-emerald-700 font-bold">✕</button>
-        </div>
+        <Alert variant="success" onClose={() => setSuccessMessage(null)}>
+          {successMessage}
+        </Alert>
       )}
 
-      {/* Error Alert Banner */}
+      {/* Error Alert Banner (Centralized Component) */}
       {errorMessage && (
-        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-sm font-medium rounded-md flex items-center justify-between">
-          <span>{errorMessage}</span>
-          <button type="button" onClick={() => setErrorMessage(null)} className="text-rose-700 font-bold">✕</button>
-        </div>
+        <Alert variant="error" onClose={() => setErrorMessage(null)}>
+          {errorMessage}
+        </Alert>
       )}
 
       {/* ==================================================================== */}

@@ -17,6 +17,7 @@ import {
 import { userService, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
+import { Alert } from '../../../components/common/Alert';
 import { UI_TOKENS } from '../../../config/designTokens';
 
 export const RoleListPage: React.FC = () => {
@@ -213,9 +214,9 @@ export const RoleListPage: React.FC = () => {
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-sm font-semibold rounded-md">
+        <Alert variant="error" onClose={() => setErrorMessage(null)}>
           {errorMessage}
-        </div>
+        </Alert>
       )}
 
       {/* Inline Creation Drawer (No Modals Rule) */}
@@ -227,9 +228,9 @@ export const RoleListPage: React.FC = () => {
           </div>
 
           {createError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium rounded-md">
+            <Alert variant="error" onClose={() => setCreateError(null)}>
               {createError}
-            </div>
+            </Alert>
           )}
 
           <form noValidate onSubmit={handleCreateRole} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">

@@ -88,4 +88,16 @@ export const UI_TOKENS = {
     tr: 'hover:bg-slate-50/90 transition-colors group',
     td: 'py-3.5 px-4 align-middle text-sm text-slate-700',
   },
+
+  // Alert & Feedback Banners
+  alert: {
+    success:
+      'p-3.5 bg-emerald-50 border border-emerald-300 text-emerald-900 text-sm font-medium rounded-md flex items-center justify-between shadow-2xs transition-all',
+    error:
+      'p-3.5 bg-rose-50 border border-rose-300 text-rose-900 text-sm font-medium rounded-md flex items-center justify-between shadow-2xs transition-all',
+    warning:
+      'p-3.5 bg-amber-50 border border-amber-300 text-amber-900 text-sm font-medium rounded-md flex items-center justify-between shadow-2xs transition-all',
+    info:
+      'p-3.5 bg-blue-50 border border-blue-300 text-blue-900 text-sm font-medium rounded-md flex items-center justify-between shadow-2xs transition-all',
+  },
 } as const;

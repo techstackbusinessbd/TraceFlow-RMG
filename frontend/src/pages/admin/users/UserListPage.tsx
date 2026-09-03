@@ -27,6 +27,7 @@ import { userService, type UserItem, type Role } from '../../../services/userSer
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
 import { TableActionButton } from '../../../components/common/TableActionButton';
+import { Alert } from '../../../components/common/Alert';
 
 export const UserListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -224,10 +225,9 @@ export const UserListPage: React.FC = () => {
 
       {/* Error Notice */}
       {errorMessage && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-center justify-between">
-          <span>{errorMessage}</span>
-          <button type="button" onClick={() => setErrorMessage(null)} className="text-red-700 font-bold">✕</button>
-        </div>
+        <Alert variant="error" onClose={() => setErrorMessage(null)}>
+          {errorMessage}
+        </Alert>
       )}
 
       {/* ==================================================================== */}
