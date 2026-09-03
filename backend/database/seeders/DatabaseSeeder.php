@@ -44,13 +44,18 @@ class DatabaseSeeder extends Seeder
             Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
         }
 
-        // 2. Seed Default Super Admin Account
-        $superAdmin = User::firstOrCreate(
+        // 2. Seed Accounts: abdulkhaled as Super Admin, super.admin as IT Admin
+        $superAdmin = User::where('username', 'abdulkhaled')->orWhere('emp_id', '255776')->first();
+        if ($superAdmin) {
+            $superAdmin->syncRoles(['Super Admin']);
+        }
+
+        $itAdmin = User::firstOrCreate(
             ['username' => 'super.admin'],
             [
                 'emp_id' => 'EMP-0001',
-                'name' => 'System Super Administrator',
-                'email' => 'super.admin@traceflow.com',
+                'name' => 'System IT Administrator',
+                'email' => 'it.admin@traceflow.com',
                 'password' => Hash::make('Admin@123456'),
                 'phone' => '+8801700000000',
                 'department' => 'Information Technology',
@@ -60,7 +65,11 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $superAdmin->assignRole('Super Admin');
+        if (! $superAdmin) {
+            $itAdmin->syncRoles(['Super Admin']);
+        } else {
+            $itAdmin->syncRoles(['IT Admin']);
+        }
 
         // 3. Seed Sample C-Suite CEO Account
         $ceoUser = User::firstOrCreate(

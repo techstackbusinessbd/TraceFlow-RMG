@@ -19,7 +19,7 @@ class UserAdminTest extends TestCase
     {
         parent::setUp();
 
-        $this->superAdmin = User::where('username', 'super.admin')->first();
+        $this->superAdmin = User::role('Super Admin')->first() ?? User::where('username', 'super.admin')->first();
         $this->superAdminToken = $this->superAdmin->createToken('admin-test-token')->plainTextToken;
     }
 
