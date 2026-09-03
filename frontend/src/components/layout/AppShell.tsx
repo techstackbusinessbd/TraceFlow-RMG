@@ -238,7 +238,7 @@ export const AppShell: React.FC = () => {
           moduleHeader: 'text-slate-200 border-b border-slate-800/80',
           level2Btn: 'text-slate-300 hover:text-white hover:bg-slate-800/60',
           level3Inactive: 'text-slate-400 hover:text-white hover:bg-slate-800/70',
-          activeLink: 'bg-blue-600 text-white font-semibold shadow-xs',
+          activeLink: 'bg-slate-800/90 text-white font-semibold border-l-2 border-blue-500 shadow-2xs',
           footer: 'border-t border-[#1e293b] bg-[#0b1323] text-slate-400',
           collapseBtn: 'hover:bg-[#1e293b] text-slate-400 hover:text-white',
           treeLine: 'border-l border-slate-700/60',
@@ -252,7 +252,7 @@ export const AppShell: React.FC = () => {
             'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-zinc-800',
           level3Inactive:
             'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-zinc-800',
-          activeLink: 'bg-blue-600 text-white font-semibold shadow-xs',
+          activeLink: 'bg-slate-200/90 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-semibold border-l-2 border-blue-600 shadow-2xs',
           footer:
             'border-t border-slate-200 dark:border-zinc-800 bg-slate-200/50 dark:bg-zinc-950/40 text-slate-600 dark:text-slate-400',
           collapseBtn:
@@ -266,7 +266,7 @@ export const AppShell: React.FC = () => {
           moduleHeader: 'text-indigo-200 border-b border-indigo-950/60',
           level2Btn: 'text-slate-200 hover:text-white hover:bg-indigo-950/50',
           level3Inactive: 'text-slate-400 hover:text-white hover:bg-indigo-950/50',
-          activeLink: 'bg-blue-600 text-white font-semibold shadow-xs',
+          activeLink: 'bg-[#151f33] text-white font-semibold border-l-2 border-blue-500 shadow-2xs',
           footer: 'border-t border-[#1a2336] bg-[#080d19] text-slate-400',
           collapseBtn: 'hover:bg-[#131d31] text-slate-400 hover:text-white',
           treeLine: 'border-l border-indigo-900/60',
@@ -471,13 +471,13 @@ export const AppShell: React.FC = () => {
                     <Link
                       key={item.id}
                       to={item.path}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         isActive
                           ? sidebarStyles.activeLink
                           : sidebarStyles.level3Inactive
                       }`}
                     >
-                      <LayoutDashboard className="w-4 h-4 shrink-0 text-blue-400" />
+                      <LayoutDashboard className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-400' : 'text-slate-400'}`} />
                       <span className="truncate">{item.title}</span>
                     </Link>
                   ) : (
@@ -485,9 +485,9 @@ export const AppShell: React.FC = () => {
                       key={item.id}
                       to={item.path}
                       title={item.title}
-                      className={`flex justify-center p-2 rounded-lg transition-colors ${
+                      className={`flex justify-center p-2 rounded-md transition-colors ${
                         isActive
-                          ? 'bg-blue-600 text-white shadow-xs'
+                          ? 'bg-slate-800 text-blue-400 shadow-2xs border border-slate-700/60'
                           : 'text-slate-400 hover:text-white hover:bg-white/10'
                       }`}
                     >
