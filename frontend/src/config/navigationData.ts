@@ -56,7 +56,7 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
         title: 'Security & Logs',
         children: [
           { id: 'admin-worm', title: 'Audit Logs', path: '/admin/audit-vault' },
-          { id: 'admin-purge', title: 'Archived Accounts', path: '/admin/purge-console' },
+          { id: 'admin-purge', title: 'Archived Accounts', path: '/admin/users/archived' },
         ],
       },
     ],

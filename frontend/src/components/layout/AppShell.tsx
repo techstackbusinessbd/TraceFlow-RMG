@@ -115,16 +115,40 @@ export const AppShell: React.FC = () => {
     return ALL_SYSTEM_MODULES.find((m) => m.id === 'system-admin') || ALL_SYSTEM_MODULES[0];
   }, [location.pathname]);
 
+  // Collect all leaf paths for the active module to compute most specific route match
+  const allLeafPaths = useMemo(() => {
+    const paths: string[] = [];
+    for (const sub of activeModule.submodules) {
+      for (const leaf of sub.children) {
+        paths.push(leaf.path);
+      }
+    }
+    return paths;
+  }, [activeModule]);
+
+  // Determine if a leaf item is the active route (supporting longest prefix match)
+  const isLeafActive = (leafPath: string) => {
+    const current = location.pathname;
+    if (current === leafPath) return true;
+    if (!current.startsWith(leafPath + '/')) return false;
+
+    // Check if there is another leaf path with a longer/more specific match
+    const hasMoreSpecific = allLeafPaths.some(
+      (p) => p !== leafPath && p.length > leafPath.length && (current === p || current.startsWith(p + '/'))
+    );
+    return !hasMoreSpecific;
+  };
+
   // Auto-expand ONLY the submodule containing the current active route
   useEffect(() => {
-    const currentPath = location.pathname;
     const newSubs: Record<string, boolean> = {};
 
     for (const sub of activeModule.submodules) {
       let subHasActiveRoute = false;
       for (const leaf of sub.children) {
-        if (currentPath === leaf.path || (leaf.path !== '/' && currentPath.startsWith(leaf.path))) {
+        if (isLeafActive(leaf.path)) {
           subHasActiveRoute = true;
+          break;
         }
       }
       if (subHasActiveRoute) {
@@ -132,7 +156,7 @@ export const AppShell: React.FC = () => {
       }
     }
     setExpandedSubmodules(newSubs);
-  }, [location.pathname, activeModule]);
+  }, [location.pathname, activeModule, allLeafPaths]);
 
   const toggleSubmodule = (subId: string) => {
     setExpandedSubmodules((prev) => ({
@@ -216,7 +240,7 @@ export const AppShell: React.FC = () => {
       }
       for (const sub of mod.submodules) {
         for (const leaf of sub.children) {
-          if (location.pathname === leaf.path || (leaf.path !== '/' && location.pathname.startsWith(leaf.path))) {
+          if (isLeafActive(leaf.path)) {
             items.push({ label: mod.title, path: mod.defaultPath });
             items.push({ label: sub.title });
             items.push({ label: leaf.title, path: leaf.path });
@@ -227,7 +251,7 @@ export const AppShell: React.FC = () => {
     }
 
     return items;
-  }, [location.pathname]);
+  }, [location.pathname, isLeafActive]);
 
   // Dynamic Sidebar Theme Classes
   const sidebarStyles = useMemo(() => {
@@ -530,9 +554,7 @@ export const AppShell: React.FC = () => {
                   {(isCollapsed || isSubExpanded) && (
                     <div className={!isCollapsed ? `ml-3 pl-2.5 space-y-0.5 ${sidebarStyles.treeLine}` : 'space-y-1'}>
                       {sub.children.map((leaf) => {
-                        const isActive =
-                          location.pathname === leaf.path ||
-                          (leaf.path !== '/' && location.pathname.startsWith(leaf.path));
+                        const isActive = isLeafActive(leaf.path);
 
                         return !isCollapsed ? (
                           <Link
