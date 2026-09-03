@@ -206,7 +206,7 @@ export const UserPermissionsPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mb-1">
-            <Link to="/admin/users" className="hover:text-blue-600 transition-colors">User Directory</Link>
+            <Link to="/admin/privileges" className="hover:text-blue-600 transition-colors">User Privileges</Link>
             <span>/</span>
             <span className="text-slate-800">{user.name}</span>
             <span>/</span>
@@ -228,11 +228,11 @@ export const UserPermissionsPage: React.FC = () => {
         {/* Action Buttons (Flat Solid Colors - STRICT) */}
         <div className="flex items-center gap-3">
           <Link
-            to="/admin/users"
+            to="/admin/privileges"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Users</span>
+            <span>Back to User Privileges</span>
           </Link>
           <button
             type="button"

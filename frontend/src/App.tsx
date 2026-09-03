@@ -62,6 +62,7 @@ export const App: React.FC = () => {
           <Route path="/admin/roles" element={<RoleListPage />} />
           <Route path="/admin/roles/:id/permissions" element={<RolePermissionsPage />} />
           <Route path="/admin/privileges" element={<UserPrivilegesOverviewPage />} />
+          <Route path="/admin/privileges/:id" element={<UserPermissionsPage />} />
 
           {/* Dynamic Module Routes from Master Configuration */}
           {ALL_SYSTEM_MODULES.map((mod) =>

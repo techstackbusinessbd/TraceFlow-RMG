@@ -462,7 +462,9 @@ class UserController extends Controller
     {
         $this->authorizePermission($request->user(), 'users.view');
 
-        $user = User::with('roles')->findOrFail($id);
+        $user = Str::isUuid($id)
+            ? User::with('roles')->findOrFail($id)
+            : User::with('roles')->where('username', $id)->orWhere('emp_id', $id)->firstOrFail();
 
         $directPermissions = $user->getDirectPermissions()->pluck('name')->values()->toArray();
         $rolePermissions = $user->getPermissionsViaRoles()->pluck('name')->unique()->values()->toArray();
@@ -492,9 +494,11 @@ class UserController extends Controller
      */
     public function updatePermissions(UpdateUserPermissionsRequest $request, string $id): JsonResponse
     {
-        $user = User::with('roles')->findOrFail($id);
+        $user = Str::isUuid($id)
+            ? User::with('roles')->findOrFail($id)
+            : User::with('roles')->where('username', $id)->orWhere('emp_id', $id)->firstOrFail();
 
-        if ($user->username === 'super.admin' && ! $request->user()->hasRole('Super Admin')) {
+        if ($user->hasRole('Super Admin') && ! $request->user()->hasRole('Super Admin')) {
             return response()->json([
                 'type' => 'https://tools.ietf.org/html/rfc7807',
                 'title' => 'Forbidden Access',

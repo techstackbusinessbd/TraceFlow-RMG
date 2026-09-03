@@ -454,7 +454,7 @@ export const UserPrivilegesOverviewPage: React.FC = () => {
                       <td className="py-3.5 px-4 text-right align-middle">
                         <button
                           type="button"
-                          onClick={() => navigate(`/admin/users/${user.id}/permissions`)}
+                          onClick={() => navigate(`/admin/privileges/${user.username || user.id}`)}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs"
                         >
                           <KeyRound className="w-3.5 h-3.5" />

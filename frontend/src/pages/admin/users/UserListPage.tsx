@@ -474,7 +474,7 @@ export const UserListPage: React.FC = () => {
                           {/* Custom Privileges Button */}
                           <button
                             type="button"
-                            onClick={() => navigate(`/admin/users/${user.id}/permissions`)}
+                            onClick={() => navigate(`/admin/privileges/${user.username || user.id}`)}
                             className="p-1.5 text-slate-600 hover:text-purple-700 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 transition-colors"
                             title="Manage User Custom Privileges"
                           >
