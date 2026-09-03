@@ -29,7 +29,7 @@ class AuthController extends Controller
             ->first();
 
         // 1. Check if user account is actively locked out
-        if ($user && $user->is_locked) {
+        if ($user && $user->is_locked && ! $user->hasRole('Super Admin')) {
             return response()->json([
                 'type' => 'https://tools.ietf.org/html/rfc7807',
                 'title' => 'Account Locked',
@@ -41,6 +41,28 @@ class AuthController extends Controller
         // 2. Validate Password and handle Brute-Force lockout
         if (! $user || ! Hash::check($password, $user->password)) {
             if ($user) {
+                // Root Super Admin is PERMANENTLY immune to lockout (prevents DoS on root authority)
+                if ($user->hasRole('Super Admin')) {
+                    DB::table('audit_vault_logs')->insert([
+                        'id' => (string) Str::uuid(),
+                        'user_id' => $user->id,
+                        'emp_id' => $user->emp_id,
+                        'action' => 'FAILED_SUPER_ADMIN_LOGIN_ATTEMPT',
+                        'entity_type' => 'User',
+                        'entity_id' => $user->id,
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'created_at' => now(),
+                    ]);
+
+                    return response()->json([
+                        'type' => 'https://tools.ietf.org/html/rfc7807',
+                        'title' => 'Authentication Failed',
+                        'status' => 401,
+                        'detail' => 'Invalid credentials provided. Please check your identifier and password.',
+                    ], 401);
+                }
+
                 $newAttempts = $user->failed_login_attempts + 1;
                 if ($newAttempts >= 5) {
                     $user->lockAccount();

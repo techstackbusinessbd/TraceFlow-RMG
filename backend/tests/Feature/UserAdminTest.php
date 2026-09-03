@@ -393,6 +393,44 @@ class UserAdminTest extends TestCase
         // Clean up
         $testUser->forceDelete();
     }
+
+    /**
+     * Test that Super Admin account is permanently immune to automated and manual lockouts.
+     */
+    public function test_super_admin_is_permanently_immune_to_lockouts(): void
+    {
+        $this->superAdmin->update(['password' => Hash::make('Correct#AdminPass123')]);
+
+        // 1. Enter 10 wrong passwords for Super Admin
+        for ($i = 1; $i <= 10; $i++) {
+            $wrongRes = $this->postJson('/api/v1/auth/login', [
+                'identifier' => $this->superAdmin->username,
+                'password' => 'CompletelyWrongPass!',
+            ]);
+            $wrongRes->assertStatus(401);
+            $this->assertFalse($this->superAdmin->fresh()->is_locked);
+        }
+
+        // 2. Super Admin can still log in immediately with correct password
+        $correctRes = $this->postJson('/api/v1/auth/login', [
+            'identifier' => $this->superAdmin->username,
+            'password' => 'Correct#AdminPass123',
+        ]);
+        $correctRes->assertStatus(200);
+
+        // 3. Manual lock attempt on Super Admin must be rejected with 403
+        $manualLockRes = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->postJson("/api/v1/admin/users/{$this->superAdmin->id}/lock");
+
+        $manualLockRes->assertStatus(403)
+            ->assertJson([
+                'status' => 403,
+                'title' => 'Protected Root Account',
+            ]);
+
+        $this->assertFalse($this->superAdmin->fresh()->is_locked);
+    }
 }
+
 
 

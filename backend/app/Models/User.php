@@ -96,6 +96,11 @@ class User extends Authenticatable
      */
     public function getIsLockedAttribute(): bool
     {
+        // Root Super Administrator is permanently immune to account lockouts
+        if ($this->hasRole('Super Admin')) {
+            return false;
+        }
+
         if ($this->locked_at === null) {
             return false;
         }
@@ -112,6 +117,11 @@ class User extends Authenticatable
      */
     public function lockAccount(?\DateTimeInterface $until = null): void
     {
+        // Root Super Administrator is permanently immune to account lockouts
+        if ($this->hasRole('Super Admin')) {
+            return;
+        }
+
         $this->update([
             'locked_at' => now(),
             'locked_until' => $until,
