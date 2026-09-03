@@ -19,7 +19,7 @@ import {
 import { userService, type UserPermissionsData } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
-import { Alert } from '../../../components/common/Alert';
+import { alertService } from '../../../services/alertService';
 
 interface MatrixRow {
   id: string;
@@ -46,8 +46,6 @@ export const UserPermissionsPage: React.FC = () => {
   const [initialDirectPermissions, setInitialDirectPermissions] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Active Selected Module in Master-Detail layout
   const [activeModule, setActiveModule] = useState<string>('User & Access Management');
@@ -74,7 +72,7 @@ export const UserPermissionsPage: React.FC = () => {
         }
       } catch (err: unknown) {
         const errorObj = err as { response?: { data?: { detail?: string } } };
-        setErrorMessage(errorObj.response?.data?.detail || 'Failed to load user privileges matrix.');
+        alertService.error('Load Error', errorObj.response?.data?.detail || 'Failed to load user privileges matrix.');
       } finally {
         setIsLoading(false);
       }
@@ -117,8 +115,6 @@ export const UserPermissionsPage: React.FC = () => {
   const handleSave = async () => {
     if (!id) return;
     setIsSaving(true);
-    setSuccessMessage(null);
-    setErrorMessage(null);
 
     try {
       const updated = await userService.updateUserPermissions(id, Array.from(directPermissions));
@@ -133,10 +129,10 @@ export const UserPermissionsPage: React.FC = () => {
       );
       setDirectPermissions(new Set(updated.direct_permissions));
       setInitialDirectPermissions(new Set(updated.direct_permissions));
-      setSuccessMessage('User custom privileges updated and synced successfully.');
+      alertService.success('Privileges Saved', 'User custom privileges have been updated and synced successfully.');
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      setErrorMessage(errorObj.response?.data?.detail || 'Failed to save custom privileges.');
+      alertService.error('Save Failed', errorObj.response?.data?.detail || 'Failed to save custom privileges.');
     } finally {
       setIsSaving(false);
     }
@@ -522,20 +518,6 @@ export const UserPermissionsPage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Success Alert */}
-      {successMessage && (
-        <Alert variant="success" onClose={() => setSuccessMessage(null)}>
-          {successMessage}
-        </Alert>
-      )}
-
-      {/* Error Alert */}
-      {errorMessage && (
-        <Alert variant="error" onClose={() => setErrorMessage(null)}>
-          {errorMessage}
-        </Alert>
-      )}
 
       {/* ==================================================================== */}
       {/* MASTER-DETAIL WORKSPACE: LEFT MODULE LIST + RIGHT MATRIX TABLE        */}

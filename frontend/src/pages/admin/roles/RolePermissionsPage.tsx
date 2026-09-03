@@ -19,7 +19,7 @@ import {
 import { userService, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
-import { Alert } from '../../../components/common/Alert';
+import { alertService } from '../../../services/alertService';
 
 interface MatrixRow {
   id: string;
@@ -47,8 +47,6 @@ export const RolePermissionsPage: React.FC = () => {
   const [initialPermissions, setInitialPermissions] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Active Selected Module in Master-Detail layout
   const [activeModule, setActiveModule] = useState<string>('User & Access Management');
@@ -79,7 +77,7 @@ export const RolePermissionsPage: React.FC = () => {
         }
       } catch (err: unknown) {
         const errorObj = err as { response?: { data?: { detail?: string } } };
-        setErrorMessage(errorObj.response?.data?.detail || 'Failed to load permissions matrix.');
+        alertService.error('Loading Error', errorObj.response?.data?.detail || 'Failed to load permissions matrix.');
       } finally {
         setIsLoading(false);
       }
@@ -111,16 +109,15 @@ export const RolePermissionsPage: React.FC = () => {
   const handleSave = async () => {
     if (!id) return;
     setIsSaving(true);
-    setSuccessMessage(null);
-    setErrorMessage(null);
 
     try {
       await userService.updateRolePermissions(id, Array.from(selectedPermissions));
       setInitialPermissions(new Set(selectedPermissions));
-      setSuccessMessage('Permissions matrix updated successfully.');
+      alertService.success('Permissions Matrix Updated', 'Role permissions have been synchronized successfully.');
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      setErrorMessage(errorObj.response?.data?.detail || 'Failed to save permissions changes.');
+      const errorMsg = errorObj.response?.data?.detail || 'Failed to save permissions changes.';
+      alertService.error('Update Failed', errorMsg);
     } finally {
       setIsSaving(false);
     }
@@ -437,20 +434,6 @@ export const RolePermissionsPage: React.FC = () => {
           </Button>
         </div>
       </div>
-
-      {/* Success Alert Banner (Centralized Component) */}
-      {successMessage && (
-        <Alert variant="success" onClose={() => setSuccessMessage(null)}>
-          {successMessage}
-        </Alert>
-      )}
-
-      {/* Error Alert Banner (Centralized Component) */}
-      {errorMessage && (
-        <Alert variant="error" onClose={() => setErrorMessage(null)}>
-          {errorMessage}
-        </Alert>
-      )}
 
       {/* ==================================================================== */}
       {/* MASTER-DETAIL WORKSPACE: LEFT MODULE LIST + RIGHT MATRIX TABLE        */}
