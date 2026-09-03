@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\AuditVaultController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserController;
@@ -41,5 +43,13 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/admin/permissions/system-manifest', [RoleController::class, 'systemManifest']);
     Route::put('/admin/roles/{id}/permissions', [RoleController::class, 'updatePermissions']);
     Route::apiResource('admin/roles', RoleController::class)->except(['update']);
+
+    // WORM Immutable Audit Vault
+    Route::get('/admin/audit-vault', [AuditVaultController::class, 'index']);
+    Route::get('/admin/audit-vault/{id}', [AuditVaultController::class, 'show']);
+
+    // Factory Device Management
+    Route::post('/admin/devices/{id}/toggle-pairing', [DeviceController::class, 'togglePairing']);
+    Route::apiResource('admin/devices', DeviceController::class);
 });
 

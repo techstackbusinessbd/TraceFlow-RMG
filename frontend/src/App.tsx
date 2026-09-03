@@ -14,6 +14,8 @@ import { UserPermissionsPage } from './pages/admin/users/UserPermissionsPage';
 import { UserPrivilegesOverviewPage } from './pages/admin/users/UserPrivilegesOverviewPage';
 import { RoleListPage } from './pages/admin/roles/RoleListPage';
 import { RolePermissionsPage } from './pages/admin/roles/RolePermissionsPage';
+import { AuditVaultPage } from './pages/admin/security/AuditVaultPage';
+import { DeviceListPage } from './pages/admin/devices/DeviceListPage';
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
 import { ALL_SYSTEM_MODULES } from './config/navigationData';
 import { UnauthorizedPage } from './pages/common/UnauthorizedPage';
@@ -65,6 +67,9 @@ export const App: React.FC = () => {
           <Route path="/admin/roles/:id/permissions" element={<RolePermissionsPage />} />
           <Route path="/admin/privileges" element={<UserPrivilegesOverviewPage />} />
           <Route path="/admin/privileges/:id" element={<UserPermissionsPage />} />
+          <Route path="/admin/audit-vault" element={<AuditVaultPage />} />
+          <Route path="/admin/purge-console" element={<Navigate to="/admin/users/archived" replace />} />
+          <Route path="/admin/devices" element={<DeviceListPage />} />
 
           {/* Security & System Error Pages */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -80,6 +85,9 @@ export const App: React.FC = () => {
                   '/admin/users',
                   '/admin/roles',
                   '/admin/privileges',
+                  '/admin/audit-vault',
+                  '/admin/purge-console',
+                  '/admin/devices',
                 ];
                 if (explicitPaths.includes(item.path)) return null;
                 return (

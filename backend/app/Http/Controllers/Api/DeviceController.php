@@ -1,0 +1,282 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreDeviceRequest;
+use App\Http\Requests\UpdateDeviceRequest;
+use App\Models\AuditVaultLog;
+use App\Models\Device;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+
+class DeviceController extends Controller
+{
+    /**
+     * Display a listing of factory floor tablets and terminals.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = Device::query();
+
+        // Universal Search
+        if ($search = $request->query('search')) {
+            $search = trim($search);
+            $query->where(function ($q) use ($search) {
+                $q->where('device_code', 'ILIKE', "%{$search}%")
+                  ->orWhere('device_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('assigned_location', 'ILIKE', "%{$search}%")
+                  ->orWhere('ip_address', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        // Type filter
+        if ($type = $request->query('device_type')) {
+            $query->where('device_type', strtoupper($type));
+        }
+
+        // Pairing Status filter
+        if ($pairingStatus = $request->query('pairing_status')) {
+            $query->where('pairing_status', strtoupper($pairingStatus));
+        }
+
+        // Active Status filter
+        if ($request->has('is_active') && $request->query('is_active') !== '') {
+            $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        // Sorting
+        $sortBy = $request->query('sort_by', 'device_code');
+        $sortDirection = strtolower($request->query('sort_direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $allowedSorts = ['device_code', 'device_name', 'device_type', 'assigned_location', 'last_ping_at', 'created_at'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'device_code';
+        }
+        $query->orderBy($sortBy, $sortDirection);
+
+        // Pagination
+        $perPage = min(max((int) $request->query('per_page', 15), 5), 100);
+        $paginated = $query->paginate($perPage);
+
+        // Telemetry KPI Metrics
+        $totalCount = Device::count();
+        $onlineThreshold = Carbon::now()->subMinutes(15);
+        $onlineCount = Device::where('is_active', true)->where('last_ping_at', '>=', $onlineThreshold)->count();
+        $tabletCount = Device::where('device_type', 'TABLET')->count();
+        $revokedCount = Device::where('pairing_status', 'REVOKED')->count();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $paginated->items(),
+            'pagination' => [
+                'total' => $paginated->total(),
+                'per_page' => $paginated->perPage(),
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'from' => $paginated->firstItem(),
+                'to' => $paginated->lastItem(),
+            ],
+            'metrics' => [
+                'total_devices' => $totalCount,
+                'online_devices' => $onlineCount,
+                'tablet_devices' => $tabletCount,
+                'revoked_devices' => $revokedCount,
+            ],
+        ]);
+    }
+
+    /**
+     * Store a newly created terminal/tablet device.
+     */
+    public function store(StoreDeviceRequest $request): JsonResponse
+    {
+        $device = Device::create([
+            'device_code' => strtoupper(trim($request->input('device_code'))),
+            'device_name' => trim($request->input('device_name')),
+            'device_type' => $request->input('device_type'),
+            'assigned_location' => trim($request->input('assigned_location')),
+            'mac_address' => $request->input('mac_address'),
+            'ip_address' => $request->input('ip_address'),
+            'pairing_status' => $request->input('pairing_status', 'PAIRED'),
+            'is_active' => $request->input('is_active', true),
+            'last_ping_at' => Carbon::now(),
+        ]);
+
+        // Audit Trail Entry
+        $user = $request->user();
+        AuditVaultLog::create([
+            'id' => (string) Str::uuid(),
+            'user_id' => $user?->id,
+            'emp_id' => $user?->emp_id,
+            'action' => 'CREATE',
+            'entity_type' => 'Device',
+            'entity_id' => $device->device_code,
+            'old_values' => null,
+            'new_values' => $device->toArray(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Device [{$device->device_code}] has been enrolled and authorized successfully.",
+            'data' => $device,
+        ], 201);
+    }
+
+    /**
+     * Display the specified device.
+     */
+    public function show(string $id): JsonResponse
+    {
+        $device = Device::find($id);
+
+        if (!$device) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Requested device hardware profile was not found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $device,
+        ]);
+    }
+
+    /**
+     * Update the specified device configuration.
+     */
+    public function update(UpdateDeviceRequest $request, string $id): JsonResponse
+    {
+        $device = Device::find($id);
+
+        if (!$device) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Device not found.',
+            ], 404);
+        }
+
+        $oldValues = $device->toArray();
+
+        $device->update([
+            'device_code' => strtoupper(trim($request->input('device_code'))),
+            'device_name' => trim($request->input('device_name')),
+            'device_type' => $request->input('device_type'),
+            'assigned_location' => trim($request->input('assigned_location')),
+            'mac_address' => $request->input('mac_address'),
+            'ip_address' => $request->input('ip_address'),
+            'pairing_status' => $request->input('pairing_status', $device->pairing_status),
+            'is_active' => $request->input('is_active', $device->is_active),
+        ]);
+
+        // Audit Trail Entry
+        $user = $request->user();
+        AuditVaultLog::create([
+            'id' => (string) Str::uuid(),
+            'user_id' => $user?->id,
+            'emp_id' => $user?->emp_id,
+            'action' => 'UPDATE',
+            'entity_type' => 'Device',
+            'entity_id' => $device->device_code,
+            'old_values' => $oldValues,
+            'new_values' => $device->toArray(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Device configuration for [{$device->device_code}] updated successfully.",
+            'data' => $device,
+        ]);
+    }
+
+    /**
+     * Soft-delete the specified device.
+     */
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        $device = Device::find($id);
+
+        if (!$device) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Device not found.',
+            ], 404);
+        }
+
+        $oldValues = $device->toArray();
+        $device->delete();
+
+        // Audit Trail Entry
+        $user = $request->user();
+        AuditVaultLog::create([
+            'id' => (string) Str::uuid(),
+            'user_id' => $user?->id,
+            'emp_id' => $user?->emp_id,
+            'action' => 'DELETE',
+            'entity_type' => 'Device',
+            'entity_id' => $device->device_code,
+            'old_values' => $oldValues,
+            'new_values' => null,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Device [{$device->device_code}] has been decommissioned successfully.",
+        ]);
+    }
+
+    /**
+     * Toggle pairing authorization status (PAIRED / REVOKED).
+     */
+    public function togglePairing(Request $request, string $id): JsonResponse
+    {
+        $device = Device::find($id);
+
+        if (!$device) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Device not found.',
+            ], 404);
+        }
+
+        $oldStatus = $device->pairing_status;
+        $newStatus = $oldStatus === 'PAIRED' ? 'REVOKED' : 'PAIRED';
+
+        $device->pairing_status = $newStatus;
+        $device->is_active = ($newStatus === 'PAIRED');
+        $device->save();
+
+        // Audit Trail Entry
+        $user = $request->user();
+        AuditVaultLog::create([
+            'id' => (string) Str::uuid(),
+            'user_id' => $user?->id,
+            'emp_id' => $user?->emp_id,
+            'action' => 'UPDATE',
+            'entity_type' => 'Device',
+            'entity_id' => $device->device_code,
+            'old_values' => ['pairing_status' => $oldStatus],
+            'new_values' => ['pairing_status' => $newStatus],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Device [{$device->device_code}] authorization updated to {$newStatus}.",
+            'data' => $device,
+        ]);
+    }
+}

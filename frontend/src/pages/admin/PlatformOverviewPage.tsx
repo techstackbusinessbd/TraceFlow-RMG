@@ -14,6 +14,7 @@ import {
   Tablet,
   FileCheck,
 } from 'lucide-react';
+import { Button } from '../../components/common/Button';
 import apiClient from '../../services/apiClient';
 
 interface HealthStatus {
@@ -66,13 +67,14 @@ export const PlatformOverviewPage: React.FC = () => {
             System health, database metrics, and active service status
           </p>
         </div>
-        <button
+        <Button
+          variant="primary"
           onClick={fetchHealth}
-          className="btn-solid-blue self-start sm:self-auto text-xs py-2 px-3.5 shadow-sm"
+          isLoading={isLoading}
+          icon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh Telemetry</span>
-        </button>
+          Refresh Telemetry
+        </Button>
       </div>
 
       {/* KPI Cards Grid with Crisp Top Accent Bars */}
