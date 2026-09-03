@@ -46,6 +46,11 @@ class User extends Authenticatable
         'default_dashboard_path',
         'last_login_at',
         'last_login_ip',
+        'failed_login_attempts',
+        'locked_at',
+        'locked_until',
+        'unlocked_at',
+        'unlocked_by',
     ];
 
     /**
@@ -61,6 +66,13 @@ class User extends Authenticatable
     ];
 
     /**
+     * Appended dynamic accessors.
+     */
+    protected $appends = [
+        'is_locked',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -70,8 +82,55 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'failed_login_attempts' => 'integer',
+            'locked_at' => 'datetime',
+            'locked_until' => 'datetime',
+            'unlocked_at' => 'datetime',
             'last_login_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    /**
+     * Determine whether the user account is actively locked out.
+     */
+    public function getIsLockedAttribute(): bool
+    {
+        if ($this->locked_at === null) {
+            return false;
+        }
+
+        if ($this->locked_until !== null && $this->locked_until->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Lock the user account.
+     */
+    public function lockAccount(?\DateTimeInterface $until = null): void
+    {
+        $this->update([
+            'locked_at' => now(),
+            'locked_until' => $until,
+            'failed_login_attempts' => max($this->failed_login_attempts, 5),
+        ]);
+    }
+
+    /**
+     * Unlock the user account.
+     */
+    public function unlockAccount(User $admin): void
+    {
+        $this->update([
+            'failed_login_attempts' => 0,
+            'locked_at' => null,
+            'locked_until' => null,
+            'unlocked_at' => now(),
+            'unlocked_by' => $admin->id,
+        ]);
+    }
 }
+

@@ -31,6 +31,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/admin/users/archived', [UserController::class, 'archived']);
     Route::post('/admin/users/{id}/restore', [UserController::class, 'restore']);
     Route::delete('/admin/users/{id}/force-delete', [UserController::class, 'forceDelete']);
+    Route::post('/admin/users/{id}/unlock', [UserController::class, 'unlock']);
+    Route::post('/admin/users/{id}/lock', [UserController::class, 'lock']);
     Route::get('/admin/users/{id}/permissions', [UserController::class, 'getPermissions']);
     Route::put('/admin/users/{id}/permissions', [UserController::class, 'updatePermissions']);
     Route::apiResource('admin/users', UserController::class);

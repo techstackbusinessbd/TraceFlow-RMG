@@ -24,6 +24,9 @@ export interface UserItem {
   deleted_at?: string | null;
   roles: { id: number; name: string }[];
   permissions?: { id: number; name: string }[];
+  failed_login_attempts?: number;
+  is_locked?: boolean;
+  locked_at?: string | null;
 }
 
 export interface UserFormData {
@@ -172,6 +175,21 @@ export const userService = {
       { permissions }
     );
     return response.data.data;
+  },
+
+  // 11. Security Lockout Management
+  async unlockUser(id: string): Promise<{ success: boolean; message: string; data: UserItem }> {
+    const response = await apiClient.post<{ success: boolean; message: string; data: UserItem }>(
+      `/v1/admin/users/${id}/unlock`
+    );
+    return response.data;
+  },
+
+  async lockUser(id: string): Promise<{ success: boolean; message: string; data: UserItem }> {
+    const response = await apiClient.post<{ success: boolean; message: string; data: UserItem }>(
+      `/v1/admin/users/${id}/lock`
+    );
+    return response.data;
   },
 };
 

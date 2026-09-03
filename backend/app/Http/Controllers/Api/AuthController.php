@@ -28,13 +28,66 @@ class AuthController extends Controller
             ->orWhere('username', $identifier)
             ->first();
 
+        // 1. Check if user account is actively locked out
+        if ($user && $user->is_locked) {
+            return response()->json([
+                'type' => 'https://tools.ietf.org/html/rfc7807',
+                'title' => 'Account Locked',
+                'status' => 423,
+                'detail' => 'Your account is locked due to multiple failed login attempts. Please contact your System Administrator to unlock it.',
+            ], 423);
+        }
+
+        // 2. Validate Password and handle Brute-Force lockout
         if (! $user || ! Hash::check($password, $user->password)) {
+            if ($user) {
+                $newAttempts = $user->failed_login_attempts + 1;
+                if ($newAttempts >= 5) {
+                    $user->lockAccount();
+
+                    // WORM Audit Log
+                    DB::table('audit_vault_logs')->insert([
+                        'id' => (string) Str::uuid(),
+                        'user_id' => $user->id,
+                        'emp_id' => $user->emp_id,
+                        'action' => 'ACCOUNT_LOCKED_FAILED_ATTEMPTS',
+                        'entity_type' => 'User',
+                        'entity_id' => $user->id,
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'created_at' => now(),
+                    ]);
+
+                    return response()->json([
+                        'type' => 'https://tools.ietf.org/html/rfc7807',
+                        'title' => 'Account Locked',
+                        'status' => 423,
+                        'detail' => 'Account has been locked due to 5 consecutive failed login attempts. Please contact your System Administrator.',
+                    ], 423);
+                }
+
+                $user->update(['failed_login_attempts' => $newAttempts]);
+                $remaining = 5 - $newAttempts;
+
+                return response()->json([
+                    'type' => 'https://tools.ietf.org/html/rfc7807',
+                    'title' => 'Authentication Failed',
+                    'status' => 401,
+                    'detail' => "Invalid credentials provided. You have {$remaining} attempt(s) remaining before account lockout.",
+                ], 401);
+            }
+
             return response()->json([
                 'type' => 'https://tools.ietf.org/html/rfc7807',
                 'title' => 'Authentication Failed',
                 'status' => 401,
                 'detail' => 'Invalid credentials provided. Please check your identifier and password.',
             ], 401);
+        }
+
+        // 3. Reset failed attempts upon successful password match
+        if ($user->failed_login_attempts > 0) {
+            $user->update(['failed_login_attempts' => 0]);
         }
 
         if (! $user->is_active) {

@@ -323,5 +323,76 @@ class UserAdminTest extends TestCase
         User::where('username', 'it.admin.01')->forceDelete();
         User::where('username', 'it.admin.02')->forceDelete();
     }
+
+    /**
+     * Test automated security account lockout on 5 failed attempts and admin unlock.
+     */
+    public function test_account_lockout_after_five_failed_logins_and_admin_unlock(): void
+    {
+        // 1. Create a test user
+        $testUser = User::create([
+            'emp_id' => 'EMP-LOCK-TEST',
+            'username' => 'lock.test.user',
+            'name' => 'Lock Test User',
+            'email' => 'locktest@traceflow.com',
+            'password' => 'Correct#Pass123',
+            'is_active' => true,
+        ]);
+        $testUser->assignRole('Floor Inspector');
+
+        // 2. Attempt 4 wrong logins -> should return 401 with remaining attempts
+        for ($i = 1; $i <= 4; $i++) {
+            $wrongRes = $this->postJson('/api/v1/auth/login', [
+                'identifier' => 'lock.test.user',
+                'password' => 'WrongPassword!',
+            ]);
+            $wrongRes->assertStatus(401);
+            $this->assertEquals($i, $testUser->fresh()->failed_login_attempts);
+            $this->assertFalse($testUser->fresh()->is_locked);
+        }
+
+        // 3. Attempt 5th wrong login -> account MUST lock and return 423
+        $lockRes = $this->postJson('/api/v1/auth/login', [
+            'identifier' => 'lock.test.user',
+            'password' => 'WrongPassword!',
+        ]);
+        $lockRes->assertStatus(423)
+            ->assertJson([
+                'status' => 423,
+                'title' => 'Account Locked',
+            ]);
+        $this->assertTrue($testUser->fresh()->is_locked);
+
+        // 4. Even with CORRECT password, login must be blocked with 423
+        $blockedRes = $this->postJson('/api/v1/auth/login', [
+            'identifier' => 'lock.test.user',
+            'password' => 'Correct#Pass123',
+        ]);
+        $blockedRes->assertStatus(423);
+
+        // 5. Admin unlocks the account
+        $unlockRes = $this->withHeader('Authorization', 'Bearer ' . $this->superAdminToken)
+            ->postJson("/api/v1/admin/users/{$testUser->id}/unlock");
+
+        $unlockRes->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ]);
+
+        $this->assertFalse($testUser->fresh()->is_locked);
+        $this->assertEquals(0, $testUser->fresh()->failed_login_attempts);
+
+        // 6. Now user can successfully login with correct password
+        $successLoginRes = $this->postJson('/api/v1/auth/login', [
+            'identifier' => 'lock.test.user',
+            'password' => 'Correct#Pass123',
+        ]);
+        $successLoginRes->assertStatus(200)
+            ->assertJsonStructure(['token', 'user']);
+
+        // Clean up
+        $testUser->forceDelete();
+    }
 }
+
 

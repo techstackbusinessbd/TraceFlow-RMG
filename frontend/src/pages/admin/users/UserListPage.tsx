@@ -18,7 +18,10 @@ import {
   Mail,
   User as UserIcon,
   SlidersHorizontal,
-  KeyRound
+  KeyRound,
+  Lock,
+  Unlock,
+  AlertTriangle,
 } from 'lucide-react';
 import { userService, type UserItem, type Role } from '../../../services/userService';
 
@@ -30,6 +33,8 @@ export const UserListPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [unlockingUserId, setUnlockingUserId] = useState<string | null>(null);
 
   // Filters and Sorting State
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -120,6 +125,26 @@ export const UserListPage: React.FC = () => {
     setPage(1);
   };
 
+  const handleUnlockUser = async (user: UserItem) => {
+    try {
+      setUnlockingUserId(user.id);
+      setActionFeedback(null);
+      const res = await userService.unlockUser(user.id);
+      setActionFeedback({
+        type: 'success',
+        message: res.message || `Account for ${user.name} (${user.username}) has been unlocked successfully.`,
+      });
+      fetchUsers();
+    } catch (err: any) {
+      setActionFeedback({
+        type: 'error',
+        message: err.response?.data?.detail || 'Failed to unlock user account. Please try again.',
+      });
+    } finally {
+      setUnlockingUserId(null);
+    }
+  };
+
   const renderSortHeader = (columnKey: string, label: string, extraClasses = '') => {
     const isSorted = sortBy === columnKey;
     return (
@@ -151,26 +176,6 @@ export const UserListPage: React.FC = () => {
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
-
-  const getRoleBadgeClasses = (role: string) => {
-    if (role === 'Super Admin') return 'bg-purple-100 text-purple-900 border-purple-300';
-    if (role === 'IT Admin') return 'bg-blue-100 text-blue-900 border-blue-300';
-    if (role === 'CEO' || role === 'Managing Director') return 'bg-slate-800 text-white border-slate-800';
-    if (role.includes('Quality') || role.includes('QA')) return 'bg-emerald-100 text-emerald-900 border-emerald-300';
-    if (role.includes('Cutting')) return 'bg-amber-100 text-amber-900 border-amber-300';
-    if (role.includes('Sewing')) return 'bg-sky-100 text-sky-900 border-sky-300';
-    return 'bg-slate-100 text-slate-800 border-slate-300';
-  };
-
-  const getAvatarBadgeBg = (role: string) => {
-    if (role === 'Super Admin') return 'bg-purple-700 text-white';
-    if (role === 'IT Admin') return 'bg-blue-600 text-white';
-    if (role === 'CEO' || role === 'Managing Director') return 'bg-slate-900 text-white';
-    if (role.includes('Quality') || role.includes('QA')) return 'bg-emerald-700 text-white';
-    if (role.includes('Cutting')) return 'bg-amber-700 text-white';
-    if (role.includes('Sewing')) return 'bg-sky-700 text-white';
-    return 'bg-slate-700 text-white';
   };
 
   return (
@@ -341,6 +346,32 @@ export const UserListPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* Action Feedback Notification */}
+      {actionFeedback && (
+        <div
+          className={`px-4 py-3 border flex items-center justify-between transition-all ${
+            actionFeedback.type === 'success'
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              : 'bg-rose-50 border-rose-300 text-rose-800'
+          }`}
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            {actionFeedback.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span>{actionFeedback.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionFeedback(null)}
+            className="text-xs font-bold hover:underline ml-4"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ==================================================================== */}
       {/* USERS DATA TABLE (PIXEL-PERFECT PROPORTIONS & SORTING) */}
@@ -358,7 +389,7 @@ export const UserListPage: React.FC = () => {
                 </th>
                 {renderSortHeader('department', 'Department & Role', 'w-56')}
                 {renderSortHeader('is_active', 'Status', 'w-32')}
-                <th className="py-3.5 px-4 w-36 text-center font-semibold text-xs text-slate-700 uppercase tracking-wider">
+                <th className="py-3.5 px-4 w-48 text-center font-semibold text-xs text-slate-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -371,7 +402,7 @@ export const UserListPage: React.FC = () => {
                   <td colSpan={6} className="py-16 text-center text-slate-400">
                     <div className="inline-flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin"></div>
-                      <span className="text-xs font-medium">Loading enterprise directory records...</span>
+                      <span className="text-xs font-medium">Loading user directory records...</span>
                     </div>
                   </td>
                 </tr>
@@ -380,63 +411,72 @@ export const UserListPage: React.FC = () => {
                   <td colSpan={6} className="py-16 text-center text-slate-500">
                     <UserIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                     <p className="font-semibold text-slate-800">No users found matching your criteria.</p>
-                    <p className="text-xs text-slate-400 mt-1">Try resetting the search terms or department filters.</p>
+                    <p className="text-xs text-slate-400 mt-1">Try clearing search filters or add a new user.</p>
                     <button
                       type="button"
                       onClick={handleResetFilters}
                       className="mt-3 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors"
                     >
-                      Reset All Filters
+                      Reset Filters
                     </button>
                   </td>
                 </tr>
               ) : (
                 users.map((user) => {
-                  const primaryRole = user.roles?.[0]?.name || 'No Role';
-                  const isSuperAdmin = user.roles?.some((r) => r.name === 'Super Admin') || primaryRole === 'Super Admin';
+                  const primaryRole = user.roles?.[0]?.name || 'Standard User';
+                  const isSuperAdmin = user.roles?.some((r) => r.name === 'Super Admin');
                   const initials = getInitials(user.name);
 
                   return (
                     <tr key={user.id} className="hover:bg-slate-50/90 transition-colors group">
                       {/* Employee ID */}
                       <td className="py-3.5 px-4 align-middle">
-                        <span className="inline-block font-mono text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-800 border border-slate-300 shadow-2xs tracking-wide">
+                        <span className="font-mono text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-800 border border-slate-300 tracking-wide">
                           {user.emp_id}
                         </span>
                       </td>
 
-                      {/* User Details with Avatar Initials */}
+                      {/* User Details (Avatar Initials + Name + Username + Email) */}
                       <td className="py-3.5 px-4 align-middle">
                         <div className="flex items-center gap-3">
-                          {/* Initials Avatar Capsule */}
-                          <div className={`w-9 h-9 shrink-0 flex items-center justify-center font-bold text-xs shadow-2xs select-none ${getAvatarBadgeBg(primaryRole)}`}>
+                          {/* Initials Avatar */}
+                          <div className="w-8 h-8 bg-slate-800 text-white font-bold text-xs flex items-center justify-center shrink-0">
                             {initials}
                           </div>
 
-                          <div className="min-w-0 flex-1">
-                            <div className="font-bold text-slate-900 text-sm truncate leading-tight group-hover:text-blue-600 transition-colors">
-                              {user.name}
+                          {/* Name & Credentials */}
+                          <div className="min-w-0">
+                            <div className="font-bold text-slate-900 text-sm truncate flex items-center gap-1.5">
+                              <span>{user.name}</span>
+                              {isSuperAdmin && (
+                                <span className="px-1.5 py-0.2 bg-purple-100 text-purple-800 text-[10px] font-bold border border-purple-300">
+                                  Root
+                                </span>
+                              )}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5 truncate">
-                              <span className="font-mono text-blue-700 font-medium">@{user.username}</span>
+                            <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                              <span className="font-mono">@{user.username}</span>
                               {user.email && (
-                                <>
-                                  <span className="text-slate-300">•</span>
-                                  <span className="flex items-center gap-1 text-slate-500 truncate" title={user.email}>
-                                    <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-                                    <span className="truncate">{user.email}</span>
-                                  </span>
-                                </>
+                                <span className="inline-flex items-center gap-1 text-slate-400 truncate">
+                                  <Mail className="w-3 h-3 shrink-0" />
+                                  <span className="truncate">{user.email}</span>
+                                </span>
                               )}
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Primary Role */}
+                      {/* Primary Role Badge */}
                       <td className="py-3.5 px-4 align-middle">
-                        <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold border ${getRoleBadgeClasses(primaryRole)}`}>
-                          {primaryRole === 'Super Admin' && (
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold border ${
+                            isSuperAdmin
+                              ? 'bg-purple-50 text-purple-800 border-purple-200'
+                              : 'bg-slate-100 text-slate-800 border-slate-300'
+                          }`}
+                        >
+                          {isSuperAdmin && (
                             <ShieldCheck className="w-3.5 h-3.5 mr-1 text-purple-700 shrink-0" />
                           )}
                           <span>{primaryRole}</span>
@@ -453,16 +493,21 @@ export const UserListPage: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* Active Status */}
+                      {/* Active / Locked Status */}
                       <td className="py-3.5 px-4 align-middle">
-                        {user.is_active ? (
+                        {user.is_locked ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-800 bg-rose-50 px-2.5 py-1 border border-rose-300">
+                            <Lock className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                            <span>Locked</span>
+                          </span>
+                        ) : user.is_active ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 border border-emerald-300">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <span>Active</span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 border border-slate-300">
-                            <XCircle className="w-3.5 h-3.5 text-slate-400" />
+                            <XCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span>Inactive</span>
                           </span>
                         )}
@@ -471,6 +516,19 @@ export const UserListPage: React.FC = () => {
                       {/* Row Actions (Fixed-Grid Alignment) */}
                       <td className="py-3.5 px-4 text-center align-middle">
                         <div className="inline-flex items-center justify-center gap-1.5">
+                          {/* Unlock Button (Only shown when account is locked) */}
+                          {user.is_locked && (
+                            <button
+                              type="button"
+                              disabled={unlockingUserId === user.id}
+                              onClick={() => handleUnlockUser(user)}
+                              className="p-1.5 text-rose-700 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-300 hover:border-rose-600 transition-colors shadow-2xs"
+                              title="Unlock Account (Reset Failed Login Attempts)"
+                            >
+                              <Unlock className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
                           {/* Custom Privileges Button */}
                           <button
                             type="button"

@@ -537,6 +537,88 @@ class UserController extends Controller
     }
 
     /**
+     * Unlock a locked user account (Admin action).
+     */
+    public function unlock(Request $request, string $id): JsonResponse
+    {
+        $this->authorizePermission($request->user(), 'users.edit');
+
+        $user = Str::isUuid($id)
+            ? User::findOrFail($id)
+            : User::where('username', $id)->orWhere('emp_id', $id)->firstOrFail();
+
+        $user->unlockAccount($request->user());
+
+        // WORM Audit Log
+        DB::table('audit_vault_logs')->insert([
+            'id' => (string) Str::uuid(),
+            'user_id' => $request->user()->id,
+            'emp_id' => $request->user()->emp_id,
+            'action' => 'UNLOCK_USER_ACCOUNT',
+            'entity_type' => 'User',
+            'entity_id' => (string) $user->id,
+            'old_values' => json_encode(['failed_login_attempts' => 5, 'is_locked' => true]),
+            'new_values' => json_encode(['failed_login_attempts' => 0, 'is_locked' => false, 'unlocked_by' => $request->user()->username]),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
+
+        $user->load('roles');
+
+        return response()->json([
+            'success' => true,
+            'message' => "User account ({$user->username}) has been unlocked successfully.",
+            'data' => $user,
+        ]);
+    }
+
+    /**
+     * Manually lock a user account (Admin action).
+     */
+    public function lock(Request $request, string $id): JsonResponse
+    {
+        $this->authorizePermission($request->user(), 'users.edit');
+
+        $user = Str::isUuid($id)
+            ? User::findOrFail($id)
+            : User::where('username', $id)->orWhere('emp_id', $id)->firstOrFail();
+
+        if ($user->hasRole('Super Admin')) {
+            return response()->json([
+                'type' => 'https://tools.ietf.org/html/rfc7807',
+                'title' => 'Protected Root Account',
+                'status' => 403,
+                'detail' => 'The Super Admin root account cannot be locked.',
+            ], 403);
+        }
+
+        $user->lockAccount();
+
+        // WORM Audit Log
+        DB::table('audit_vault_logs')->insert([
+            'id' => (string) Str::uuid(),
+            'user_id' => $request->user()->id,
+            'emp_id' => $request->user()->emp_id,
+            'action' => 'LOCK_USER_ACCOUNT',
+            'entity_type' => 'User',
+            'entity_id' => (string) $user->id,
+            'new_values' => json_encode(['is_locked' => true, 'locked_by' => $request->user()->username]),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
+
+        $user->load('roles');
+
+        return response()->json([
+            'success' => true,
+            'message' => "User account ({$user->username}) has been locked.",
+            'data' => $user,
+        ]);
+    }
+
+    /**
      * Helper to verify permission or super admin role.
      */
     private function authorizePermission(User $user, string $permission): void
