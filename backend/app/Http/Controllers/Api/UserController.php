@@ -51,8 +51,13 @@ class UserController extends Controller
             $query->where('is_active', filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN));
         }
 
+        // Sorting
+        $allowedSorts = ['emp_id', 'name', 'username', 'department', 'is_active', 'created_at'];
+        $sortBy = in_array($request->input('sort_by'), $allowedSorts, true) ? $request->input('sort_by') : 'emp_id';
+        $sortDirection = strtolower($request->input('sort_direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
         $perPage = min((int) $request->input('per_page', 15), 100);
-        $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $users = $query->orderBy($sortBy, $sortDirection)->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -62,6 +67,10 @@ class UserController extends Controller
                 'per_page' => $users->perPage(),
                 'current_page' => $users->currentPage(),
                 'last_page' => $users->lastPage(),
+                'from' => $users->firstItem() ?? 0,
+                'to' => $users->lastItem() ?? 0,
+                'sort_by' => $sortBy,
+                'sort_direction' => $sortDirection,
             ],
         ]);
     }

@@ -44,6 +44,8 @@ export interface UserListParams {
   role?: string;
   department?: string;
   is_active?: string;
+  sort_by?: string;
+  sort_direction?: 'asc' | 'desc';
   page?: number;
   per_page?: number;
 }
@@ -56,6 +58,10 @@ export interface PaginatedResponse<T> {
     per_page: number;
     current_page: number;
     last_page: number;
+    from?: number;
+    to?: number;
+    sort_by?: string;
+    sort_direction?: string;
   };
 }
 
