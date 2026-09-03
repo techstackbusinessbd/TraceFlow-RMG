@@ -41,7 +41,6 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
         children: [
           { id: 'admin-users', title: 'Users', path: '/admin/users' },
           { id: 'admin-roles', title: 'Roles & Permissions', path: '/admin/roles' },
-          { id: 'admin-privileges', title: 'User Privileges', path: '/admin/privileges' },
         ],
       },
       {
