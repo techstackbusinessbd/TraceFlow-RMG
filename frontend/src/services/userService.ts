@@ -35,6 +35,7 @@ export interface UserFormData {
   name: string;
   email: string;
   password?: string;
+  password_confirmation?: string;
   phone: string;
   department: string;
   designation: string;
@@ -188,6 +189,14 @@ export const userService = {
   async lockUser(id: string): Promise<{ success: boolean; message: string; data: UserItem }> {
     const response = await apiClient.post<{ success: boolean; message: string; data: UserItem }>(
       `/v1/admin/users/${id}/lock`
+    );
+    return response.data;
+  },
+
+  async resetPassword(id: string, payload: { password: string; password_confirmation: string; reason?: string }): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.post<{ success: boolean; message: string }>(
+      `/v1/admin/users/${id}/reset-password`,
+      payload
     );
     return response.data;
   },

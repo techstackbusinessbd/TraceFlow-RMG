@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Save, 
@@ -19,6 +19,8 @@ import {
 import { userService, type UserPermissionsData } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { UI_TOKENS } from '../../../config/designTokens';
 import { alertService } from '../../../services/alertService';
 
 interface MatrixRow {
@@ -39,6 +41,7 @@ interface MatrixRow {
 
 export const UserPermissionsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const [permissionsData, setPermissionsData] = useState<UserPermissionsData | null>(null);
   const [manifest, setManifest] = useState<Record<string, Record<string, string>>>({});
@@ -422,20 +425,11 @@ export const UserPermissionsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div>
-          <Link
-            to="/admin/users"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors mb-1"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Users Directory
-          </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              User Privileges: {user.name}
-            </h1>
+      {/* Mandatory Standard Page Header */}
+      <PageHeader
+        title={`User Privileges: ${user.name}`}
+        badge={
+          <div className="flex items-center gap-1.5">
             <Badge variant="neutral" className="font-mono text-xs">
               @{user.username}
             </Badge>
@@ -445,31 +439,35 @@ export const UserPermissionsPage: React.FC = () => {
               </Badge>
             ))}
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Configure direct user privilege overrides beyond the baseline inherited from their primary role.
-          </p>
-        </div>
-
-        {/* Header Action Controls */}
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="secondary"
-            icon={<RotateCcw className="w-3.5 h-3.5" />}
-            onClick={handleResetToRoleDefaults}
-            disabled={directPermissions.size === 0}
-          >
-            Reset to Role
-          </Button>
-          <Button
-            variant="primary"
-            icon={<Save className="w-4 h-4" />}
-            isLoading={isSaving}
-            onClick={handleSave}
-          >
-            Save Privileges
-          </Button>
-        </div>
-      </div>
+        }
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              icon={<ArrowLeft className="w-4 h-4" />}
+              onClick={() => navigate('/admin/users')}
+            >
+              Users Directory
+            </Button>
+            <Button
+              variant="secondary"
+              icon={<RotateCcw className="w-3.5 h-3.5" />}
+              onClick={handleResetToRoleDefaults}
+              disabled={directPermissions.size === 0}
+            >
+              Reset to Role
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Save className="w-4 h-4" />}
+              isLoading={isSaving}
+              onClick={handleSave}
+            >
+              Save Privileges
+            </Button>
+          </>
+        }
+      />
 
       {/* KPI Metrics Summary Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -548,14 +546,10 @@ export const UserPermissionsPage: React.FC = () => {
                   key={modName}
                   type="button"
                   onClick={() => setActiveModule(modName)}
-                  className={`w-full text-left px-4 py-3.5 transition-colors flex items-center justify-between gap-3 ${
-                    isActive
-                      ? 'bg-slate-900 dark:bg-blue-600 text-white font-bold'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200'
-                  }`}
+                  className={isActive ? UI_TOKENS.navList.itemActive : UI_TOKENS.navList.itemInactive}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={isActive ? 'text-blue-400 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
+                    <div className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}>
                       {getModuleIcon(modName)}
                     </div>
                     <span className="text-sm truncate">{modName}</span>
@@ -568,7 +562,7 @@ export const UserPermissionsPage: React.FC = () => {
                       </span>
                     )}
                     <Badge
-                      variant={isActive ? 'root' : isFull ? 'success' : 'neutral'}
+                      variant={isFull ? 'success' : stats.effective > 0 ? 'info' : 'neutral'}
                       className="text-[11px] font-mono"
                     >
                       {stats.effective}/{stats.total}

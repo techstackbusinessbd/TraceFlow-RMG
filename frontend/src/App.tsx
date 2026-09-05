@@ -7,6 +7,7 @@ import { PlatformOverviewPage } from './pages/admin/PlatformOverviewPage';
 import { UserListPage } from './pages/admin/users/UserListPage';
 import { UserCreatePage } from './pages/admin/users/UserCreatePage';
 import { UserEditPage } from './pages/admin/users/UserEditPage';
+import { UserResetPasswordPage } from './pages/admin/users/UserResetPasswordPage';
 import { UserDeletePage } from './pages/admin/users/UserDeletePage';
 import { UserArchivedPage } from './pages/admin/users/UserArchivedPage';
 import { UserPermanentDeletePage } from './pages/admin/users/UserPermanentDeletePage';
@@ -16,6 +17,22 @@ import { RoleListPage } from './pages/admin/roles/RoleListPage';
 import { RolePermissionsPage } from './pages/admin/roles/RolePermissionsPage';
 import { AuditVaultPage } from './pages/admin/security/AuditVaultPage';
 import { DeviceListPage } from './pages/admin/devices/DeviceListPage';
+import { OrganizationOverviewPage } from './pages/master/organization/OrganizationOverviewPage';
+import { CompanyListPage } from './pages/master/organization/CompanyListPage';
+import { CompanyCreatePage } from './pages/master/organization/CompanyCreatePage';
+import { CompanyEditPage } from './pages/master/organization/CompanyEditPage';
+import { FactoryUnitListPage } from './pages/master/organization/FactoryUnitListPage';
+import { FactoryUnitCreatePage } from './pages/master/organization/FactoryUnitCreatePage';
+import { FactoryUnitEditPage } from './pages/master/organization/FactoryUnitEditPage';
+import { ProductionLineListPage } from './pages/master/organization/ProductionLineListPage';
+import { ProductionLineCreatePage } from './pages/master/organization/ProductionLineCreatePage';
+import { ProductionLineEditPage } from './pages/master/organization/ProductionLineEditPage';
+import { BuildingListPage } from './pages/master/organization/BuildingListPage';
+import { BuildingCreatePage } from './pages/master/organization/BuildingCreatePage';
+import { BuildingEditPage } from './pages/master/organization/BuildingEditPage';
+import { FloorListPage } from './pages/master/organization/FloorListPage';
+import { FloorCreatePage } from './pages/master/organization/FloorCreatePage';
+import { FloorEditPage } from './pages/master/organization/FloorEditPage';
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
 import { ALL_SYSTEM_MODULES } from './config/navigationData';
 import { UnauthorizedPage } from './pages/common/UnauthorizedPage';
@@ -60,6 +77,7 @@ export const App: React.FC = () => {
           <Route path="/admin/users/create" element={<UserCreatePage />} />
           <Route path="/admin/users/archived" element={<UserArchivedPage />} />
           <Route path="/admin/users/:id/edit" element={<UserEditPage />} />
+          <Route path="/admin/users/:id/reset-password" element={<UserResetPasswordPage />} />
           <Route path="/admin/users/:id/permissions" element={<UserPermissionsPage />} />
           <Route path="/admin/users/:id/delete" element={<UserDeletePage />} />
           <Route path="/admin/users/:id/permanent-delete" element={<UserPermanentDeletePage />} />
@@ -70,6 +88,24 @@ export const App: React.FC = () => {
           <Route path="/admin/audit-vault" element={<AuditVaultPage />} />
           <Route path="/admin/purge-console" element={<Navigate to="/admin/users/archived" replace />} />
           <Route path="/admin/devices" element={<DeviceListPage />} />
+
+          {/* Module 02: Master Library - Organization Setup */}
+          <Route path="/master-data/organization" element={<OrganizationOverviewPage />} />
+          <Route path="/master-data/companies" element={<CompanyListPage />} />
+          <Route path="/master-data/companies/create" element={<CompanyCreatePage />} />
+          <Route path="/master-data/companies/:id/edit" element={<CompanyEditPage />} />
+          <Route path="/master-data/units" element={<FactoryUnitListPage />} />
+          <Route path="/master-data/units/create" element={<FactoryUnitCreatePage />} />
+          <Route path="/master-data/units/:id/edit" element={<FactoryUnitEditPage />} />
+          <Route path="/master-data/buildings" element={<BuildingListPage />} />
+          <Route path="/master-data/buildings/create" element={<BuildingCreatePage />} />
+          <Route path="/master-data/buildings/:id/edit" element={<BuildingEditPage />} />
+          <Route path="/master-data/floors" element={<FloorListPage />} />
+          <Route path="/master-data/floors/create" element={<FloorCreatePage />} />
+          <Route path="/master-data/floors/:id/edit" element={<FloorEditPage />} />
+          <Route path="/master-data/lines" element={<ProductionLineListPage />} />
+          <Route path="/master-data/lines/create" element={<ProductionLineCreatePage />} />
+          <Route path="/master-data/lines/:id/edit" element={<ProductionLineEditPage />} />
 
           {/* Security & System Error Pages */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -88,6 +124,12 @@ export const App: React.FC = () => {
                   '/admin/audit-vault',
                   '/admin/purge-console',
                   '/admin/devices',
+                  '/master-data/organization',
+                  '/master-data/companies',
+                  '/master-data/units',
+                  '/master-data/buildings',
+                  '/master-data/floors',
+                  '/master-data/lines',
                 ];
                 if (explicitPaths.includes(item.path)) return null;
                 return (

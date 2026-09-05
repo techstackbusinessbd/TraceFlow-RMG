@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Shield, 
@@ -17,6 +17,7 @@ import {
 import { userService, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
+import { PageHeader } from '../../../components/common/PageHeader';
 import { alertService } from '../../../services/alertService';
 import { DataTable, type ColumnDef } from '../../../components/common/DataTable';
 import { UI_TOKENS } from '../../../config/designTokens';
@@ -278,37 +279,33 @@ export const RoleListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div>
-          <Link
-            to="/admin/users"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors mb-1"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Users Directory
-          </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Roles & Permissions Management</h1>
-            <Badge variant="neutral" className="font-mono text-xs">
-              {roles.length} Registered
-            </Badge>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Configure system role boundaries, module privileges, and granular operational authorization matrix.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="primary"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={() => setShowCreateCard(!showCreateCard)}
-          >
-            {showCreateCard ? 'Hide Form' : 'Create Custom Role'}
-          </Button>
-        </div>
-      </div>
+      {/* Mandatory Golden Standard Page Header */}
+      <PageHeader
+        title="Roles & Permissions"
+        badge={
+          <Badge variant="neutral">
+            {roles.length} Registered
+          </Badge>
+        }
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              icon={<ArrowLeft className="w-4 h-4" />}
+              onClick={() => navigate('/admin/users')}
+            >
+              Users Directory
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Plus className="w-4 h-4" />}
+              onClick={() => setShowCreateCard(!showCreateCard)}
+            >
+              {showCreateCard ? 'Hide Form' : 'Create Role'}
+            </Button>
+          </>
+        }
+      />
 
       {/* ==================================================================== */}
       {/* EXECUTIVE KPI SUMMARY DOCK */}
@@ -382,17 +379,17 @@ export const RoleListPage: React.FC = () => {
       {/* ==================================================================== */}
       {/* TOOLBAR & CATEGORY FILTER BAR */}
       {/* ==================================================================== */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-2xs p-4 space-y-3">
+      <div className={UI_TOKENS.filter.container}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           {/* Live Search */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search roles by title (e.g. QA, Inspector, CEO)..."
-              className="w-full pl-9 pr-8 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors"
+              className={`${UI_TOKENS.input.base} pl-9 pr-8`}
             />
             {searchQuery && (
               <button

@@ -50,6 +50,21 @@ class DatabaseSeeder extends Seeder
             $superAdmin->syncRoles(['Super Admin']);
         }
 
+        User::firstOrCreate(
+            ['email' => 'admin@traceflow.com'],
+            [
+                'emp_id' => 'EMP-0000',
+                'username' => 'admin',
+                'name' => 'TraceFlow Administrator',
+                'password' => Hash::make('Admin@123456'),
+                'phone' => '+8801700000001',
+                'department' => 'Administration',
+                'designation' => 'System Administrator',
+                'is_active' => true,
+                'default_dashboard_path' => '/admin/platform-overview',
+            ]
+        )->syncRoles(['Super Admin']);
+
         $itAdmin = User::firstOrCreate(
             ['username' => 'super.admin'],
             [

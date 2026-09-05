@@ -1,31 +1,30 @@
-import React, { useEffect, useState, useTransition } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useTransition, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   UserPlus, 
   Archive, 
   Search, 
   ShieldCheck, 
+  Shield,
   Edit3, 
   Trash2, 
   CheckCircle2, 
   XCircle, 
   RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Mail,
-  User as UserIcon,
-  SlidersHorizontal,
-  KeyRound,
-  Lock,
-  Unlock,
+  Mail, 
+  User as UserIcon, 
+  SlidersHorizontal, 
+  KeyRound, 
+  Lock, 
+  Unlock, 
 } from 'lucide-react';
 import { userService, type UserItem, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
 import { TableActionButton } from '../../../components/common/TableActionButton';
+import { DataTable, type ColumnDef } from '../../../components/common/DataTable';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { UI_TOKENS } from '../../../config/designTokens';
 import { alertService } from '../../../services/alertService';
 
 export const UserListPage: React.FC = () => {
@@ -115,16 +114,6 @@ export const UserListPage: React.FC = () => {
     });
   };
 
-  const handleSort = (column: string) => {
-    if (sortBy === column) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortBy(column);
-      setSortDirection('asc');
-    }
-    setPage(1);
-  };
-
   const handleUnlockUser = async (user: UserItem) => {
     try {
       setUnlockingUserId(user.id);
@@ -139,32 +128,6 @@ export const UserListPage: React.FC = () => {
     }
   };
 
-  const renderSortHeader = (columnKey: string, label: string, extraClasses = '') => {
-    const isSorted = sortBy === columnKey;
-    return (
-      <th
-        onClick={() => handleSort(columnKey)}
-        className={`py-3.5 px-4 cursor-pointer select-none group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${extraClasses}`}
-        title={`Click to sort by ${label}`}
-      >
-        <div className="flex items-center gap-1.5 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-          <span>{label}</span>
-          <span className="shrink-0">
-            {isSorted ? (
-              sortDirection === 'asc' ? (
-                <ArrowUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 font-bold" />
-              ) : (
-                <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 font-bold" />
-              )
-            ) : (
-              <ArrowUpDown className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />
-            )}
-          </span>
-        </div>
-      </th>
-    );
-  };
-
   const getInitials = (name: string) => {
     if (!name) return 'U';
     const parts = name.trim().split(/\s+/);
@@ -172,61 +135,216 @@ export const UserListPage: React.FC = () => {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  const columns: ColumnDef<UserItem>[] = useMemo(
+    () => [
+      {
+        key: 'emp_id',
+        header: 'Employee ID',
+        width: 'w-40',
+        sortable: true,
+        render: (user) => (
+          <Badge variant="neutral" className="font-mono">
+            {user.emp_id}
+          </Badge>
+        ),
+      },
+      {
+        key: 'name',
+        header: 'User Details',
+        width: 'w-[320px]',
+        sortable: true,
+        render: (user) => {
+          const isSuperAdmin = user.roles?.some((r) => r.name === 'Super Admin');
+          const initials = getInitials(user.name);
+
+          return (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-slate-800 text-white font-bold text-xs flex items-center justify-center rounded-md shrink-0">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <div className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate flex items-center gap-1.5">
+                  <span>{user.name}</span>
+                  {isSuperAdmin && (
+                    <span className="px-1.5 py-0.2 bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 text-[10px] font-bold rounded-sm border border-purple-300 dark:border-purple-800">
+                      Root
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
+                  <span className="font-mono">@{user.username}</span>
+                  {user.email && (
+                    <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 truncate">
+                      <Mail className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{user.email}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        key: 'primary_role',
+        header: 'Primary Role',
+        width: 'w-44',
+        render: (user) => {
+          const primaryRole = user.roles?.[0]?.name || 'Standard User';
+          const isSuperAdmin = user.roles?.some((r) => r.name === 'Super Admin');
+
+          return isSuperAdmin ? (
+            <Badge variant="root" icon={<ShieldCheck className="w-3.5 h-3.5 text-purple-700 dark:text-purple-300 shrink-0" />}>
+              {primaryRole}
+            </Badge>
+          ) : (
+            <Badge variant="neutral">
+              {primaryRole}
+            </Badge>
+          );
+        },
+      },
+      {
+        key: 'department',
+        header: 'Department & Designation',
+        width: 'w-56',
+        sortable: true,
+        render: (user) => (
+          <div>
+            <div className="text-slate-900 dark:text-slate-100 font-semibold text-xs truncate">
+              {user.department || 'General Plant Operations'}
+            </div>
+            <div className="text-slate-500 dark:text-slate-400 text-xs truncate mt-0.5">
+              {user.designation || 'Factory Staff'}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'is_active',
+        header: 'Status',
+        width: 'w-32',
+        sortable: true,
+        render: (user) => (
+          user.is_locked ? (
+            <Badge variant="danger" icon={<Lock className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />}>
+              Locked
+            </Badge>
+          ) : user.is_active ? (
+            <Badge variant="success" icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />}>
+              Active
+            </Badge>
+          ) : (
+            <Badge variant="neutral" icon={<XCircle className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />}>
+              Inactive
+            </Badge>
+          )
+        ),
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        width: 'w-48',
+        align: 'center',
+        render: (user) => {
+          const isSuperAdmin = user.roles?.some((r) => r.name === 'Super Admin');
+
+          return (
+            <div className="inline-flex items-center justify-center gap-1.5">
+              {user.is_locked && (
+                <TableActionButton
+                  variant="warning"
+                  icon={<Unlock className="w-3.5 h-3.5" />}
+                  title="Unlock Account (Reset Failed Login Attempts)"
+                  disabled={unlockingUserId === user.id}
+                  onClick={() => handleUnlockUser(user)}
+                />
+              )}
+
+              <TableActionButton
+                variant="purple"
+                icon={<Shield className="w-3.5 h-3.5" />}
+                title="Manage User Custom Privileges & Overrides"
+                onClick={() => navigate(`/admin/privileges/${user.username || user.id}`)}
+              />
+
+              <TableActionButton
+                variant="base"
+                icon={<Edit3 className="w-3.5 h-3.5" />}
+                title="Edit User Profile"
+                onClick={() => navigate(`/admin/users/${user.id}/edit`)}
+              />
+
+              <TableActionButton
+                variant="warning"
+                icon={<KeyRound className="w-3.5 h-3.5" />}
+                title="Reset User Password"
+                onClick={() => navigate(`/admin/users/${user.id}/reset-password`)}
+              />
+
+              {!isSuperAdmin ? (
+                <TableActionButton
+                  variant="danger"
+                  icon={<Trash2 className="w-3.5 h-3.5" />}
+                  title="Soft Delete / Archive User"
+                  onClick={() => navigate(`/admin/users/${user.id}/delete`)}
+                />
+              ) : (
+                <div className="w-8 h-8" title="Super Admin is permanently protected" />
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [unlockingUserId, navigate]
+  );
+
   return (
     <div className="space-y-6">
-      {/* Top Breadcrumb & Title Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">
-            <Link to="/admin/platform-overview" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Platform</Link>
-            <span>/</span>
-            <span className="text-slate-800 dark:text-slate-200 font-semibold">User Management</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Enterprise User Directory</h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-md">
-              {pagination.total} Registered Accounts
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage factory operators, line supervisors, quality inspectors, and executive administration accounts.
-          </p>
-        </div>
+      {/* Reusable Standard Page Header */}
+      <PageHeader
+        title="User Directory"
+        badge={
+          <Badge variant="neutral">
+            {pagination.total} Users
+          </Badge>
+        }
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              icon={<Archive className="w-4 h-4 text-slate-500" />}
+              onClick={() => navigate('/admin/users/archived')}
+            >
+              Archived Users
+            </Button>
 
-        {/* Top Action Buttons (Centralized Design System - STRICT) */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            icon={<Archive className="w-4 h-4 text-slate-500" />}
-            onClick={() => navigate('/admin/users/archived')}
-          >
-            Archived Users
-          </Button>
-
-          <Button
-            variant="primary"
-            icon={<UserPlus className="w-4 h-4" />}
-            onClick={() => navigate('/admin/users/create')}
-          >
-            Add New User
-          </Button>
-        </div>
-      </div>
+            <Button
+              variant="primary"
+              icon={<UserPlus className="w-4 h-4" />}
+              onClick={() => navigate('/admin/users/create')}
+            >
+              Add New User
+            </Button>
+          </>
+        }
+      />
 
       {/* ==================================================================== */}
       {/* ENTERPRISE FILTER TOOLBAR */}
       {/* ==================================================================== */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs p-4 space-y-3 rounded-md">
+      <div className={UI_TOKENS.filter.container}>
         <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
           {/* Universal Text Search */}
           <div className="relative md:col-span-4">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by Employee ID, Name, Username, or Email..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              className={`${UI_TOKENS.input.base} pl-9`}
             />
           </div>
 
@@ -238,7 +356,7 @@ export const UserListPage: React.FC = () => {
                 setSelectedRole(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 font-medium"
+              className={UI_TOKENS.input.select}
             >
               <option value="">All Roles</option>
               {roles.map((r) => (
@@ -257,7 +375,7 @@ export const UserListPage: React.FC = () => {
                 setSelectedDept(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 font-medium"
+              className={UI_TOKENS.input.select}
             >
               <option value="">All Departments</option>
               <option value="Information Technology">Information Technology</option>
@@ -278,7 +396,7 @@ export const UserListPage: React.FC = () => {
                 setSelectedStatus(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 font-medium"
+              className={UI_TOKENS.input.select}
             >
               <option value="">All Statuses</option>
               <option value="true">Active Only</option>
@@ -306,7 +424,7 @@ export const UserListPage: React.FC = () => {
         </form>
 
         {/* Quick Toolbar Subline */}
-        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className={UI_TOKENS.filter.subline}>
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
             <span>
@@ -333,235 +451,38 @@ export const UserListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ==================================================================== */}
-      {/* USERS DATA TABLE (PIXEL-PERFECT PROPORTIONS & SORTING) */}
-      {/* ==================================================================== */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs rounded-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed">
-            {/* Table Header with Explicit Widths */}
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800">
-                {renderSortHeader('emp_id', 'Employee ID', 'w-40')}
-                {renderSortHeader('name', 'User Details', 'w-[320px]')}
-                <th className="py-3.5 px-4 w-44 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Primary Role
-                </th>
-                {renderSortHeader('department', 'Department & Role', 'w-56')}
-                {renderSortHeader('is_active', 'Status', 'w-32')}
-                <th className="py-3.5 px-4 w-48 text-center font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            {/* Table Body */}
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm text-slate-700 dark:text-slate-300">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center text-slate-400 dark:text-slate-500">
-                    <div className="inline-flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
-                      <span className="text-xs font-medium">Loading user directory records...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center text-slate-500 dark:text-slate-400">
-                    <UserIcon className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                    <p className="font-semibold text-slate-800 dark:text-slate-200">No users found matching your criteria.</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Try clearing search filters or add a new user.</p>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleResetFilters}
-                      className="mt-3"
-                    >
-                      Reset Filters
-                    </Button>
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => {
-                  const primaryRole = user.roles?.[0]?.name || 'Standard User';
-                  const isSuperAdmin = user.roles?.some((r) => r.name === 'Super Admin');
-                  const initials = getInitials(user.name);
-
-                  return (
-                    <tr key={user.id} className="hover:bg-slate-50/90 dark:hover:bg-slate-800/50 transition-colors group">
-                      {/* Employee ID */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <Badge variant="neutral" className="font-mono">
-                          {user.emp_id}
-                        </Badge>
-                      </td>
-
-                      {/* User Details (Avatar Initials + Name + Username + Email) */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          {/* Initials Avatar */}
-                          <div className="w-8 h-8 bg-slate-800 text-white font-bold text-xs flex items-center justify-center rounded-md shrink-0">
-                            {initials}
-                          </div>
-
-                          {/* Name & Credentials */}
-                          <div className="min-w-0">
-                            <div className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate flex items-center gap-1.5">
-                              <span>{user.name}</span>
-                              {isSuperAdmin && (
-                                <span className="px-1.5 py-0.2 bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 text-[10px] font-bold rounded-sm border border-purple-300 dark:border-purple-800">
-                                  Root
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
-                              <span className="font-mono">@{user.username}</span>
-                              {user.email && (
-                                <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 truncate">
-                                  <Mail className="w-3 h-3 shrink-0" />
-                                  <span className="truncate">{user.email}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Primary Role Badge */}
-                      <td className="py-3.5 px-4 align-middle">
-                        {isSuperAdmin ? (
-                          <Badge variant="root" icon={<ShieldCheck className="w-3.5 h-3.5 text-purple-700 dark:text-purple-300 shrink-0" />}>
-                            {primaryRole}
-                          </Badge>
-                        ) : (
-                          <Badge variant="neutral">
-                            {primaryRole}
-                          </Badge>
-                        )}
-                      </td>
-
-                      {/* Department & Designation */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <div className="text-slate-900 dark:text-slate-100 font-semibold text-xs truncate">
-                          {user.department || 'General Plant Operations'}
-                        </div>
-                        <div className="text-slate-500 dark:text-slate-400 text-xs truncate mt-0.5">
-                          {user.designation || 'Factory Staff'}
-                        </div>
-                      </td>
-
-                      {/* Active / Locked Status */}
-                      <td className="py-3.5 px-4 align-middle">
-                        {user.is_locked ? (
-                          <Badge variant="danger" icon={<Lock className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />}>
-                            Locked
-                          </Badge>
-                        ) : user.is_active ? (
-                          <Badge variant="success" icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />}>
-                            Active
-                          </Badge>
-                        ) : (
-                          <Badge variant="neutral" icon={<XCircle className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />}>
-                            Inactive
-                          </Badge>
-                        )}
-                      </td>
-
-                      {/* Row Actions (32x32px Fixed Proportions) */}
-                      <td className="py-3.5 px-4 text-center align-middle">
-                        <div className="inline-flex items-center justify-center gap-1.5">
-                          {/* Unlock Button (Only shown when account is locked) */}
-                          {user.is_locked && (
-                            <TableActionButton
-                              variant="warning"
-                              icon={<Unlock className="w-3.5 h-3.5" />}
-                              title="Unlock Account (Reset Failed Login Attempts)"
-                              disabled={unlockingUserId === user.id}
-                              onClick={() => handleUnlockUser(user)}
-                            />
-                          )}
-
-                          {/* Custom Privileges Button */}
-                          <TableActionButton
-                            variant="purple"
-                            icon={<KeyRound className="w-3.5 h-3.5" />}
-                            title="Manage User Custom Privileges"
-                            onClick={() => navigate(`/admin/privileges/${user.username || user.id}`)}
-                          />
-
-                          {/* Edit Button */}
-                          <TableActionButton
-                            variant="base"
-                            icon={<Edit3 className="w-3.5 h-3.5" />}
-                            title="Edit User Profile"
-                            onClick={() => navigate(`/admin/users/${user.id}/edit`)}
-                          />
-
-                          {/* Delete Button */}
-                          {!isSuperAdmin ? (
-                            <TableActionButton
-                              variant="danger"
-                              icon={<Trash2 className="w-3.5 h-3.5" />}
-                              title="Soft Delete / Archive User"
-                              onClick={() => navigate(`/admin/users/${user.id}/delete`)}
-                            />
-                          ) : (
-                            <div className="w-8 h-8" title="Super Admin is permanently protected" />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ==================================================================== */}
-        {/* COMPREHENSIVE PAGINATION FOOTER */}
-        {/* ==================================================================== */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 gap-3 select-none">
-          <div>
-            Showing{' '}
-            <strong className="text-slate-900 dark:text-slate-100 font-semibold">
-              {pagination.total > 0 ? (page - 1) * perPage + 1 : 0}
-            </strong>{' '}
-            to{' '}
-            <strong className="text-slate-900 dark:text-slate-100 font-semibold">
-              {Math.min(page * perPage, pagination.total)}
-            </strong>{' '}
-            of <strong className="text-slate-900 dark:text-slate-100 font-semibold">{pagination.total}</strong> total users
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              disabled={page <= 1 || isLoading}
-              onClick={() => setPage(page - 1)}
-              className="inline-flex items-center gap-1 px-3 py-1.5 font-medium text-slate-700 bg-white border border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors shadow-2xs"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              Previous
-            </button>
-
-            <span className="px-3 py-1.5 font-semibold text-slate-800 bg-slate-100 border border-slate-300">
-              Page {page} of {Math.max(pagination.last_page, 1)}
-            </span>
-
-            <button
-              type="button"
-              disabled={page >= pagination.last_page || isLoading}
-              onClick={() => setPage(page + 1)}
-              className="inline-flex items-center gap-1 px-3 py-1.5 font-medium text-slate-700 bg-white border border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors shadow-2xs"
-            >
-              Next
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* CENTRALIZED DESIGN DATATABLE */}
+      <DataTable<UserItem>
+        columns={columns}
+        data={users}
+        keyExtractor={(u) => u.id}
+        isLoading={isLoading}
+        emptyMessage="No users found matching your criteria."
+        emptyIcon={<UserIcon className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />}
+        emptyAction={
+          <Button variant="secondary" size="sm" onClick={handleResetFilters}>
+            Reset Filters
+          </Button>
+        }
+        sortKey={sortBy}
+        sortDir={sortDirection}
+        onSort={(key, dir) => {
+          setSortBy(key);
+          setSortDirection(dir);
+          setPage(1);
+        }}
+        serverPagination={{
+          currentPage: page,
+          totalPages: Math.max(pagination.last_page, 1),
+          totalRecords: pagination.total,
+          perPage: perPage,
+          onPageChange: (newPage) => setPage(newPage),
+          onPerPageChange: (newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          },
+        }}
+      />
     </div>
   );
 };

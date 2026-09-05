@@ -619,6 +619,50 @@ class UserController extends Controller
     }
 
     /**
+     * Dedicated Password Reset for User Accounts.
+     */
+    public function resetPassword(\App\Http\Requests\Admin\ResetUserPasswordRequest $request, string $id): JsonResponse
+    {
+        $this->authorizePermission($request->user(), 'users.edit');
+
+        $user = Str::isUuid($id)
+            ? User::findOrFail($id)
+            : User::where('username', $id)->orWhere('emp_id', $id)->firstOrFail();
+
+        $validated = $request->validated();
+
+        $user->password = Hash::make($validated['password']);
+        $user->failed_login_attempts = 0;
+        $user->is_locked = false;
+        $user->locked_at = null;
+        $user->save();
+
+        // WORM Audit Log
+        DB::table('audit_vault_logs')->insert([
+            'id' => (string) Str::uuid(),
+            'user_id' => $request->user()->id,
+            'emp_id' => $request->user()->emp_id,
+            'action' => 'RESET_USER_PASSWORD',
+            'entity_type' => 'User',
+            'entity_id' => (string) $user->id,
+            'new_values' => json_encode([
+                'target_username' => $user->username,
+                'target_emp_id' => $user->emp_id,
+                'reason' => $validated['reason'] ?? 'Admin password reset',
+                'reset_by' => $request->user()->username,
+            ]),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Password for user {$user->username} has been successfully reset.",
+        ]);
+    }
+
+    /**
      * Helper to verify permission or super admin role.
      */
     private function authorizePermission(User $user, string $permission): void

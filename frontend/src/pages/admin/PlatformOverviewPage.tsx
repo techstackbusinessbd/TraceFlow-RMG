@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Shield,
   Database,
   Cpu,
   Activity,
@@ -15,6 +14,8 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
+import { Badge } from '../../components/common/Badge';
+import { PageHeader } from '../../components/common/PageHeader';
 import apiClient from '../../services/apiClient';
 
 interface HealthStatus {
@@ -56,26 +57,25 @@ export const PlatformOverviewPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <Shield className="w-7 h-7 text-blue-600 dark:text-blue-500" />
-            <span>System Dashboard</span>
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            System health, database metrics, and active service status
-          </p>
-        </div>
-        <Button
-          variant="primary"
-          onClick={fetchHealth}
-          isLoading={isLoading}
-          icon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
-        >
-          Refresh Telemetry
-        </Button>
-      </div>
+      {/* Mandatory Standard Page Header */}
+      <PageHeader
+        title="System Dashboard"
+        badge={
+          <Badge variant={health?.status === 'healthy' ? 'success' : 'warning'}>
+            {health?.status === 'healthy' ? 'System Operational' : 'Connecting'}
+          </Badge>
+        }
+        actions={
+          <Button
+            variant="secondary"
+            onClick={fetchHealth}
+            isLoading={isLoading}
+            icon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
+          >
+            Refresh Telemetry
+          </Button>
+        }
+      />
 
       {/* KPI Cards Grid with Crisp Top Accent Bars */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, 
   Archive, 
+  ArrowLeft, 
   RotateCcw, 
-  Trash2 
+  Trash2, 
 } from 'lucide-react';
 import { userService, type UserItem } from '../../../services/userService';
-import { useAuthStore } from '../../../store/authStore';
-import { alertService } from '../../../services/alertService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { DataTable, type ColumnDef } from '../../../components/common/DataTable';
+import { alertService } from '../../../services/alertService';
+import { useAuthStore } from '../../../store/authStore';
 
 export const UserArchivedPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user: authUser } = useAuthStore();
-  const isSuperAdmin = authUser?.roles?.includes('Super Admin');
+  const { user: currentUser } = useAuthStore();
+  const isSuperAdmin = currentUser?.roles?.includes('Super Admin');
 
   const [archivedUsers, setArchivedUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -24,11 +26,11 @@ export const UserArchivedPage: React.FC = () => {
   const fetchArchivedUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await userService.getArchivedUsers();
-      setArchivedUsers(response.data);
+      const data = await userService.getArchivedUsers();
+      setArchivedUsers(data.data || []);
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      alertService.error('Load Error', errorObj.response?.data?.detail || 'Failed to load archived accounts.');
+      alertService.error('Failed to load archived users', errorObj.response?.data?.detail || 'Unable to retrieve archived accounts.');
     } finally {
       setIsLoading(false);
     }
@@ -40,145 +42,144 @@ export const UserArchivedPage: React.FC = () => {
 
   const handleRestore = async (id: string) => {
     setRestoringId(id);
-
     try {
-      const res = await userService.restoreUser(id);
-      alertService.success('Restored', res.message || 'User account restored successfully.');
+      await userService.restoreUser(id);
+      alertService.success('Account Restored', 'The user account has been successfully restored to active directory.');
       await fetchArchivedUsers();
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      alertService.error('Restore Error', errorObj.response?.data?.detail || 'Failed to restore user account.');
+      alertService.error('Restore Failed', errorObj.response?.data?.detail || 'Failed to restore user account.');
     } finally {
       setRestoringId(null);
     }
   };
 
+  const columns: ColumnDef<UserItem>[] = useMemo(
+    () => [
+      {
+        key: 'emp_id',
+        header: 'Employee ID',
+        width: 'w-36',
+        sortable: true,
+        render: (u) => (
+          <Badge variant="neutral" className="font-mono">
+            {u.emp_id}
+          </Badge>
+        ),
+      },
+      {
+        key: 'name',
+        header: 'User Details',
+        sortable: true,
+        render: (u) => (
+          <div>
+            <div className="font-semibold text-slate-900 dark:text-slate-100">{u.name}</div>
+            <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">@{u.username}</div>
+          </div>
+        ),
+      },
+      {
+        key: 'roles',
+        header: 'Former Role',
+        width: 'w-40',
+        render: (u) => (
+          <Badge variant="neutral">
+            {u.roles?.[0]?.name || 'Former Staff'}
+          </Badge>
+        ),
+      },
+      {
+        key: 'department',
+        header: 'Department',
+        width: 'w-44',
+        sortable: true,
+        render: (u) => (
+          <span className="text-xs text-slate-600 dark:text-slate-400">
+            {u.department || 'N/A'}
+          </span>
+        ),
+      },
+      {
+        key: 'deleted_at',
+        header: 'Deactivation Date',
+        width: 'w-48',
+        sortable: true,
+        render: (u) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+            {u.deleted_at ? new Date(u.deleted_at).toLocaleString() : 'Archived'}
+          </span>
+        ),
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        width: 'w-48',
+        align: 'right',
+        render: (u) => (
+          <div className="inline-flex items-center justify-end gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={restoringId === u.id}
+              isLoading={restoringId === u.id}
+              onClick={() => handleRestore(u.id)}
+              icon={<RotateCcw className="w-3.5 h-3.5" />}
+              title="Restore this account"
+            >
+              Restore
+            </Button>
+
+            {isSuperAdmin && (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => navigate(`/admin/users/${u.id}/permanent-delete`)}
+                icon={<Trash2 className="w-3.5 h-3.5" />}
+                title="Super Admin Permanent Force Delete"
+              >
+                Purge
+              </Button>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [restoringId, isSuperAdmin, navigate]
+  );
+
   return (
     <div className="space-y-6">
-      {/* Top Navigation & Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <Link
-            to="/admin/users"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors mb-1"
+      {/* Mandatory Standard Page Header */}
+      <PageHeader
+        title="Archived Accounts"
+        badge={
+          <Badge variant="neutral">
+            {archivedUsers.length} Archived
+          </Badge>
+        }
+        actions={
+          <Button
+            variant="secondary"
+            icon={<ArrowLeft className="w-4 h-4" />}
+            onClick={() => navigate('/admin/users')}
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Active Users Directory
-          </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Archived User Accounts</h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold bg-slate-200 text-slate-800">
-              Trash Repository
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Deactivated accounts preserved for historical audit compliance. Accounts can be restored or purged.
-          </p>
-        </div>
-      </div>
+            Users Directory
+          </Button>
+        }
+      />
 
-      {/* Data Table */}
-      <div className="bg-white border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <th className="py-3 px-4">Employee ID</th>
-                <th className="py-3 px-4">User Details</th>
-                <th className="py-3 px-4">Former Role</th>
-                <th className="py-3 px-4">Department</th>
-                <th className="py-3 px-4">Deactivation Date</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 text-sm text-slate-700">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
-                    <div className="inline-flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin"></div>
-                      <span>Loading archived repository...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : archivedUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
-                    <Archive className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="font-medium">No archived or deactivated users found.</p>
-                    <p className="text-xs text-slate-400 mt-1">The trash repository is completely empty.</p>
-                  </td>
-                </tr>
-              ) : (
-                archivedUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
-                    {/* Employee ID */}
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-600 text-xs">
-                      <span className="px-2 py-1 bg-slate-100 border border-slate-200">
-                        {user.emp_id}
-                      </span>
-                    </td>
-
-                    {/* User Info */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-800">{user.name}</div>
-                      <div className="text-xs text-slate-400 font-mono">@{user.username}</div>
-                    </td>
-
-                    {/* Role */}
-                    <td className="py-3.5 px-4">
-                      <Badge variant="neutral">
-                        {user.roles?.[0]?.name || 'Former Staff'}
-                      </Badge>
-                    </td>
-
-                    {/* Department */}
-                    <td className="py-3.5 px-4 text-xs text-slate-600">
-                      {user.department || 'N/A'}
-                    </td>
-
-                    {/* Deactivation Date */}
-                    <td className="py-3.5 px-4 text-xs text-slate-500 font-mono">
-                      {user.deleted_at ? new Date(user.deleted_at).toLocaleString() : 'Archived'}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        {/* Restore Button */}
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          disabled={restoringId === user.id}
-                          isLoading={restoringId === user.id}
-                          onClick={() => handleRestore(user.id)}
-                          icon={<RotateCcw className="w-3.5 h-3.5" />}
-                          title="Restore this account"
-                        >
-                          Restore
-                        </Button>
-
-                        {/* Super Admin Permanent Purge Button */}
-                        {isSuperAdmin && (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => navigate(`/admin/users/${user.id}/permanent-delete`)}
-                            icon={<Trash2 className="w-3.5 h-3.5" />}
-                            title="Super Admin Permanent Force Delete"
-                          >
-                            Purge
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Centralized Design DataTable */}
+      <DataTable<UserItem>
+        columns={columns}
+        data={archivedUsers}
+        keyExtractor={(u) => u.id}
+        isLoading={isLoading}
+        emptyMessage="No archived or deactivated users found. The trash repository is completely empty."
+        emptyIcon={<Archive className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />}
+        initialSortKey="deleted_at"
+        initialSortDir="desc"
+        defaultPerPage={10}
+      />
     </div>
   );
 };

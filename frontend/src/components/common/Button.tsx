@@ -8,6 +8,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   icon?: React.ReactNode;
+  iconRight?: React.ReactNode;
   isLoading?: boolean;
 }
 
@@ -15,6 +16,7 @@ export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   icon,
+  iconRight,
   isLoading = false,
   children,
   className = '',
@@ -37,14 +39,16 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       {...props}
       disabled={disabled || isLoading}
-      className={`${tokenClass} ${className}`}
+      className={`${tokenClass} whitespace-nowrap ${className}`}
     >
       {isLoading ? (
         <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent animate-spin shrink-0" />
       ) : (
         icon && <span className="shrink-0">{icon}</span>
       )}
-      {children && <span>{children}</span>}
+      {children && <span className="inline-flex items-center gap-1.5 whitespace-nowrap">{children}</span>}
+      {!isLoading && iconRight && <span className="shrink-0">{iconRight}</span>}
     </button>
   );
 };
+

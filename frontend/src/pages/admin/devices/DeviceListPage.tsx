@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useTransition } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState, useTransition, useMemo } from 'react';
 import {
   Tablet,
   Search,
@@ -8,8 +7,6 @@ import {
   Edit2,
   Trash2,
   SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
   Wifi,
   WifiOff,
   ShieldCheck,
@@ -26,6 +23,9 @@ import {
 import { deviceService, type DeviceItem, type DevicePayload } from '../../../services/deviceService';
 import { Button } from '../../../components/common/Button';
 import { Badge, type BadgeVariant } from '../../../components/common/Badge';
+import { DataTable, type ColumnDef } from '../../../components/common/DataTable';
+import { TableActionButton } from '../../../components/common/TableActionButton';
+import { PageHeader } from '../../../components/common/PageHeader';
 import { alertService } from '../../../services/alertService';
 import { formatDateTime } from '../../../utils/dateUtils';
 import { UI_TOKENS } from '../../../config/designTokens';
@@ -40,6 +40,8 @@ export const DeviceListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('device_code');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [perPage, setPerPage] = useState<number>(15);
   const [page, setPage] = useState<number>(1);
 
@@ -86,6 +88,8 @@ export const DeviceListPage: React.FC = () => {
         search: searchTerm.trim() || undefined,
         device_type: selectedType || undefined,
         pairing_status: selectedStatus || undefined,
+        sort_by: sortBy || undefined,
+        sort_direction: sortDirection || undefined,
         page,
         per_page: perPage,
       });
@@ -110,7 +114,7 @@ export const DeviceListPage: React.FC = () => {
 
   useEffect(() => {
     fetchDevices();
-  }, [page, perPage, selectedType, selectedStatus]);
+  }, [page, perPage, selectedType, selectedStatus, sortBy, sortDirection]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +126,8 @@ export const DeviceListPage: React.FC = () => {
     setSearchTerm('');
     setSelectedType('');
     setSelectedStatus('');
+    setSortBy('device_code');
+    setSortDirection('asc');
     setPerPage(15);
     setPage(1);
     startTransition(() => {
@@ -283,43 +289,179 @@ export const DeviceListPage: React.FC = () => {
     }
   };
 
+  const columns: ColumnDef<DeviceItem>[] = useMemo(
+    () => [
+      {
+        key: 'device_code',
+        header: 'Asset Tag',
+        sortable: true,
+        width: 'w-44',
+        render: (device) => (
+          <div>
+            <Badge variant="neutral" className="font-mono text-xs font-bold">
+              {device.device_code}
+            </Badge>
+            <span className="block text-[10px] text-slate-400 mt-0.5">Asset Tag</span>
+          </div>
+        ),
+      },
+      {
+        key: 'device_name',
+        header: 'Designation & Type',
+        sortable: true,
+        width: 'w-52',
+        render: (device) => (
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded">
+              {getTypeIcon(device.device_type)}
+            </div>
+            <div className="truncate">
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-xs block truncate">
+                {device.device_name}
+              </span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                {device.device_type}
+              </span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'hardware_specs',
+        header: 'Hardware Specs',
+        width: 'w-60',
+        render: (device) => (
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-800 dark:text-slate-200">
+              <span className="text-slate-400 font-sans text-[10px]">SN:</span>
+              <span className="font-semibold">{device.serial_number || '—'}</span>
+            </div>
+            <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="text-slate-400 font-sans text-[10px]">MAC:</span>
+              <span>{device.mac_address || '—'}</span>
+            </div>
+            <div className="flex items-center gap-1.5 font-mono text-[11px] text-blue-600 dark:text-blue-400">
+              <span className="text-slate-400 font-sans text-[10px]">IP:</span>
+              <span className="font-semibold">{device.ip_address || 'DHCP Pending'}</span>
+              <span className="text-[9px] font-sans font-bold px-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800">
+                DHCP Live
+              </span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'assigned_location',
+        header: 'Factory Location',
+        sortable: true,
+        width: 'w-48',
+        render: (device) => (
+          <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+            {device.assigned_location}
+          </span>
+        ),
+      },
+      {
+        key: 'heartbeat',
+        header: 'Heartbeat',
+        width: 'w-40',
+        render: (device) => (
+          device.last_ping_at ? (
+            <div>
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                <Wifi className="w-3.5 h-3.5" />
+                <span className="text-[11px]">Online</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5" title={device.last_ping_at}>
+                {formatDateTime(device.last_ping_at)}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+              <WifiOff className="w-3.5 h-3.5" />
+              <span className="font-mono text-[11px]">No Signal</span>
+            </div>
+          )
+        ),
+      },
+      {
+        key: 'pairing_status',
+        header: 'Status',
+        sortable: true,
+        width: 'w-32',
+        render: (device) => (
+          <Badge variant={getStatusBadgeVariant(device.pairing_status)}>
+            {device.pairing_status}
+          </Badge>
+        ),
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        width: 'w-44',
+        align: 'center',
+        render: (device) => {
+          const isPaired = device.pairing_status === 'PAIRED';
+          const isSyncing = syncingDeviceId === device.id;
+
+          return (
+            <div className="flex items-center justify-center gap-1.5">
+              <TableActionButton
+                variant="base"
+                title="Re-sync Hardware MAC & Serial from Device"
+                disabled={isSyncing}
+                icon={<RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isSyncing ? 'animate-spin' : ''}`} />}
+                onClick={() => handleSyncExistingDevice(device)}
+              />
+
+              <TableActionButton
+                variant={isPaired ? 'warning' : 'primary'}
+                title={isPaired ? 'Revoke Authorization' : 'Authorize Pairing'}
+                icon={isPaired ? <ShieldAlert className="w-3.5 h-3.5 text-amber-600" /> : <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />}
+                onClick={() => handleTogglePairing(device)}
+              />
+
+              <TableActionButton
+                variant="base"
+                title="Edit Device"
+                icon={<Edit2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />}
+                onClick={() => handleOpenEditDrawer(device)}
+              />
+
+              <TableActionButton
+                variant="danger"
+                title="Decommission Device"
+                icon={<Trash2 className="w-3.5 h-3.5 text-rose-600" />}
+                onClick={() => handleDeleteDevice(device)}
+              />
+            </div>
+          );
+        },
+      },
+    ],
+    [syncingDeviceId]
+  );
+
   return (
     <div className="space-y-6">
-      {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">
-            <Link to="/admin/platform-overview" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Platform</Link>
-            <span>/</span>
-            <span className="text-slate-500 dark:text-slate-400">Device Management</span>
-            <span>/</span>
-            <span className="text-slate-800 dark:text-slate-200 font-semibold">Tablets & Devices</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
-              <Tablet className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-              <span>Factory Tablets & Terminals Registry</span>
-            </h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold bg-blue-100 dark:bg-blue-950/80 text-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-md">
-              Hardware Access Control
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage factory floor tablets, QC terminals, and scanners with manual asset tagging and automatic MAC/Serial synchronization.
-          </p>
-        </div>
-
-        {/* Action Button */}
-        <div className="flex items-center gap-3">
+      {/* Mandatory Golden Standard Page Header */}
+      <PageHeader
+        title="Device Registry"
+        badge={
+          <Badge variant="neutral">
+            {pagination.total} Devices
+          </Badge>
+        }
+        actions={
           <Button
             variant="primary"
             icon={<Plus className="w-4 h-4" />}
             onClick={handleOpenCreateDrawer}
           >
-            Enroll New Device
+            Enroll Device
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* KPI Telemetry Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -587,17 +729,18 @@ export const DeviceListPage: React.FC = () => {
       {/* ==================================================================== */}
       {/* FILTER TOOLBAR */}
       {/* ==================================================================== */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-xs p-4 space-y-3">
+      {/* FILTER TOOLBAR */}
+      <div className={UI_TOKENS.filter.container}>
         <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
           {/* Universal Text Search */}
           <div className="relative md:col-span-5">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by Asset Tag, Name, Serial, MAC, or IP..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              className={`${UI_TOKENS.input.base} pl-9`}
             />
           </div>
 
@@ -609,7 +752,7 @@ export const DeviceListPage: React.FC = () => {
                 setSelectedType(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 font-medium"
+              className={UI_TOKENS.input.select}
             >
               <option value="">All Hardware Types</option>
               <option value="TABLET">Tablets</option>
@@ -620,14 +763,14 @@ export const DeviceListPage: React.FC = () => {
           </div>
 
           {/* Status Filter */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <select
               value={selectedStatus}
               onChange={(e) => {
                 setSelectedStatus(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 font-medium"
+              className={UI_TOKENS.input.select}
             >
               <option value="">All Pairing Statuses</option>
               <option value="PAIRED">Paired & Authorized</option>
@@ -637,11 +780,11 @@ export const DeviceListPage: React.FC = () => {
           </div>
 
           {/* Buttons */}
-          <div className="md:col-span-1 flex items-center gap-1.5">
+          <div className="md:col-span-2 flex items-center gap-2">
             <Button
               type="submit"
               variant="primary"
-              className="w-full"
+              className="flex-1"
             >
               Filter
             </Button>
@@ -656,10 +799,12 @@ export const DeviceListPage: React.FC = () => {
         </form>
 
         {/* Subline */}
-        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className={UI_TOKENS.filter.subline}>
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-            <span>Sorted by: <strong>DEVICE ASSET TAG (ASC)</strong></span>
+            <span>
+              Sorted by: <strong className="text-slate-800 dark:text-slate-200">{sortBy.toUpperCase()}</strong> ({sortDirection.toUpperCase()})
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -681,234 +826,38 @@ export const DeviceListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ==================================================================== */}
-      {/* DEVICES DATA TABLE */}
-      {/* ==================================================================== */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800">
-                <th className="py-3.5 px-4 w-44 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Device Tag (Manual)
-                </th>
-                <th className="py-3.5 px-4 w-52 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Designation & Type
-                </th>
-                <th className="py-3.5 px-4 w-60 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Hardware Specs (Auto-Synced)
-                </th>
-                <th className="py-3.5 px-4 w-48 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Factory Location
-                </th>
-                <th className="py-3.5 px-4 w-40 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Heartbeat
-                </th>
-                <th className="py-3.5 px-4 w-32 font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="py-3.5 px-4 w-44 text-right font-semibold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm text-slate-700 dark:text-slate-300">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="py-16 text-center text-slate-400 dark:text-slate-500">
-                    <div className="inline-flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
-                      <span className="text-xs font-medium">Loading hardware terminals registry...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : devices.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-16 text-center text-slate-500 dark:text-slate-400">
-                    <Tablet className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                    <p className="font-semibold text-slate-800 dark:text-slate-200">No factory devices found.</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Enroll your first tablet or barcode scanner terminal.</p>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleOpenCreateDrawer}
-                      className="mt-3"
-                    >
-                      Enroll Device
-                    </Button>
-                  </td>
-                </tr>
-              ) : (
-                devices.map((device) => {
-                  const isPaired = device.pairing_status === 'PAIRED';
-                  const isSyncing = syncingDeviceId === device.id;
-
-                  return (
-                    <tr key={device.id} className="hover:bg-slate-50/90 dark:hover:bg-slate-800/50 transition-colors group">
-                      {/* Device Tag (Manual) */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <Badge variant="neutral" className="font-mono text-xs font-bold">
-                          {device.device_code}
-                        </Badge>
-                        <span className="block text-[10px] text-slate-400 mt-0.5">Asset Tag</span>
-                      </td>
-
-                      {/* Designation & Hardware Type */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <div className="flex items-center gap-2.5">
-                          <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded">
-                            {getTypeIcon(device.device_type)}
-                          </div>
-                          <div className="truncate">
-                            <span className="font-bold text-slate-900 dark:text-slate-100 text-xs block truncate">
-                              {device.device_name}
-                            </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                              {device.device_type}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Hardware Specs (MAC & Serial - Auto Synced) */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-800 dark:text-slate-200">
-                            <span className="text-slate-400 font-sans text-[10px]">SN:</span>
-                            <span className="font-semibold">{device.serial_number || '—'}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                            <span className="text-slate-400 font-sans text-[10px]">MAC:</span>
-                            <span>{device.mac_address || '—'}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-blue-600 dark:text-blue-400">
-                            <span className="text-slate-400 font-sans text-[10px]">IP:</span>
-                            <span className="font-semibold">{device.ip_address || 'DHCP Pending'}</span>
-                            <span className="text-[9px] font-sans font-bold px-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800">
-                              DHCP Live
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Factory Location */}
-                      <td className="py-3.5 px-4 align-middle text-xs font-medium text-slate-800 dark:text-slate-200">
-                        {device.assigned_location}
-                      </td>
-
-                      {/* Heartbeat Ping */}
-                      <td className="py-3.5 px-4 align-middle">
-                        {device.last_ping_at ? (
-                          <div>
-                            <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-                              <Wifi className="w-3.5 h-3.5" />
-                              <span className="text-[11px]">Online</span>
-                            </div>
-                            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5" title={device.last_ping_at}>
-                              {formatDateTime(device.last_ping_at)}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
-                            <WifiOff className="w-3.5 h-3.5" />
-                            <span className="font-mono text-[11px]">No Signal</span>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Pairing Status */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <Badge variant={getStatusBadgeVariant(device.pairing_status)}>
-                          {device.pairing_status}
-                        </Badge>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-3.5 px-4 text-right align-middle">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Re-sync Hardware specs button */}
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            title="Re-sync Hardware MAC & Serial from Device"
-                            isLoading={isSyncing}
-                            icon={<RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isSyncing ? 'animate-spin' : ''}`} />}
-                            onClick={() => handleSyncExistingDevice(device)}
-                          />
-
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            title={isPaired ? 'Revoke Authorization' : 'Authorize Pairing'}
-                            icon={isPaired ? <ShieldAlert className="w-3.5 h-3.5 text-rose-500" /> : <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />}
-                            onClick={() => handleTogglePairing(device)}
-                          />
-
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<Edit2 className="w-3.5 h-3.5" />}
-                            onClick={() => handleOpenEditDrawer(device)}
-                          />
-
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<Trash2 className="w-3.5 h-3.5 text-rose-600" />}
-                            onClick={() => handleDeleteDevice(device)}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 gap-3 select-none">
-          <div>
-            Showing{' '}
-            <strong className="text-slate-900 dark:text-slate-100 font-semibold">
-              {pagination.total > 0 ? (page - 1) * perPage + 1 : 0}
-            </strong>{' '}
-            to{' '}
-            <strong className="text-slate-900 dark:text-slate-100 font-semibold">
-              {Math.min(page * perPage, pagination.total)}
-            </strong>{' '}
-            of <strong className="text-slate-900 dark:text-slate-100 font-semibold">{pagination.total}</strong> registered devices
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={page <= 1 || isLoading}
-              onClick={() => setPage(page - 1)}
-              icon={<ChevronLeft className="w-3.5 h-3.5" />}
-            >
-              Previous
-            </Button>
-
-            <span className="px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md">
-              Page {page} of {Math.max(pagination.last_page, 1)}
-            </span>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={page >= pagination.last_page || isLoading}
-              onClick={() => setPage(page + 1)}
-              icon={<ChevronRight className="w-3.5 h-3.5" />}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* CENTRALIZED DESIGN DATATABLE */}
+      <DataTable<DeviceItem>
+        columns={columns}
+        data={devices}
+        keyExtractor={(d) => d.id}
+        isLoading={isLoading}
+        emptyMessage="No factory devices found."
+        emptyIcon={<Tablet className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />}
+        emptyAction={
+          <Button variant="primary" size="sm" onClick={handleOpenCreateDrawer}>
+            Enroll Device
+          </Button>
+        }
+        sortKey={sortBy}
+        sortDir={sortDirection}
+        onSort={(key, dir) => {
+          setSortBy(key);
+          setSortDirection(dir);
+          setPage(1);
+        }}
+        serverPagination={{
+          currentPage: page,
+          totalPages: Math.max(pagination.last_page, 1),
+          totalRecords: pagination.total,
+          perPage: perPage,
+          onPageChange: (newPage) => setPage(newPage),
+          onPerPageChange: (newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          },
+        }}
+      />
     </div>
   );
 };

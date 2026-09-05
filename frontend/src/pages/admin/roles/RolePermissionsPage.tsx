@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Save, 
@@ -19,6 +19,8 @@ import {
 import { userService, type Role } from '../../../services/userService';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { UI_TOKENS } from '../../../config/designTokens';
 import { alertService } from '../../../services/alertService';
 
 interface MatrixRow {
@@ -393,47 +395,34 @@ export const RolePermissionsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div>
-          <Link
-            to="/admin/roles"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors mb-1"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Roles Registry
-          </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Permissions Matrix: {role.name}
-            </h1>
-            <Badge variant={isSuperAdmin ? 'root' : 'info'}>
-              {selectedPermissions.size} Granted
-            </Badge>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Configure module-level access and functional authorization boundaries for this role profile.
-          </p>
-        </div>
-
-        {/* Header Action Controls */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/admin/roles')}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            icon={<Save className="w-4 h-4" />}
-            isLoading={isSaving}
-            onClick={handleSave}
-          >
-            Save Permissions
-          </Button>
-        </div>
-      </div>
+      {/* Mandatory Standard Page Header */}
+      <PageHeader
+        title={`Permissions Matrix: ${role.name}`}
+        badge={
+          <Badge variant={isSuperAdmin ? 'root' : 'info'}>
+            {selectedPermissions.size} Granted
+          </Badge>
+        }
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              icon={<ArrowLeft className="w-4 h-4" />}
+              onClick={() => navigate('/admin/roles')}
+            >
+              Roles Registry
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Save className="w-4 h-4" />}
+              isLoading={isSaving}
+              onClick={handleSave}
+            >
+              Save Permissions
+            </Button>
+          </>
+        }
+      />
 
       {/* ==================================================================== */}
       {/* MASTER-DETAIL WORKSPACE: LEFT MODULE LIST + RIGHT MATRIX TABLE        */}
@@ -465,14 +454,10 @@ export const RolePermissionsPage: React.FC = () => {
                   key={modName}
                   type="button"
                   onClick={() => setActiveModule(modName)}
-                  className={`w-full text-left px-4 py-3.5 transition-colors flex items-center justify-between gap-3 ${
-                    isActive
-                      ? 'bg-slate-900 dark:bg-blue-600 text-white font-bold'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200'
-                  }`}
+                  className={isActive ? UI_TOKENS.navList.itemActive : UI_TOKENS.navList.itemInactive}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={isActive ? 'text-blue-400 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
+                    <div className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}>
                       {getModuleIcon(modName)}
                     </div>
                     <span className="text-sm truncate">{modName}</span>
@@ -480,9 +465,7 @@ export const RolePermissionsPage: React.FC = () => {
 
                   <Badge
                     variant={
-                      isActive
-                        ? 'root'
-                        : isFull
+                      isFull
                         ? 'success'
                         : isPartial
                         ? 'info'

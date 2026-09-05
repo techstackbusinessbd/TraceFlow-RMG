@@ -35,6 +35,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/users/{id}/force-delete', [UserController::class, 'forceDelete']);
     Route::post('/admin/users/{id}/unlock', [UserController::class, 'unlock']);
     Route::post('/admin/users/{id}/lock', [UserController::class, 'lock']);
+    Route::post('/admin/users/{id}/reset-password', [UserController::class, 'resetPassword']);
     Route::get('/admin/users/{id}/permissions', [UserController::class, 'getPermissions']);
     Route::put('/admin/users/{id}/permissions', [UserController::class, 'updatePermissions']);
     Route::apiResource('admin/users', UserController::class);
@@ -53,6 +54,36 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('/admin/devices/{id}/sync-telemetry', [DeviceController::class, 'syncTelemetry']);
     Route::post('/admin/devices/{id}/toggle-pairing', [DeviceController::class, 'togglePairing']);
     Route::apiResource('admin/devices', DeviceController::class);
+
+    // Module 02: Master Library - Organization Structure Setup
+    Route::prefix('master')->group(function () {
+        // Group Organization
+        Route::get('/organization', [\App\Http\Controllers\Api\Master\OrganizationController::class, 'show']);
+        Route::put('/organization', [\App\Http\Controllers\Api\Master\OrganizationController::class, 'update']);
+
+        // Sister Companies
+        Route::get('/companies/active', [\App\Http\Controllers\Api\Master\CompanyController::class, 'activeList']);
+        Route::apiResource('/companies', \App\Http\Controllers\Api\Master\CompanyController::class);
+
+        // Factory Plants / Units
+        Route::get('/units/active', [\App\Http\Controllers\Api\Master\FactoryUnitController::class, 'activeList']);
+        Route::apiResource('/units', \App\Http\Controllers\Api\Master\FactoryUnitController::class);
+
+        // Factory Buildings
+        Route::get('/buildings/active', [\App\Http\Controllers\Api\Master\BuildingController::class, 'activeList']);
+        Route::get('/buildings/next-code', [\App\Http\Controllers\Api\Master\BuildingController::class, 'nextCode']);
+        Route::apiResource('/buildings', \App\Http\Controllers\Api\Master\BuildingController::class);
+
+        // Building Floors
+        Route::get('/floors/active', [\App\Http\Controllers\Api\Master\FloorController::class, 'activeList']);
+        Route::get('/floors/next-code', [\App\Http\Controllers\Api\Master\FloorController::class, 'nextCode']);
+        Route::apiResource('/floors', \App\Http\Controllers\Api\Master\FloorController::class);
+
+        // Production Lines & Sections
+        Route::get('/lines/active', [\App\Http\Controllers\Api\Master\ProductionLineController::class, 'activeList']);
+        Route::get('/lines/next-code', [\App\Http\Controllers\Api\Master\ProductionLineController::class, 'nextCode']);
+        Route::apiResource('/lines', \App\Http\Controllers\Api\Master\ProductionLineController::class);
+    });
 });
 
 // Device Floor Telemetry & Dynamic DHCP Heartbeat (Called by factory tablets/scanners)

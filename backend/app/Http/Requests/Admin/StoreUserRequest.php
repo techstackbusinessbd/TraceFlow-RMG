@@ -44,7 +44,8 @@ class StoreUserRequest extends BaseApiRequest
                 'max:150',
                 Rule::unique('users', 'email')->whereNull('deleted_at'),
             ],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password_confirmation' => ['required', 'string', 'min:8'],
             'phone' => ['nullable', 'string', 'max:20'],
             'department' => ['nullable', 'string', 'max:50'],
             'designation' => ['nullable', 'string', 'max:50'],
@@ -72,6 +73,8 @@ class StoreUserRequest extends BaseApiRequest
             'email.unique' => 'This email address is already registered.',
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters long.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'password_confirmation.required' => 'Password confirmation is required.',
             'role.required' => 'Please select a system role for this user.',
             'role.exists' => 'The selected system role is invalid.',
         ];

@@ -90,6 +90,44 @@ export const UI_TOKENS = {
     td: 'py-3.5 px-4 align-middle text-sm text-slate-700 dark:text-slate-300',
   },
 
+  // Page Header (Ultra-Compact Enterprise Standard)
+  pageHeader: {
+    wrapper:
+      'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1',
+    iconWrapper:
+      'w-8 h-8 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0',
+    title:
+      'text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2.5',
+    titleSm:
+      'text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2',
+    description:
+      'text-xs text-slate-500 dark:text-slate-400 mt-0.5',
+    actions:
+      'flex items-center gap-2.5 shrink-0',
+  },
+
+  // Breadcrumbs
+  breadcrumb: {
+    wrapper:
+      'flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium mb-1.5',
+    link:
+      'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors',
+    separator:
+      'text-slate-400 dark:text-slate-600 select-none',
+    current:
+      'text-slate-800 dark:text-slate-200 font-semibold',
+  },
+
+  // Filter Bar Shell
+  filter: {
+    container:
+      'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-2xs p-4 space-y-3',
+    row:
+      'flex flex-col sm:flex-row items-stretch sm:items-center gap-3',
+    subline:
+      'flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 gap-3',
+  },
+
   // Alert & Feedback Banners
   alert: {
     success:
@@ -100,5 +138,23 @@ export const UI_TOKENS = {
       'p-3.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-sm font-medium rounded-md flex items-center justify-between shadow-2xs transition-all',
     info:
       'p-3.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-sm font-medium rounded-md flex items-center justify-between shadow-2xs transition-all',
+  },
+
+  // Enterprise Tab Navigation
+  tab: {
+    container:
+      'flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 pb-px overflow-x-auto select-none',
+    itemActive:
+      'inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50/40 dark:bg-blue-950/30 rounded-t-md transition-all',
+    itemInactive:
+      'inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-t-md transition-all border-b-2 border-transparent',
+  },
+
+  // Enterprise Vertical Navigation List (Modules/Sections)
+  navList: {
+    itemActive:
+      'w-full text-left px-4 py-3.5 transition-colors flex items-center justify-between gap-3 bg-blue-50/80 dark:bg-blue-950/50 border-l-4 border-blue-600 text-blue-700 dark:text-blue-300 font-bold',
+    itemInactive:
+      'w-full text-left px-4 py-3.5 transition-colors flex items-center justify-between gap-3 border-l-4 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-medium',
   },
 } as const;

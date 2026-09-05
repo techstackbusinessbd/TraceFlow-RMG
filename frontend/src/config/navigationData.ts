@@ -78,6 +78,8 @@ export const ALL_SYSTEM_MODULES: EnterpriseModule[] = [
           { id: 'master-org', title: 'Group Organization', path: '/master-data/organization' },
           { id: 'master-companies', title: 'Sister Companies', path: '/master-data/companies' },
           { id: 'master-units', title: 'Factory Plants', path: '/master-data/units' },
+          { id: 'master-buildings', title: 'Buildings & Facilities', path: '/master-data/buildings' },
+          { id: 'master-floors', title: 'Floors & Layouts', path: '/master-data/floors' },
           { id: 'master-lines', title: 'Lines & Sections', path: '/master-data/lines' },
         ],
       },
